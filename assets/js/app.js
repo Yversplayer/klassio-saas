@@ -2,8 +2,10 @@
 (function () {
   "use strict";
 
-  var API_BASE = "http://localhost:5001/api";
   var UI = window.KlassioUI;
+  // Voir KlassioUI.apiOrigin() : en production, même origine que la page.
+  // Le repli couvre le cas — anormal — où ui.js n'aurait pas été chargé.
+  var API_BASE = (UI ? UI.apiOrigin() : "http://localhost:5001") + "/api";
 
   function escapeHtml(s) { return UI ? UI.escapeHtml(s) : String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
 

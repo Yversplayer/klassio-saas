@@ -383,7 +383,30 @@
   function qs(name) { return new URLSearchParams(window.location.search).get(name); }
   function todayIso() { var d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
 
+  // ORIGINE DU BACKEND — une seule source de vérité pour toute l'application.
+  //
+  // Elle était écrite en dur (« http://localhost:5001 ») dans app.js et dans
+  // page-invitation.js, et répétée dans la directive `connect-src` de la CSP
+  // de 36 pages. Le jour du déploiement, le navigateur aurait refusé TOUS les
+  // appels : pas une panne partielle, un produit muet.
+  //
+  // Trois cas, dans cet ordre :
+  //   1. `window.KLASSIO_API_ORIGIN` posé explicitement — c'est le cas d'un
+  //      frontend servi ailleurs que l'API (statique sur un CDN, API sur un
+  //      dyno). `tools/configurer_origine.py` l'écrit au déploiement.
+  //   2. page ouverte en local → le serveur de développement, port 5001.
+  //   3. sinon, MÊME ORIGINE que la page. C'est le cas courant en production :
+  //      un seul domaine, l'API sous /api. Rien à configurer, et la CSP
+  //      `connect-src 'self'` suffit.
+  function apiOrigin() {
+    if (typeof window.KLASSIO_API_ORIGIN === "string") return window.KLASSIO_API_ORIGIN;
+    var h = window.location.hostname;
+    if (h === "localhost" || h === "127.0.0.1" || h === "" || h === "::1") return "http://localhost:5001";
+    return "";   // même origine : fetch("/api/...")
+  }
+
   window.KlassioUI = {
+    apiOrigin: apiOrigin,
     escapeHtml: escapeHtml, icon: icon, money: money, compactMoney: compactMoney, setCurrency: function (c) { if (c) defaultCurrency = c; },
     fmtDate: fmtDate, fmtDateTime: fmtDateTime, relTime: relTime, initials: initials, fullName: fullName, plural: plural, WEEKDAYS: WEEKDAYS,
     avatar: avatar, badge: badge, METHODS: METHODS, ROLE_LABELS: ROLE_LABELS,

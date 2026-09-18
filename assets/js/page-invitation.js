@@ -18,7 +18,10 @@
 //    réseau, double clic, retour arrière : chacun a un chemin explicite.
 (function () {
   "use strict";
-  var API_BASE = "http://localhost:5001/api";
+  // Page publique : elle ne charge pas app.js, mais bien ui.js — l'origine
+  // vient donc de la même source que partout ailleurs, pas d'une seconde
+  // constante qu'on oublierait de changer au déploiement.
+  var API_BASE = (window.KlassioUI ? window.KlassioUI.apiOrigin() : "http://localhost:5001") + "/api";
   var UI = window.KlassioUI;
 
   // Les délais de mise en scène — jamais du travail simulé, seulement le temps

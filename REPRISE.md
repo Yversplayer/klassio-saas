@@ -1160,6 +1160,17 @@ fichier créé seulement dans le miroir sera perdu — c'est déjà arrivé avec
       les `*.db` (élèves mineurs nommés, responsables, paiements, empreintes de
       mots de passe). 198 fichiers, 4,7 Mo. Accès par clé SSH ed25519 **sans
       phrase de passe** — elle vaut donc ce que vaut l'accès au portable.
+- [x] ~~Origine du backend écrite en dur dans le frontend~~ — corrigé le 18/09.
+      **C'était un blocage de déploiement silencieux** : `app.js` et
+      `page-invitation.js` portaient `http://localhost:5001/api`, et 36 pages
+      répétaient `connect-src 'self' http://localhost:5001` dans leur CSP. Une
+      fois déployé, le navigateur aurait refusé TOUS les appels — pas une panne
+      partielle, un produit muet. Une seule source de vérité désormais,
+      `KlassioUI.apiOrigin()` : origine explicite si posée, sinon localhost en
+      développement, sinon **même origine que la page** — le cas courant en
+      production, où il n'y a rien à configurer. `tools/configurer_origine.py`
+      réécrit la CSP des 37 pages en une commande et **refuse une origine
+      `http://` non locale** (les jetons de session transiteraient en clair).
 - [ ] Confier le déploiement Heroku à Emergant — `DEPLOIEMENT.md` §3.3.
 - [ ] Jouer une fois `pg_tests.py --supabase` avant la bascule (seul mode qui
       exerce le pooler en mode transaction).
@@ -1170,7 +1181,14 @@ fichier créé seulement dans le miroir sera perdu — c'est déjà arrivé avec
 ### Non vérifié — à savoir
 
 - Comportement réel sur Supabase depuis un dyno européen (mesures faites en
-  local, sans latence réseau).
+  local, sans latence réseau). **Mesuré le 18/09 depuis Kinshasa :
+  270 ms d'aller-retour moyen vers le projet Supabase en Irlande** (210–320 ms,
+  0 % de perte). C'est la raison chiffrée pour laquelle l'application doit être
+  déployée À CÔTÉ de sa base : le tableau de bord fait 28 requêtes SQL. Depuis
+  Kinshasa, cela coûterait 28 × 270 ms ≈ 7,5 s pour une seule page ; depuis un
+  dyno irlandais, 28 × ~2 ms plus UN aller-retour de 270 ms, soit moins de
+  400 ms. La distance de l'utilisateur au serveur coûte un aller-retour ; la
+  distance du serveur à la base en coûte un PAR REQUÊTE.
 - Test d'endurance : campagne la plus longue = 60 s par palier. La mémoire est
   restée plate, mais ce n'est pas une preuve sur plusieurs heures.
 - Accessibilité clavier et lecteur d'écran.
