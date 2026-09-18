@@ -32,10 +32,29 @@
     var token = getToken();
     if (token) options.headers["Authorization"] = "Bearer " + token;
     return fetch(API_BASE + path, options).then(function (res) {
-      return res.json().catch(function () { return {}; }).then(function (body) {
+      return res.json().catch(function () { return null; }).then(function (body) {
         if (res.status === 401 && document.body.dataset.page !== "connexion") {
           try { localStorage.removeItem("klassio_token"); } catch (e) {}
           window.location.href = "connexion.html?expired=1";
+        }
+        // UNE RÉPONSE QUI N'EST PAS DU JSON NE VIENT PAS DE L'API KLASSIO.
+        //
+        // Le frontend est servi par un hébergeur statique, l'API par un
+        // serveur ailleurs. Tant que les deux ne sont pas reliés, l'appel
+        // atterrit sur la page 404 HTML de l'hébergeur — qui est une RÉPONSE,
+        // pas une panne réseau : le filet ci-dessous ne se déclenche donc pas,
+        // et l'écran affichait « Connexion impossible ». L'utilisateur en
+        // concluait qu'il s'était trompé de mot de passe, alors qu'aucune API
+        // n'avait été jointe. Même piège derrière un proxy d'entreprise ou un
+        // portail captif de wifi public, qui répondent aussi du HTML.
+        //
+        // Un corps vide sur une réponse réussie (204) reste normal : seul le
+        // couple « échec + corps illisible » signale une API absente.
+        if (body === null) {
+          return res.ok
+            ? { ok: true, status: res.status, body: {} }
+            : { ok: false, status: res.status, body: {
+                error: "L'API Klassio ne répond pas à cette adresse — le service n'est pas encore relié à ce site." } };
         }
         return { ok: res.ok, status: res.status, body: body };
       });
