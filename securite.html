@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sécurité — Klassio</title>
+<meta name="description" content="Isolation des établissements, rôles et moindre privilège, invitations révocables, sessions, traçabilité financière, assistant en lecture seule." />
+<link rel="canonical" href="https://klassio.app/securite.html" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Klassio" />
+<meta property="og:title" content="Sécurité — Klassio" />
+<meta property="og:description" content="Isolation des établissements, rôles et moindre privilège, invitations révocables, sessions, traçabilité financière, assistant en lecture seule." />
+<meta property="og:url" content="https://klassio.app/securite.html" />
+<meta property="og:image" content="https://klassio.app/assets/logo.png" />
+<meta name="twitter:card" content="summary" />
+<link rel="icon" href="assets/logo.png" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' http://localhost:5001; base-uri 'self'; form-action 'self'">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;1,500;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css?v=1790400015" />
+<script src="assets/js/theme.js?v=1790200001"></script>
+</head>
+<body class="pub-body">
+
+<div id="pubNav"></div>
+
+<main class="pub-page">
+
+  <div class="container">
+    <div class="pub-hero">
+      <span class="kicker">Sécurité</span>
+      <h1>Ce que l'architecture garantit</h1>
+      <p class="chapo">Cette page décrit des mécanismes réellement en place, pas des intentions.
+      Vous n'y lirez ni « 100&nbsp;% sécurisé », ni « inviolable » : aucun système ne l'est,
+      et l'affirmer serait le premier manquement à la sécurité.</p>
+    </div>
+
+    <section class="pub-section">
+      <h2>Séparation des établissements</h2>
+      <div class="pub-prose">
+        <p>Chaque donnée porte l'identifiant de son établissement, et <strong>ce dernier n'est jamais fourni
+        par le navigateur</strong> : il vient de la session serveur. Toute requête le filtre.</p>
+        <p>Une ressource appartenant à une autre école répond <strong>« introuvable »</strong>, jamais une liste
+        vide — un tableau vide affirmerait « cette ressource existe, elle est vide », ce qui est déjà
+        une information. Un balayage automatique appelle chaque route avec les identifiants d'une autre
+        école à chaque livraison.</p>
+      </div>
+    </section>
+
+    <section class="pub-section">
+      <h2>Rôles et principe de moindre privilège</h2>
+      <div class="pub-prose">
+        <p>Quatre rôles : Direction, Directeur des disciplines, professeur, parent. Chacun reçoit
+        strictement ce dont il a besoin.</p>
+        <p>Les permissions d'un enseignant portent sur <strong>ses classes</strong>, celles d'un parent sur
+        <strong>ses enfants</strong>. Ce périmètre est résolu par le serveur à chaque requête. Masquer un
+        bouton dans l'interface n'a jamais protégé quoi que ce soit : l'autorisation est vérifiée
+        derrière, toujours.</p>
+      </div>
+    </section>
+
+    <section class="pub-section">
+      <h2>Accès par invitation, révocable</h2>
+      <div class="pub-prose">
+        <p>Personne ne crée de compte librement. Un accès naît d'une invitation émise par la Direction,
+        valable 7 jours, utilisable une seule fois, et qui porte déjà son périmètre.</p>
+        <p>Un accès se <strong>révoque</strong>, y compris après acceptation : les sessions ouvertes sont
+        fermées et la reconnexion devient impossible. La révocation coupe un accès — elle ne détruit
+        aucune donnée scolaire.</p>
+      </div>
+    </section>
+
+    <section class="pub-section">
+      <h2>Sessions et mots de passe</h2>
+      <div class="pub-prose">
+        <p>Les mots de passe sont stockés sous forme de condensat, jamais en clair. Les jetons de session
+        sont également hachés en base.</p>
+        <p>Chaque requête revérifie que la personne appartient toujours à l'établissement et que son accès
+        est actif — un accès révoqué tombe immédiatement, sans attendre l'expiration de la session.</p>
+        <p>Les tentatives de connexion sont limitées en débit.</p>
+      </div>
+    </section>
+
+    <section class="pub-section">
+      <h2>Argent et traçabilité</h2>
+      <div class="pub-prose">
+        <p>Aucun solde n'est stocké : il se recalcule toujours à partir des paiements confirmés.
+        Le montant d'un paiement est validé par le serveur contre la dette réelle — un montant modifié
+        dans le navigateur est refusé.</p>
+        <p>Chaque paiement porte une clé d'idempotence : un double clic, un rechargement ou une coupure
+        réseau ne produisent jamais deux encaissements. Un reçu numéroté est émis
+        <strong>à la confirmation réelle</strong>, jamais avant.</p>
+        <p>Les opérations sensibles sont journalisées : qui, quand, quoi, et l'état avant et après.</p>
+      </div>
+    </section>
+
+    <section class="pub-section">
+      <h2>L'assistant est en lecture seule</h2>
+      <div class="pub-prose">
+        <p>Le module d'assistance <strong>ne contient aucune opération d'écriture</strong>. Ce n'est pas un
+        filtre de mots-clés que l'on pourrait contourner par une formulation habile : la capacité
+        d'écrire n'existe pas dans ce code.</p>
+        <p>Il ne peut donc ni créer, ni modifier, ni supprimer, ni payer, ni inviter, ni changer une
+        permission, ni prendre une décision disciplinaire. Ce qui engage un élève ou une famille reste
+        décidé par une personne.</p>
+      </div>
+    </section>
+
+    <section class="pub-section">
+      <h2>Ce que nous ne prétendons pas</h2>
+      <div class="pub-note">
+        <p>Klassio est un produit en construction. Certaines choses ne sont pas encore en place, et
+        nous préférons le dire : il n'existe aujourd'hui <strong>aucune intégration de paiement
+        Mobile Money ou bancaire</strong> ; les procédures de restauration de sauvegarde n'ont pas encore
+        été exercées en conditions réelles ; aucune certification de sécurité indépendante n'a été
+        obtenue à ce jour. Nous ne revendiquons rien de tout cela.</p>
+      </div>
+    </section>
+  </div>
+
+
+  <div class="container">
+    <div class="pub-cta">
+      <h2>Prêt à simplifier votre établissement ?</h2>
+      <p>Créez votre espace en quelques minutes. Vous seul décidez qui y entre.</p>
+      <div class="row">
+        <a href="app/inscription.html" class="btn btn-primary">Créer mon espace établissement</a>
+        <a href="demo.html" class="btn btn-ghost">Voir la démonstration</a>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<div id="pubFooter"></div>
+
+<script src="assets/js/public.js?v=1790400014"></script>
+</body>
+</html>

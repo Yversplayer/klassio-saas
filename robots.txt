@@ -1,0 +1,20 @@
+# Klassio — le site public est indexable ; l'application ne l'est pas.
+User-agent: *
+Allow: /$
+Allow: /index.html
+Allow: /a-propos.html
+Allow: /aide.html
+Allow: /faq.html
+Allow: /contact.html
+Allow: /securite.html
+Allow: /confidentialite.html
+Allow: /cgu.html
+Allow: /mentions.html
+Allow: /demo.html
+Allow: /assets/
+
+# L'espace connecté n'a rien à faire dans un index : il ne contient que des
+# données d'établissements, et ses pages sont vides sans session.
+Disallow: /app/
+
+Sitemap: https://klassio.app/sitemap.xml

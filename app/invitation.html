@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Invitation — Klassio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;1,500;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/style.css?v=1790400015" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' http://localhost:5001; base-uri 'self'; form-action 'self'">
+<script src="../assets/js/theme.js?v=1790200001"></script>
+</head>
+<body data-page="invitation">
+<div class="portal">
+  <div class="portal-cover" id="pCover"></div>
+  <div class="portal-scrim"></div>
+
+  <div class="portal-card wx-card" style="max-width:540px">
+
+    <!-- En-tête d'établissement : n'apparaît qu'une fois le contexte confirmé
+         par le serveur. Rien n'est affiché avant d'être vrai. -->
+    <div class="portal-head" id="portalHead" hidden>
+      <div class="portal-logo" id="pLogo"><span>…</span></div>
+      <div class="portal-id"><h1 id="pName"></h1><p id="pTagline"></p></div>
+    </div>
+
+    <!-- Fil de progression : uniquement pendant les étapes où l'utilisateur agit -->
+    <div class="wx-steps" id="wxSteps" hidden aria-hidden="true">
+      <span class="wx-dot" data-step="context"></span>
+      <span class="wx-dot" data-step="form"></span>
+      <span class="wx-dot" data-step="processing"></span>
+    </div>
+
+    <!-- 0. Vérification du lien -->
+    <div class="auth-step" id="stateLoading">
+      <div class="wx-spinner" aria-hidden="true"></div>
+      <h2 class="portal-h2">Vérification de votre invitation…</h2>
+      <p class="muted">Un instant.</p>
+    </div>
+
+    <!-- 0bis. Lien inutilisable — le message dépend de la raison réelle -->
+    <div class="auth-step" id="stateInvalid" hidden>
+      <div class="wx-icon wx-icon-warn" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M12 8v5" /><path d="M12 16.5v.01" /><circle cx="12" cy="12" r="9" />
+        </svg>
+      </div>
+      <h2 class="portal-h2" id="invalidTitle">Invitation introuvable</h2>
+      <p class="muted" id="invalidMessage">Ce lien n'est plus valide.</p>
+      <a href="connexion.html" class="btn btn-accent block" id="invalidAction" style="margin-top:18px">Se connecter</a>
+    </div>
+
+    <!-- 1. Accueil -->
+    <div class="auth-step wx-hero" id="stateWelcome" hidden>
+      <p class="wx-line" id="welcomeLine1">Bienvenue sur Klassio.</p>
+      <p class="wx-line wx-line-2" id="welcomeLine2"></p>
+      <p class="wx-line wx-line-3 muted" id="welcomeLine3"></p>
+      <button class="btn btn-accent block" id="welcomeNext" style="margin-top:26px">Continuer</button>
+    </div>
+
+    <!-- 2. Contexte réel, tel que le serveur l'a confirmé -->
+    <div class="auth-step" id="stateContext" hidden>
+      <span class="auth-kicker" id="contextKicker">Votre espace</span>
+      <h2 class="portal-h2" id="contextTitle"></h2>
+      <p class="muted" id="contextIntro"></p>
+      <div class="wx-list" id="contextList"></div>
+      <p class="wx-note" id="contextNote"></p>
+      <button class="btn btn-accent block" id="contextNext" style="margin-top:20px">C'est bien moi, continuer</button>
+      <button class="btn btn-ghost block btn-sm" id="contextWrong" style="margin-top:8px">Ce n'est pas moi</button>
+    </div>
+
+    <!-- 3. Activation du compte -->
+    <div class="auth-step" id="stateForm" hidden>
+      <span class="auth-kicker">Dernière étape</span>
+      <h2 class="portal-h2" id="formTitle">Activez votre compte</h2>
+      <p class="muted" id="formIntro"></p>
+
+      <form id="activationForm" novalidate>
+        <div class="field" style="margin-top:14px">
+          <label for="acceptName">Votre nom complet</label>
+          <input type="text" id="acceptName" placeholder="Ex. Jean Mukendi" autocomplete="name" required />
+        </div>
+        <div class="form-grid">
+          <div class="field">
+            <label for="acceptPhone">Numéro de téléphone</label>
+            <input type="tel" id="acceptPhone" placeholder="09xx xxx xxx" autocomplete="tel" inputmode="tel" />
+          </div>
+          <div class="field">
+            <label for="acceptEmail">Email <span class="muted">(facultatif si téléphone)</span></label>
+            <input type="email" id="acceptEmail" placeholder="vous@exemple.com" autocomplete="username" />
+          </div>
+        </div>
+        <div class="field">
+          <label for="acceptPassword">Choisissez un mot de passe</label>
+          <input type="password" id="acceptPassword" placeholder="Mot de passe" autocomplete="new-password" required />
+          <ul class="pw-rules" id="pwRules">
+            <li data-rule="length">8 caractères minimum</li>
+            <li data-rule="upper">Une majuscule</li>
+            <li data-rule="lower">Une minuscule</li>
+            <li data-rule="digit">Un chiffre</li>
+            <li data-rule="special">Un caractère spécial</li>
+          </ul>
+        </div>
+        <div class="field">
+          <label for="acceptPassword2">Confirmez le mot de passe</label>
+          <input type="password" id="acceptPassword2" placeholder="Retapez le mot de passe" autocomplete="new-password" required />
+        </div>
+        <label class="wx-consent">
+          <input type="checkbox" id="acceptTerms" />
+          <span>J'accepte que mon établissement gère mon compte et les données scolaires qui m'y sont rattachées.</span>
+        </label>
+        <p class="form-error" id="acceptError" hidden role="alert"></p>
+        <button class="btn btn-accent block" id="acceptBtn" type="submit" style="margin-top:16px">Activer mon compte</button>
+      </form>
+      <p class="wx-note" style="margin-top:12px">Votre rôle et votre périmètre sont fixés par votre établissement — ils ne se choisissent pas ici.</p>
+    </div>
+
+    <!-- 4. Traitement réel, puis succès. Aucun état n'avance sans le serveur. -->
+    <div class="auth-step wx-processing" id="stateProcessing" hidden>
+      <div class="wx-stage" id="wxStage" data-phase="working">
+        <div class="wx-spinner wx-spinner-lg" id="wxLoader" aria-hidden="true"></div>
+        <svg class="wx-check" id="wxCheck" viewBox="0 0 52 52" aria-hidden="true">
+          <circle class="wx-check-ring" cx="26" cy="26" r="23" fill="none" />
+          <path class="wx-check-mark" fill="none" d="M14 27 l8 8 l16 -17" />
+        </svg>
+      </div>
+      <h2 class="portal-h2" id="processingTitle" aria-live="polite">Préparation de votre espace…</h2>
+      <p class="muted" id="processingSub"></p>
+
+      <div id="processingError" hidden>
+        <p class="form-error" id="processingErrorText" role="alert"></p>
+        <button class="btn btn-accent block" id="retryBtn" style="margin-top:14px">Réessayer</button>
+        <a href="connexion.html" class="btn btn-ghost block btn-sm" id="processingLogin" hidden style="margin-top:8px">Se connecter</a>
+      </div>
+    </div>
+
+    <div class="portal-foot">
+      <span>Propulsé par</span>
+      <a href="../index.html"><img src="../assets/logo.png?v=1789000492" alt="" class="brand-mark" style="width:16px;height:16px">Klassio</a>
+    </div>
+  </div>
+</div>
+<script src="../assets/js/ui.js?v=1790400001"></script>
+<script src="../assets/js/page-invitation.js?v=1790400001"></script>
+</body>
+</html>

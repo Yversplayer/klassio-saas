@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Connexion — Klassio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;1,500;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/style.css?v=1790400015" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' http://localhost:5001; base-uri 'self'; form-action 'self'">
+<script src="../assets/js/theme.js?v=1790200001"></script>
+</head>
+<body data-page="connexion">
+<div class="auth-page">
+  <div class="auth-topbar">
+    <a href="../index.html" class="brand"><img src="../assets/logo.png?v=1789000492" class="brand-mark" alt="">Klassio</a>
+    <a href="inscription.html" class="btn btn-ghost btn-sm">Pas encore d'espace ? Créer un établissement</a>
+  </div>
+  <div class="auth-main">
+    <div class="auth-card" style="max-width:440px;">
+      <span class="auth-kicker">Connexion</span>
+      <h1>Ravis de vous revoir</h1>
+      <p class="sub">Direction, professeur, DD ou parent : votre rôle est déterminé par votre compte, jamais choisi ici.</p>
+      <div class="field"><label for="loginEmail">Email ou numéro de téléphone</label><input type="text" id="loginEmail" placeholder="vous@exemple.com ou 09xx xxx xxx" autocomplete="username" /></div>
+      <div class="field"><label for="loginPassword">Mot de passe</label><input type="password" id="loginPassword" placeholder="Votre mot de passe" autocomplete="current-password" /></div>
+      <p id="loginError" class="form-error" hidden></p>
+      <p class="muted" id="portalHint" hidden style="margin:0 0 12px"></p>
+      <button class="btn btn-lime block" id="loginBtn" style="margin-top:6px;">Se connecter</button>
+      <p class="muted" style="margin-top:18px;text-align:center;">Professeur, DD ou parent ? Vous rejoignez Klassio uniquement via le lien d'invitation envoyé par votre établissement. Mot de passe oublié : votre établissement vous envoie un lien de réinitialisation.</p>
+    </div>
+  </div>
+</div>
+<script src="../assets/js/ui.js?v=1790400001"></script>
+<script src="../assets/js/app.js?v=1790400001"></script>
+</body>
+</html>

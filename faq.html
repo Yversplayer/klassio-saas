@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FAQ — Klassio</title>
+<meta name="description" content="Questions fréquentes sur Klassio : invitations, résultats, paiements, reçus, sécurité des données, assistant en lecture seule, abonnement." />
+<link rel="canonical" href="https://klassio.app/faq.html" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Klassio" />
+<meta property="og:title" content="FAQ — Klassio" />
+<meta property="og:description" content="Questions fréquentes sur Klassio : invitations, résultats, paiements, reçus, sécurité des données, assistant en lecture seule, abonnement." />
+<meta property="og:url" content="https://klassio.app/faq.html" />
+<meta property="og:image" content="https://klassio.app/assets/logo.png" />
+<meta name="twitter:card" content="summary" />
+<link rel="icon" href="assets/logo.png" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' http://localhost:5001; base-uri 'self'; form-action 'self'">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;1,500;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css?v=1790400015" />
+<script src="assets/js/theme.js?v=1790200001"></script>
+</head>
+<body class="pub-body">
+
+<div id="pubNav"></div>
+
+<main class="pub-page">
+
+  <div class="container">
+    <div class="pub-hero">
+      <span class="kicker">FAQ</span>
+      <h1>Questions fréquentes</h1>
+      <p class="chapo">Les réponses courtes. Pour les guides pas à pas, voyez le
+      <a class="link-btn" href="aide.html">centre d'aide</a>.</p>
+    </div>
+    <section class="pub-section">
+      <details class="pub-acc"><summary>Qu'est-ce que Klassio ?</summary><div class="acc-corps"><p>Une plateforme de gestion scolaire qui réunit les informations et les opérations d'un établissement autour d'un dossier numérique par élève : identité, classe, responsables, résultats, présence, discipline, documents, paiements et reçus.</p></div></details>
+      <details class="pub-acc"><summary>À qui s'adresse Klassio ?</summary><div class="acc-corps"><p>Aux établissements scolaires — maternelle, primaire, secondaire — et à leurs quatre publics : la Direction, les enseignants, le Directeur des disciplines et les parents. Il n'existe pas de compte élève : l'élève est au centre du système, pas un utilisateur.</p></div></details>
+      <details class="pub-acc"><summary>Comment commencer ?</summary><div class="acc-corps"><p>La Direction crée l'espace de l'établissement, ajoute ses classes et ses élèves — un par un ou par import d'un fichier — puis invite son équipe et les familles. Comptez une après-midi pour une école de taille moyenne.</p></div></details>
+      <details class="pub-acc"><summary>Comment fonctionnent les invitations ?</summary><div class="acc-corps"><p>Personne ne crée de compte librement. La Direction génère un lien unique, valable 7 jours, utilisable une seule fois, et qui porte déjà le périmètre : les classes d'un enseignant, les enfants d'un parent.</p><p>Une invitation se révoque à tout moment — y compris après avoir été acceptée. La personne perd alors l'accès, sans qu'aucune donnée ne soit supprimée.</p></div></details>
+      <details class="pub-acc"><summary>Les parents peuvent-ils voir les autres élèves ?</summary><div class="acc-corps"><p>Non. Un parent ne voit que les enfants auxquels l'établissement l'a rattaché. Le lien est résolu par le serveur à chaque requête : envoyer l'identifiant d'un autre élève depuis le navigateur ne donne rien.</p></div></details>
+      <details class="pub-acc"><summary>Comment les données sont-elles protégées ?</summary><div class="acc-corps"><p>Chaque établissement est isolé des autres : une ressource qui ne lui appartient pas répond « introuvable », jamais une liste vide. Le rôle, l'établissement et le périmètre viennent toujours de la session serveur, jamais du navigateur.</p><p>Le détail des principes est sur la page <a class="link-btn" href="securite.html">Sécurité</a>.</p></div></details>
+      <details class="pub-acc"><summary>Comment fonctionne l'import Excel ?</summary><div class="acc-corps"><p>Vous déposez votre fichier. Klassio détecte les colonnes, vous montre ce qu'il a compris et signale les anomalies — un montant payé supérieur au montant dû, par exemple. <strong>Rien n'est écrit avant votre confirmation.</strong></p></div></details>
+      <details class="pub-acc"><summary>Comment fonctionnent les résultats ?</summary><div class="acc-corps"><p>Les enseignants saisissent quand ils veulent. Les familles ne voient une période <strong>qu'une fois proclamée</strong> par la Direction. Importer n'est pas publier : ce sont deux décisions distinctes.</p><p>Corriger un résultat crée une version : l'ancienne est conservée, datée. Rien n'est écrasé.</p></div></details>
+      <details class="pub-acc"><summary>Comment fonctionnent les paiements ?</summary><div class="acc-corps"><p>L'établissement définit ses frais, éventuellement répartis en tranches avec leurs échéances. Le parent voit ce qui est dû, ce qui est payé et ce qui vient.</p><p><strong>Aucune intégration Mobile Money ou bancaire n'est active à ce jour.</strong> Une demande de paiement est transmise à l'établissement, qui la confirme après vérification réelle de la transaction. Klassio n'affiche jamais « paiement réussi » sans cette confirmation.</p></div></details>
+      <details class="pub-acc"><summary>Comment retrouver un reçu ?</summary><div class="acc-corps"><p>Un reçu numéroté est émis à chaque paiement confirmé. La Direction les retrouve dans Finance → Paiements ; le parent dans Frais &amp; reçus. L'assistant peut aussi le retrouver pour vous.</p></div></details>
+      <details class="pub-acc"><summary>Comment fonctionne l'assistant ?</summary><div class="acc-corps"><p>Il lit vos données et répond dans les limites de votre rôle : compter, chercher, résumer, expliquer, retrouver un reçu.</p><p><strong>Il est en lecture seule.</strong> Il ne peut ni créer, ni modifier, ni supprimer, ni payer, ni inviter, ni sanctionner. Ce n'est pas un réglage : le module n'a aucune capacité d'écriture.</p></div></details>
+      <details class="pub-acc"><summary>Comment gérer mon abonnement ?</summary><div class="acc-corps"><p>Paramètres → Abonnement Klassio. Vous y voyez le statut, la période d'essai, la formule et l'estimation mensuelle.</p><p>L'abonnement Klassio est payé par l'établissement. Il n'a rien à voir avec les frais scolaires réglés par les familles.</p></div></details>
+      <details class="pub-acc"><summary>Comment supprimer mon compte ?</summary><div class="acc-corps"><p>Paramètres → Supprimer mon compte. Votre mot de passe vous est redemandé.</p><p>Vos données personnelles sont supprimées. Les données scolaires — dossiers des élèves, résultats, pièces comptables — appartiennent à l'établissement et sont conservées.</p></div></details>
+      <details class="pub-acc"><summary>Comment contacter le support ?</summary><div class="acc-corps"><p>Par le <a class="link-btn" href="contact.html">formulaire de contact</a>. Précisez votre établissement et le type de demande : nous répondons par email.</p></div></details>
+    </section>
+  </div>
+
+
+  <div class="container">
+    <div class="pub-cta">
+      <h2>Prêt à simplifier votre établissement ?</h2>
+      <p>Créez votre espace en quelques minutes. Vous seul décidez qui y entre.</p>
+      <div class="row">
+        <a href="app/inscription.html" class="btn btn-primary">Créer mon espace établissement</a>
+        <a href="demo.html" class="btn btn-ghost">Voir la démonstration</a>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<div id="pubFooter"></div>
+
+<script src="assets/js/public.js?v=1790400014"></script>
+</body>
+</html>

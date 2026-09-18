@@ -1,0 +1,15 @@
+# Ce qui n'a rien à faire dans le conteneur de production Heroku.
+# Le dépôt reste complet ; seul le déploiement est allégé.
+docs
+demo.html
+index.html
+docs/exemples
+*.md
+backend/tests
+backend/README.md
+tools/build_pages.py
+tools/check_js_strings.py
+tools/demo_pdfs.py
+tools/seed_demo_lots.py
+requirements-dev.txt
+assets/logo-source.png

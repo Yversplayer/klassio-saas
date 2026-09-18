@@ -1,0 +1,44 @@
+# Klassio — ce qui ne doit JAMAIS quitter cette machine.
+#
+# Deux catégories, pour deux raisons différentes. Ne retirez une ligne qu'en
+# sachant laquelle des deux vous rouvrez.
+
+# ---------------------------------------------------------------------------
+# 1. SECRETS. Une fois poussés, ils sont compromis — même effacés au commit
+#    suivant, ils restent dans l'historique et dans les copies déjà clonées.
+# ---------------------------------------------------------------------------
+backend/.env
+.env
+*.env
+!*.env.example
+!backend/.env.example
+
+# ---------------------------------------------------------------------------
+# 2. DONNÉES RÉELLES. `klassio.db` contient des élèves mineurs nommés, leurs
+#    responsables, des paiements et des empreintes de mots de passe. Publier
+#    ce fichier serait une violation de données, pas une maladresse.
+# ---------------------------------------------------------------------------
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+backend/klassio.db.avant-*
+
+# ---------------------------------------------------------------------------
+# 3. Reconstructible — inutile de le versionner.
+# ---------------------------------------------------------------------------
+backend_venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Sorties brutes de k6 : les résumés .json sont gardés (REPRISE y renvoie),
+# les vidages console ne servent qu'une fois.
+tools/k6/resultats/*.txt
+
+# macOS
+.DS_Store

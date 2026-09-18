@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Klassio — La clarté derrière chaque établissement</title>
+<meta name="description" content="Klassio centralise élèves, finances, paiements et trésorerie de votre établissement scolaire dans un seul espace simple et intelligent." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;1,500;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css?v=1790400015" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' http://localhost:5001; base-uri 'self'; form-action 'self'">
+<script src="assets/js/theme.js?v=1790200001"></script>
+<noscript>
+  <!-- Sans JavaScript, cette page était un écran verrouillé : <body class="no-scroll">
+       (overflow:hidden) et #splash en position fixe ne sont retirés que par main.js,
+       et .reveal laissait tout le contenu sous la ligne de flottaison invisible.
+       Ce repli rend la page lisible et défilable sans une ligne de script. -->
+  <style>
+    body.no-scroll { overflow: auto !important; height: auto !important; }
+    #splash { display: none !important; }
+    /* Le fond de la barre n'est posé qu'au défilement, par le script : sans
+       lui elle reste transparente et le texte de la page passe dessous. */
+    .navbar { background: var(--bg) !important; box-shadow: 0 1px 0 var(--line) !important; }
+    .reveal { opacity: 1 !important; transform: none !important; }
+    .nappe { transform: none !important; opacity: 1 !important; }
+    .nappe-content { opacity: 1 !important; }
+    .portal-container { min-height: auto !important; }
+    .portal-viewport { position: static !important; height: auto !important; overflow: visible !important; }
+    .hero-stage { position: static !important; padding: 150px 0 80px !important; }
+    .portal-reveal { display: none !important; }
+    .glyph-o-interior { background: var(--surface-soft) !important; }
+    .scroll-hint { display: none !important; }
+    /* Les trois effets du récit sont pilotés par le défilement : sans script,
+       on affiche directement leur état d'arrivée. Rien n'est perdu. */
+    .hub-line { stroke-dashoffset: 0 !important; }
+    .hub-pulse { display: none !important; }
+    .trust-runway { min-height: 0 !important; }
+    .trust-grid, .trust-section .story-copy { position: static !important; }
+    .trust-progress { display: none !important; }
+  </style>
+</noscript>
+</head>
+<body class="no-scroll">
+
+  <!-- SPLASH GREETING -->
+  <div id="splash">
+    <div class="splash-inner">
+      <img src="assets/logo.png?v=1789000492" class="splash-logo" alt="Klassio" />
+      <span class="splash-greeting">Bonjour</span>
+      <span class="splash-sub">Bienvenue sur Klassio</span>
+      <span class="splash-skip">Appuyez pour continuer</span>
+    </div>
+  </div>
+
+  <!-- NAVBAR -->
+  <nav class="navbar" id="navbar">
+    <a href="#" class="brand"><img src="assets/logo.png?v=1789000492" class="brand-mark" alt="Klassio">Klassio</a>
+    <div class="nav-links">
+      <a href="#produit">Produit</a>
+      <a href="a-propos.html">À propos</a>
+      <a href="aide.html">Centre d'aide</a>
+      <a href="contact.html">Contact</a>
+    </div>
+    <div class="nav-actions">
+      <div class="theme-toggle" id="themeToggle" role="group" aria-label="Thème"><button type="button" data-theme-choice="light" aria-label="Thème clair"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg></button><button type="button" data-theme-choice="dark" aria-label="Thème sombre"><svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z"/></svg></button></div>
+      <a href="app/connexion.html" class="btn btn-ghost btn-sm">Connexion</a>
+      <a href="app/inscription.html" class="btn btn-primary btn-sm">
+        <svg class="btn-arr btn-arr-left" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        <span class="btn-label">Commencer</span>
+        <svg class="btn-arr btn-arr-right" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </a>
+    </div>
+  </nav>
+
+  <!-- HERO — la question, puis Klassio comme RÉPONSE, puis l'entrée dans le « O »
+
+       Composition demandée, à ne pas défaire : au repos, avant tout défilement,
+       l'écran montre la phrase ET Klassio juste en dessous. Le mot-marque ne
+       doit jamais « apparaître » en cours de défilement ; défiler ne fait
+       qu'une chose, entrer dans le O. Voir le bloc de commentaires du même nom
+       dans style.css et dans main.js. -->
+  <div class="portal-container" id="portalContainer">
+    <div class="portal-viewport" id="portalViewport">
+
+      <header class="hero hero-stage" id="heroStage">
+        <div class="container hero-inner" id="heroInner">
+
+          <!-- LA QUESTION.
+               L'espace avant le <br> est volontaire : sous 640 px le <br> est
+               masqué, et c'est cet espace qui sépare encore les deux membres
+               de phrase. -->
+          <h1 class="hero-question" id="heroQuestion">Toute la gestion de votre école, <br>dans <span class="accent">un seul espace clair</span></h1>
+
+          <span class="answer-cue" id="answerCue" aria-hidden="true"></span>
+
+          <!-- LA RÉPONSE -->
+          <div class="glyph-wordmark-wrap" id="glyphWordmarkWrap" role="img" aria-label="Klassio">
+            <span class="glyph-char" aria-hidden="true">K</span>
+            <span class="glyph-char" aria-hidden="true">L</span>
+            <span class="glyph-char" aria-hidden="true">A</span>
+            <span class="glyph-char" aria-hidden="true">S</span>
+            <span class="glyph-char" aria-hidden="true">S</span>
+            <span class="glyph-char" aria-hidden="true">I</span>
+
+            <!-- Le « O » est une ouverture : chambre opaque, et rien d'autre.
+                 Ce qu'on voit dedans vit dans .portal-reveal, plus bas. -->
+            <span class="glyph-char glyph-o-wrap" id="glyphAperture" aria-hidden="true">
+              <span class="glyph-o-outer">
+                <span class="glyph-o-interior" id="glyphInterior"></span>
+              </span>
+            </span>
+          </div>
+
+          <!-- L'APPUI -->
+          <div class="hero-support" id="heroSupport">
+            <p class="hero-sub">Élèves, finances, paiements et trésorerie — centralisés, automatisés et sécurisés.</p>
+            <div class="hero-ctas">
+              <a href="app/inscription.html" class="btn btn-lime">
+                <svg class="btn-arr btn-arr-left" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                <span class="btn-label">Créer mon espace</span>
+                <svg class="btn-arr btn-arr-right" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              </a>
+              <a href="demo.html" class="btn btn-ghost">
+                <svg class="btn-arr btn-arr-left" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                <span class="btn-label">Voir la démonstration</span>
+                <svg class="btn-arr btn-arr-right" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              </a>
+            </div>
+            <p class="scroll-hint"><span class="sh-rail" aria-hidden="true"></span>Défilez pour entrer</p>
+          </div>
+
+        </div>
+      </header>
+
+      <!-- CE QU'ON DÉCOUVRE EN ENTRANT DANS LE « O ».
+           Plein écran et jamais mis à l'échelle : c'est la découpe circulaire
+           qui s'élargit, pas le contenu. C'est ce qui le garde net, et ce qui
+           garantit qu'on ne voit jamais la page à travers l'ouverture. -->
+      <div class="portal-reveal" id="portalReveal" aria-hidden="true">
+        <div class="telemetry-grid"></div>
+        <div class="portal-core-glow"></div>
+        <div class="telemetry-hud" id="telemetryHud">
+          <div class="hud-pill"><span class="hud-dot"></span> L'espace Klassio</div>
+          <h2 class="hud-headline">Une fois dedans, <span class="em">tout est au même endroit</span></h2>
+          <div class="preview-frame portal-preview">
+            <div class="preview-topbar"><span></span><span></span><span></span></div>
+            <div class="preview-body">
+              <div class="preview-side">
+                <div class="p-logo">Klassio</div>
+                <div class="p-item active"><span class="ic"></span>Accueil</div>
+                <div class="p-item"><span class="ic"></span>Établissement</div>
+                <div class="p-item"><span class="ic"></span>Élèves</div>
+                <div class="p-item"><span class="ic"></span>Finance</div>
+                <div class="p-item"><span class="ic"></span>Paiements</div>
+                <div class="p-item"><span class="ic"></span>Rapports</div>
+                <div class="p-item"><span class="ic"></span>IA</div>
+              </div>
+              <div class="preview-main">
+                <div class="preview-search">🔍&nbsp; Rechercher ou demander à Klassio…</div>
+                <div class="preview-cards">
+                  <div class="preview-card"><div class="k">Encaissé ce mois</div><div class="v lime">18 420 $</div></div>
+                  <div class="preview-card"><div class="k">Impayés</div><div class="v">3 260 $</div></div>
+                  <div class="preview-card"><div class="k">Élèves actifs</div><div class="v">1 284</div></div>
+                </div>
+                <div class="preview-row"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- BANDE DE CAPACITÉS — pleine largeur, seule sur sa ligne. -->
+  <section class="capability-band" aria-labelledby="bandLabel">
+    <p class="band-label" id="bandLabel">Ce que Klassio tient pour vous</p>
+    <div class="logo-marquee">
+      <div class="logo-track">
+        <span class="band-word">Élèves</span><span class="band-word">Classes &amp; effectifs</span><span class="band-word">Inscriptions</span><span class="band-word">Frais &amp; obligations</span><span class="band-word">Encaissements</span><span class="band-word">Trésorerie</span><span class="band-word">Présences</span><span class="band-word">Discipline</span><span class="band-word">Résultats</span><span class="band-word">Import Excel</span><span class="band-word">Proclamation</span><span class="band-word">Parents</span><span class="band-word">Professeurs</span><span class="band-word">Direction</span><span class="band-word">Rapports</span><span class="band-word">Historique versionné</span>
+        <span class="band-word" aria-hidden="true">Élèves</span><span class="band-word" aria-hidden="true">Classes &amp; effectifs</span><span class="band-word" aria-hidden="true">Inscriptions</span><span class="band-word" aria-hidden="true">Frais &amp; obligations</span><span class="band-word" aria-hidden="true">Encaissements</span><span class="band-word" aria-hidden="true">Trésorerie</span><span class="band-word" aria-hidden="true">Présences</span><span class="band-word" aria-hidden="true">Discipline</span><span class="band-word" aria-hidden="true">Résultats</span><span class="band-word" aria-hidden="true">Import Excel</span><span class="band-word" aria-hidden="true">Proclamation</span><span class="band-word" aria-hidden="true">Parents</span><span class="band-word" aria-hidden="true">Professeurs</span><span class="band-word" aria-hidden="true">Direction</span><span class="band-word" aria-hidden="true">Rapports</span><span class="band-word" aria-hidden="true">Historique versionné</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- STORYTELLING -->
+  <main class="story" id="produit">
+
+    <section class="story-section">
+      <div class="story-copy reveal">
+        <span class="story-index">01 — Le problème</span>
+        <h2>Trop d'outils, trop de fichiers, trop de temps perdu</h2>
+        <p>Excel dispersé, cahiers, WhatsApp, relevés bancaires, cash à compter à la main. Chaque établissement jongle avec des processus séparés qui ne se parlent pas entre eux.</p>
+      </div>
+      <div class="story-visual reveal">
+        <div class="tools-chaos">
+          <div class="chip c1"><span class="c-ic">📊</span><span class="c-label">Excel élèves.xlsx</span></div>
+          <div class="chip c2"><span class="c-ic">💬</span><span class="c-label">WhatsApp parents</span></div>
+          <div class="chip c3"><span class="c-ic">📒</span><span class="c-label">Cahier de caisse</span></div>
+          <div class="chip c4"><span class="c-ic">🏦</span><span class="c-label">Relevé bancaire</span></div>
+          <div class="chip c5"><span class="c-ic">🧾</span><span class="c-label">Reçus papier</span></div>
+          <div class="chip c6"><span class="c-ic">📋</span><span class="c-label">Registre classes</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="story-section reverse">
+      <div class="story-copy reveal">
+        <span class="story-index">02 — La vision</span>
+        <h2>Un seul système. Un seul accès. Un contrôle total.</h2>
+        <p>Établissement, classes, élèves, finances, paiements — une seule source de vérité, reliée et toujours à jour, plutôt qu'une collection d'outils qui ne se parlent pas.</p>
+      </div>
+      <div class="story-visual reveal">
+        <!-- Les six satellites SORTENT du noyau au défilement, un par un, et
+             rejoignent leur place en étoile. Géométrie mesurée par main.js :
+             ici on ne décrit que l'état d'arrivée, jamais l'état de départ. -->
+        <div class="hub" id="hub">
+          <svg class="lines" viewBox="0 0 400 300" aria-hidden="true">
+            <!-- pathLength="1" : la longueur devient une unité, le tracé se
+                 pilote alors par un simple stroke-dashoffset de 1 vers 0,
+                 sans avoir à mesurer chaque segment. -->
+            <line class="hub-line" pathLength="1" x1="200" y1="150" x2="70" y2="55"/>
+            <line class="hub-line" pathLength="1" x1="200" y1="150" x2="330" y2="55"/>
+            <line class="hub-line" pathLength="1" x1="200" y1="150" x2="55" y2="180"/>
+            <line class="hub-line" pathLength="1" x1="200" y1="150" x2="345" y2="185"/>
+            <line class="hub-line" pathLength="1" x1="200" y1="150" x2="120" y2="255"/>
+            <line class="hub-line" pathLength="1" x1="200" y1="150" x2="280" y2="255"/>
+          </svg>
+          <div class="hub-node" style="top:10%; left:6%;">Élèves</div>
+          <div class="hub-node" style="top:10%; right:4%;">Classes</div>
+          <div class="hub-node" style="top:52%; left:0%;">Paiements</div>
+          <div class="hub-node" style="top:56%; right:-2%;">Trésorerie</div>
+          <div class="hub-node" style="bottom:2%; left:16%;">Dépenses</div>
+          <div class="hub-node" style="bottom:2%; right:12%;">Rapports</div>
+          <div class="hub-core" id="hubCore">
+            <span class="hub-pulse" aria-hidden="true"></span>
+            <span class="hub-core-label">Source<br>unique</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="story-section">
+      <div class="story-copy reveal">
+        <span class="story-index">03 — Pensé pour Kinshasa</span>
+        <h2>Conçu pour les établissements scolaires d'ici</h2>
+        <p>Mobile Money, WhatsApp, espèces au comptoir : Klassio est pensé pour la réalité quotidienne des écoles et universités de Kinshasa, pas pour un marché générique.</p>
+      </div>
+      <div class="story-visual reveal">
+        <!-- Chaque carte entre par un côté, en alternance, au rythme du
+             défilement, puis se fixe. data-from donne le côté. -->
+        <div class="local-reality" id="localReality">
+          <div class="reality-card" data-from="left"><span class="rc-ic">📶</span><span class="rc-label">Pages légères, sans framework : pensées pour une connexion irrégulière.</span></div>
+          <div class="reality-card" data-from="right"><span class="rc-ic">🗓️</span><span class="rc-label">Année scolaire, périodes, proclamation — le vocabulaire des écoles d'ici.</span></div>
+          <div class="reality-card" data-from="left"><span class="rc-ic">👪</span><span class="rc-label">Le parent suit son enfant, et seulement le sien.</span></div>
+          <div class="reality-card" data-from="right"><span class="rc-ic">🏫</span><span class="rc-label">Direction, discipline, professeur, parent : quatre rôles, quatre périmètres.</span></div>
+        </div>
+      </div>
+      </div>
+    </section>
+
+    <section class="story-section reverse">
+      <div class="story-copy reveal">
+        <span class="story-index">04 — L'intelligence</span>
+        <h2>Une recherche qui comprend ce que vous voulez</h2>
+        <p>Pas de chatbot à ouvrir : une seule barre pour chercher, naviguer ou demander, avec une réponse immédiate. Klassio comprend le rôle, l'établissement et le contexte de chaque utilisateur.</p>
+      </div>
+      <div class="story-visual reveal">
+        <div class="ai-visual">
+          <div class="ai-bar">🔍&nbsp; Montre-moi les impayés de la 6e A</div>
+          <div class="ai-answer">12 élèves de 6e A ont un solde impayé, pour un total de <strong>940 $</strong>.</div>
+          <div class="ai-insight-preview"><span>✨</span>5 paiements attendent un rapprochement depuis 3 jours.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 05 — LE DÉCOMPTE.
+         Les quatre garanties se présentent UNE À UNE au défilement : celle du
+         moment est nette et numérotée, les autres restent en retrait, floues.
+         La colonne de droite est épinglée le temps du décompte ; c'est ce qui
+         donne au défilement de quoi égrener les quatre étapes. -->
+    <section class="story-section trust-section" id="confiance">
+      <div class="story-copy reveal">
+        <span class="story-index">05 — La confiance</span>
+        <h2>Sécurisé, traçable, sous contrôle</h2>
+        <p>Permissions granulaires, historique complet, isolation totale entre établissements. La confiance se construit sur des faits, pas des promesses.</p>
+        <p class="trust-progress" aria-hidden="true"><span class="tp-current" id="trustCurrent">1</span><span class="tp-sep">/</span><span class="tp-total">4</span></p>
+      </div>
+      <div class="story-visual trust-runway">
+        <div class="trust-grid reveal" id="trustGrid">
+          <div class="trust-card"><span class="tc-num" aria-hidden="true">1</span><div class="ic">🔒</div><h4>Permissions</h4><p>Chaque rôle ne voit que ce qui lui est autorisé.</p></div>
+          <div class="trust-card"><span class="tc-num" aria-hidden="true">2</span><div class="ic">🕓</div><h4>Historique</h4><p>Chaque action importante reste traçable dans le temps.</p></div>
+          <div class="trust-card"><span class="tc-num" aria-hidden="true">3</span><div class="ic">🏫</div><h4>Isolation</h4><p>Les données d'un établissement restent les siennes.</p></div>
+          <div class="trust-card"><span class="tc-num" aria-hidden="true">4</span><div class="ic">🛡️</div><h4>Contrôle serveur</h4><p>Les opérations sensibles sont vérifiées côté serveur.</p></div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- NAPPE — feature unroll -->
+  <section class="nappe-section">
+    <div class="container">
+      <div class="nappe-heading reveal">
+        <span class="story-index">06 — Le produit</span>
+        <h2>Un seul système, plusieurs moteurs</h2>
+        <p>Derrière l'interface simple de Klassio, chaque module travaille ensemble.</p>
+      </div>
+      <div class="nappe-wrap">
+        <div class="nappe" id="nappe">
+          <div class="nappe-fold"></div>
+          <div class="nappe-content">
+            <p class="lead">Ce que Klassio centralise pour vous</p>
+            <div class="feature-grid">
+              <div class="feature-chip"><div class="ic">🎓</div><h5>Élèves & classes</h5><p>Dossiers, effectifs, historique.</p></div>
+              <div class="feature-chip"><div class="ic">💳</div><h5>Finance & facturation</h5><p>Obligations, échéances, soldes.</p></div>
+              <div class="feature-chip"><div class="ic">📲</div><h5>Paiements & Mobile Money</h5><p>Cash, banque, mobile, en un flux.</p></div>
+              <div class="feature-chip"><div class="ic">🏦</div><h5>Trésorerie</h5><p>Caisse, banque, comptes réunis.</p></div>
+              <div class="feature-chip"><div class="ic">📥</div><h5>Import Excel intelligent</h5><p>Vos fichiers, structurés en minutes.</p></div>
+              <div class="feature-chip"><div class="ic">✨</div><h5>IA proactive</h5><p>Observe, explique, jamais seule décideuse.</p></div>
+              <div class="feature-chip"><div class="ic">🛡️</div><h5>Sécurité & audit</h5><p>Traçabilité de chaque opération.</p></div>
+              <div class="feature-chip"><div class="ic">📊</div><h5>Rapports en temps réel</h5><p>La bonne information, au bon moment.</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FINAL CTA -->
+  <section class="final-cta" id="commencer">
+    <div class="cta-box reveal">
+      <h2>Prêt à simplifier votre établissement ?</h2>
+      <p>Créez votre espace en quelques minutes, ou demandez une démonstration personnalisée.</p>
+      <div class="cta-actions">
+        <a href="app/inscription.html" class="btn btn-lime">
+          <svg class="btn-arr btn-arr-left" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          <span class="btn-label">Créer mon espace</span>
+          <svg class="btn-arr btn-arr-right" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+        <a href="demo.html" class="btn btn-ghost">
+          <svg class="btn-arr btn-arr-left" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          <span class="btn-label">Voir la démonstration</span>
+          <svg class="btn-arr btn-arr-right" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="container">
+      <div class="footer-top">
+        <div>
+          <a href="#" class="brand"><img src="assets/logo.png?v=1789000492" class="brand-mark" alt="Klassio">Klassio</a>
+          <p class="footer-tag">La clarté derrière chaque établissement. Klassio centralise élèves, finances et paiements dans un seul espace simple et intelligent.</p>
+        </div>
+        <div class="footer-cols">
+          <div class="footer-col">
+            <h5>Produit</h5>
+            <a href="#produit">Fonctionnalités</a>
+            <a href="a-propos.html#comment">Comment ça marche</a>
+            <a href="demo.html">Démonstration</a>
+            <a href="securite.html">Sécurité</a>
+          </div>
+          <div class="footer-col">
+            <h5>Espace</h5>
+            <a href="app/inscription.html">Créer un compte</a>
+            <a href="app/connexion.html">Connexion</a>
+          </div>
+          <div class="footer-col">
+            <h5>Ressources</h5>
+            <a href="aide.html">Centre d'aide</a>
+            <a href="faq.html">FAQ</a>
+            <a href="a-propos.html">À propos</a>
+            <a href="contact.html">Contact</a>
+          </div>
+          <div class="footer-col">
+            <h5>Légal</h5>
+            <a href="confidentialite.html">Confidentialité</a>
+            <a href="cgu.html">Conditions générales</a>
+            <a href="mentions.html">Mentions légales</a>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>© 2026 Klassio. Tous droits réservés.</span>
+        <span>V1 — en construction</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="assets/js/main.js?v=1789600001"></script>
+</body>
+</html>

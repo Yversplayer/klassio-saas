@@ -1,0 +1,159 @@
+{
+  "base_url": "http://127.0.0.1:5011",
+  "mot_de_passe": "ChargeKlassio2026!",
+  "etablissements": [
+    {
+      "etiquette": "ecole1",
+      "tenant_id": "34eecfabb85f4e429a685c10a10d7d29",
+      "nom": "Complexe Scolaire Ecole1",
+      "comptes": {
+        "directeur": "direction@ecole1.charge.test",
+        "discipline": "discipline@ecole1.charge.test",
+        "professeur": "prof0@ecole1.charge.test",
+        "parent": "parent0@ecole1.charge.test"
+      },
+      "eleves_count": 2000,
+      "classes_count": 42,
+      "exemples": {
+        "eleve_id": "3cfb6e44cfa040b783ad80c564c79e6d",
+        "eleve_code": "STU-1000000",
+        "eleve_nom": "Mbala0",
+        "class_id": "f2b8ac4d91294ddeb008bcc89bdac2ce"
+      },
+      "volumes": {
+        "eleves": 2000,
+        "tuteurs": 1826,
+        "obligations": 2000,
+        "paiements": 1183,
+        "recus": 1183,
+        "notes": 24000,
+        "incidents": 200,
+        "notifications": 2000,
+        "presences": 160000
+      }
+    },
+    {
+      "etiquette": "ecole2",
+      "tenant_id": "4cc23e6284194ff6b78b9110803c844f",
+      "nom": "Complexe Scolaire Ecole2",
+      "comptes": {
+        "directeur": "direction@ecole2.charge.test",
+        "discipline": "discipline@ecole2.charge.test",
+        "professeur": "prof0@ecole2.charge.test",
+        "parent": "parent0@ecole2.charge.test"
+      },
+      "eleves_count": 2000,
+      "classes_count": 42,
+      "exemples": {
+        "eleve_id": "f9bf75b4c0b343f78ea71aea285a421b",
+        "eleve_code": "STU-2000000",
+        "eleve_nom": "Ngoy0",
+        "class_id": "a2aa4f8e842b4b71b17a996c3aeb508c"
+      },
+      "volumes": {
+        "eleves": 2000,
+        "tuteurs": 1776,
+        "obligations": 2000,
+        "paiements": 1203,
+        "recus": 1203,
+        "notes": 24000,
+        "incidents": 200,
+        "notifications": 2000,
+        "presences": 160000
+      }
+    },
+    {
+      "etiquette": "ecole3",
+      "tenant_id": "594b80ec107c4d4488d82d58ebd35f12",
+      "nom": "Complexe Scolaire Ecole3",
+      "comptes": {
+        "directeur": "direction@ecole3.charge.test",
+        "discipline": "discipline@ecole3.charge.test",
+        "professeur": "prof0@ecole3.charge.test",
+        "parent": "parent0@ecole3.charge.test"
+      },
+      "eleves_count": 2000,
+      "classes_count": 42,
+      "exemples": {
+        "eleve_id": "ecba6df1591d463c9cd5625fea780fe2",
+        "eleve_code": "STU-3000000",
+        "eleve_nom": "Ilunga0",
+        "class_id": "11eb0893577e4ae398002c7fcaac8d30"
+      },
+      "volumes": {
+        "eleves": 2000,
+        "tuteurs": 1800,
+        "obligations": 2000,
+        "paiements": 1215,
+        "recus": 1215,
+        "notes": 24000,
+        "incidents": 200,
+        "notifications": 2000,
+        "presences": 160000
+      }
+    },
+    {
+      "etiquette": "ecole4",
+      "tenant_id": "99b800bdaa734a9eb94316ec0ef305a6",
+      "nom": "Complexe Scolaire Ecole4",
+      "comptes": {
+        "directeur": "direction@ecole4.charge.test",
+        "discipline": "discipline@ecole4.charge.test",
+        "professeur": "prof0@ecole4.charge.test",
+        "parent": "parent0@ecole4.charge.test"
+      },
+      "eleves_count": 2000,
+      "classes_count": 42,
+      "exemples": {
+        "eleve_id": "d2869596dc0c4d478ff9ba9946b8e9c7",
+        "eleve_code": "STU-4000000",
+        "eleve_nom": "Kanyinda0",
+        "class_id": "1c29df2b3de94550be0a61e69e7fd009"
+      },
+      "volumes": {
+        "eleves": 2000,
+        "tuteurs": 1809,
+        "obligations": 2000,
+        "paiements": 1219,
+        "recus": 1219,
+        "notes": 24000,
+        "incidents": 200,
+        "notifications": 2000,
+        "presences": 160000
+      }
+    },
+    {
+      "etiquette": "ecole5",
+      "tenant_id": "328135d3045c40808ae32c08804c692d",
+      "nom": "Complexe Scolaire Ecole5",
+      "comptes": {
+        "directeur": "direction@ecole5.charge.test",
+        "discipline": "discipline@ecole5.charge.test",
+        "professeur": "prof0@ecole5.charge.test",
+        "parent": "parent0@ecole5.charge.test"
+      },
+      "eleves_count": 2000,
+      "classes_count": 42,
+      "exemples": {
+        "eleve_id": "9cc58c9707314f93b64207c332b44915",
+        "eleve_code": "STU-5000000",
+        "eleve_nom": "Mbala0",
+        "class_id": "1cbb143f6db141a790fd6e186f1b1be0"
+      },
+      "volumes": {
+        "eleves": 2000,
+        "tuteurs": 1799,
+        "obligations": 2000,
+        "paiements": 1211,
+        "recus": 1211,
+        "notes": 24000,
+        "incidents": 200,
+        "notifications": 2000,
+        "presences": 160000
+      }
+    }
+  ],
+  "jours_appel": 80,
+  "moteur": "postgres",
+  "genere_le": "2026-09-13 01:01:48"
+}

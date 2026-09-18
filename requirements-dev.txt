@@ -1,0 +1,11 @@
+# KLASSIO — dépendances de développement et de test uniquement.
+# Aucune n'est installée en production : voir requirements.txt.
+#
+#   backend_venv/bin/pip install -r requirements-dev.txt
+
+# PostgreSQL 16 réel, embarqué dans une roue pip (10 Mo). Permet d'exécuter la
+# suite contre le vrai moteur sans Docker, sans droits administrateur et sans
+# réseau — donc sans dépendre d'un hébergement européen, et sans jamais
+# approcher les données réelles.
+#   python backend/tools/pg_tests.py
+pgserver==0.1.4

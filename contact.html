@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Contact — Klassio</title>
+<meta name="description" content="Contactez l'équipe Klassio : question sur le produit, signalement d'un problème, suggestion ou demande commerciale." />
+<link rel="canonical" href="https://klassio.app/contact.html" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Klassio" />
+<meta property="og:title" content="Contact — Klassio" />
+<meta property="og:description" content="Contactez l'équipe Klassio : question sur le produit, signalement d'un problème, suggestion ou demande commerciale." />
+<meta property="og:url" content="https://klassio.app/contact.html" />
+<meta property="og:image" content="https://klassio.app/assets/logo.png" />
+<meta name="twitter:card" content="summary" />
+<link rel="icon" href="assets/logo.png" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' http://localhost:5001; base-uri 'self'; form-action 'self'">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;1,500;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css?v=1790400015" />
+<script src="assets/js/theme.js?v=1790200001"></script>
+</head>
+<body class="pub-body">
+
+<div id="pubNav"></div>
+
+<main class="pub-page">
+
+  <div class="container">
+    <div class="pub-hero">
+      <span class="kicker">Contact</span>
+      <h1>Écrivez-nous</h1>
+      <p class="chapo">Une question sur Klassio, un problème rencontré, une suggestion ?
+      Dites-nous de quoi il s'agit et nous revenons vers vous par email.</p>
+    </div>
+
+    <section class="pub-section">
+      <div class="pub-grid" style="align-items:start">
+        <div style="grid-column:1/-1;max-width:640px">
+          <form id="contactForm" class="form-grid">
+            <div class="field"><label for="cNom">Votre nom</label>
+              <input id="cNom" name="name" required maxlength="120" autocomplete="name" /></div>
+            <div class="field"><label for="cEmail">Votre email</label>
+              <input id="cEmail" name="email" type="email" required maxlength="200" autocomplete="email" />
+              <span class="hint">C'est à cette adresse que nous répondrons.</span></div>
+            <div class="field"><label for="cType">Type de demande</label>
+              <select id="cType" name="kind">
+                <option value="question">Une question sur Klassio</option>
+                <option value="probleme">Signaler un problème</option>
+                <option value="suggestion">Suggérer une amélioration</option>
+                <option value="commercial">Demande commerciale</option>
+              </select></div>
+            <div class="field"><label for="cEcole">Votre établissement <span class="muted">(facultatif)</span></label>
+              <input id="cEcole" name="school" maxlength="200" /></div>
+            <div class="field full"><label for="cSujet">Sujet</label>
+              <input id="cSujet" name="subject" required maxlength="200" /></div>
+            <div class="field full"><label for="cMsg">Votre message</label>
+              <textarea id="cMsg" name="message" rows="6" required maxlength="5000"></textarea>
+              <span class="hint">Décrivez votre situation. Pour un problème, précisez l'écran concerné et ce que vous attendiez.</span></div>
+            <p class="form-error full" id="cErr" hidden></p>
+            <div class="full"><button type="submit" class="btn btn-primary" id="cGo">Envoyer le message</button></div>
+          </form>
+          <div id="cOk" hidden>
+            <div class="pub-carte" style="text-align:center;border-color:var(--lime-deep)">
+              <h3>Message reçu</h3>
+              <p id="cOkTexte">Merci. Nous revenons vers vous par email.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="pub-section">
+      <h2>Avant d'écrire</h2>
+      <p class="sous">Beaucoup de questions ont déjà leur réponse.</p>
+      <div class="pub-grid">
+        <div class="pub-carte"><h3>Centre d'aide</h3><p>Guides pas à pas : créer son espace, inviter son équipe, importer ses élèves, publier les résultats, gérer les frais.</p><p style="margin-top:12px"><a class="link-btn" href="aide.html">Ouvrir le centre d'aide</a></p></div>
+        <div class="pub-carte"><h3>FAQ</h3><p>Les réponses courtes aux questions les plus fréquentes.</p><p style="margin-top:12px"><a class="link-btn" href="faq.html">Voir la FAQ</a></p></div>
+        <div class="pub-carte"><h3>Vous avez déjà un espace ?</h3><p>Si vous ne parvenez plus à vous connecter, votre établissement peut vous envoyer un lien de réinitialisation depuis Établissement → Équipe &amp; accès.</p><p style="margin-top:12px"><a class="link-btn" href="app/connexion.html">Se connecter</a></p></div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+  // Le formulaire n'annonce JAMAIS un envoi avant la réponse du serveur, et
+  // n'invente pas d'échec quand le réseau coupe : un message parti mais dont la
+  // réponse s'est perdue ne doit pas pousser l'utilisateur à le renvoyer trois
+  // fois. La validation ici est un confort — c'est le backend qui tranche.
+  (function () {
+    var API = "http://localhost:5001/api";
+    var form = document.getElementById("contactForm");
+    var err = document.getElementById("cErr");
+    var btn = document.getElementById("cGo");
+
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      err.hidden = true;
+      var corps = {
+        name: document.getElementById("cNom").value.trim(),
+        email: document.getElementById("cEmail").value.trim(),
+        subject: document.getElementById("cSujet").value.trim(),
+        message: document.getElementById("cMsg").value.trim(),
+        kind: document.getElementById("cType").value,
+        school: document.getElementById("cEcole").value.trim() || undefined
+      };
+      if (corps.message.length < 10) {
+        err.textContent = "Votre message est trop court pour qu'on puisse y répondre utilement.";
+        err.hidden = false;
+        return;
+      }
+      btn.disabled = true;
+      var libelle = btn.textContent;
+      btn.textContent = "Envoi…";
+      fetch(API + "/public/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(corps)
+      }).then(function (r) {
+        return r.json().then(function (b) { return { ok: r.ok, status: r.status, body: b }; });
+      }).then(function (res) {
+        btn.disabled = false;
+        btn.textContent = libelle;
+        if (!res.ok) {
+          err.textContent = res.body.error || "Votre message n'a pas pu être envoyé.";
+          err.hidden = false;
+          return;
+        }
+        document.getElementById("cOkTexte").textContent = res.body.message;
+        form.hidden = true;
+        document.getElementById("cOk").hidden = false;
+      }).catch(function () {
+        btn.disabled = false;
+        btn.textContent = libelle;
+        err.textContent = "La connexion a été interrompue. Votre message a peut-être été reçu — attendez un instant avant de le renvoyer.";
+        err.hidden = false;
+      });
+    });
+  })();
+  </script>
+
+
+</main>
+
+<div id="pubFooter"></div>
+
+<script src="assets/js/public.js?v=1790400014"></script>
+</body>
+</html>

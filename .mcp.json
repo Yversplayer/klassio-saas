@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "k6": {
+      "type": "stdio",
+      "command": "/Users/macbookpro/.local/bin/mcp-k6",
+      "args": [],
+      "env": {}
+    }
+  }
+}

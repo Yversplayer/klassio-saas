@@ -1,0 +1,21 @@
+# KLASSIO — dépendances d'exécution (production).
+#
+# Volontairement court : seuls les paquets réellement importés par
+# backend/*.py y figurent. Le venv de développement contient davantage
+# (numpy, scipy, pillow, requests) — aucun n'est importé par l'application,
+# les embarquer alourdirait le déploiement sans rien apporter.
+#
+# Régénérer la liste des imports réels :
+#   grep -rhoE "^\s*(import|from) [a-zA-Z_]+" backend/*.py | awk '{print $2}' | sort -u
+
+Flask==3.1.3
+openpyxl==3.1.5
+pypdf==6.18.0
+
+# PostgreSQL (KLASSIO_DB_BACKEND=postgres). La variante -binary évite de
+# compiler libpq sur le dyno.
+psycopg[binary]==3.2.13
+
+# Serveur WSGI de production. `flask run` / app.run() ne servent qu'au
+# développement local.
+gunicorn==23.0.0

@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Établissement — Klassio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;1,500;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/style.css?v=1790400015" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' http://localhost:5001; base-uri 'self'; form-action 'self'">
+<script src="../assets/js/theme.js?v=1790200001"></script>
+</head>
+<body data-page="etablissement">
+
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar" aria-label="Navigation principale">
+    <div class="s-brand"><img src="../assets/logo.png?v=1789183937" class="brand-mark" alt="">Klassio</div>
+    <nav id="sidebarNav"></nav>
+    <div class="s-role" id="roleTag"></div>
+  </aside>
+  <div class="sidebar-scrim" id="sidebarScrim" hidden></div>
+
+  <div class="main-col">
+    <div class="topbar">
+      <div class="topbar-left">
+        <button class="icon-btn" id="sidebarToggle" aria-label="Afficher ou masquer le menu"></button>
+        <nav class="topbar-context" id="topbarContext" aria-label="Fil d'Ariane"></nav>
+      </div>
+      <div class="topbar-right">
+        <button class="icon-btn bell" id="bellBtn" aria-label="Notifications" aria-haspopup="true"></button>
+      </div>
+    </div>
+
+    <div class="dash-body">
+
+      <div class="page-header">
+        <div><h1 id="schoolTitle">Établissement</h1><p id="schoolSub">Chargement…</p></div>
+        <div class="row" id="pageActions"></div>
+      </div>
+      <div class="kpi-grid" id="etabKpis"></div>
+      <div class="tabs" id="etabTabs" role="tablist"></div>
+      <div id="etabContent"></div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/js/ui.js?v=1790400001"></script>
+<script src="../assets/js/loader.js?v=1789400003"></script>
+<script src="../assets/js/app.js?v=1790400001"></script>
+<script src="../assets/js/admin.js?v=1790400014"></script>
+<script src="../assets/js/page-etablissement.js?v=1790400014"></script>
+</body>
+</html>

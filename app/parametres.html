@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Paramètres — Klassio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;1,500;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/style.css?v=1790400015" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' http://localhost:5001; base-uri 'self'; form-action 'self'">
+<script src="../assets/js/theme.js?v=1790200001"></script>
+</head>
+<body data-page="parametres">
+
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar" aria-label="Navigation principale">
+    <div class="s-brand"><img src="../assets/logo.png?v=1789183937" class="brand-mark" alt="">Klassio</div>
+    <nav id="sidebarNav"></nav>
+    <div class="s-role" id="roleTag"></div>
+  </aside>
+  <div class="sidebar-scrim" id="sidebarScrim" hidden></div>
+
+  <div class="main-col">
+    <div class="topbar">
+      <div class="topbar-left">
+        <button class="icon-btn" id="sidebarToggle" aria-label="Afficher ou masquer le menu"></button>
+        <nav class="topbar-context" id="topbarContext" aria-label="Fil d'Ariane"></nav>
+      </div>
+      <div class="topbar-right">
+        <button class="icon-btn bell" id="bellBtn" aria-label="Notifications" aria-haspopup="true"></button>
+      </div>
+    </div>
+
+    <div class="dash-body narrow">
+
+      <div class="page-header">
+        <div><h1>Paramètres</h1><p>Votre compte, votre sécurité et — pour la Direction — les règles de votre établissement.</p></div>
+      </div>
+      <!-- ABONNEMENT — la gestion commerciale entre Klassio et l'établissement.
+           Elle vivait en tête du Dashboard, au même rang que les élèves et
+           l'encaissement, et y revenait chaque matin. Sa place est ici : on la
+           consulte quand on la cherche, pas quand on vient faire l'appel.
+           Réservé à la Direction : c'est elle qui paie Klassio.
+           NE PAS CONFONDRE avec les frais scolaires des élèves, payés par les
+           familles — deux circuits financiers distincts, jamais mélangés. -->
+      <div class="panel" id="abonnement" hidden>
+        <div class="panel-head"><h2>Abonnement Klassio</h2><span class="sub">Ce que votre établissement paie à Klassio — distinct des frais scolaires</span></div>
+        <div id="abonnementCorps"></div>
+      </div>
+
+      <!-- APPARENCE — le choix du thème vivait dans un coin de la topbar, au
+           même rang que les notifications. C'est une préférence personnelle :
+           sa place est dans les paramètres. Le bouton « Système » suit la
+           préférence du navigateur tant que l'utilisateur n'a pas tranché. -->
+      <div class="panel">
+        <div class="panel-head"><h2>Apparence</h2><span class="sub">Ce réglage ne concerne que vous, sur cet appareil</span></div>
+        <div class="theme-choice" id="themeChoice" role="radiogroup" aria-label="Thème de l'interface">
+          <button type="button" role="radio" aria-checked="false" data-theme-pick="light">
+            <span class="tc-sample tc-light" aria-hidden="true"></span>Clair
+          </button>
+          <button type="button" role="radio" aria-checked="false" data-theme-pick="dark">
+            <span class="tc-sample tc-dark" aria-hidden="true"></span>Sombre
+          </button>
+          <button type="button" role="radio" aria-checked="false" data-theme-pick="system">
+            <span class="tc-sample tc-system" aria-hidden="true"></span>Système
+          </button>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h2>Votre compte</h2></div>
+        <dl class="dl"><dt>Nom</dt><dd id="pName">—</dd><dt>Rôle</dt><dd id="pRole">—</dd><dt>Établissement</dt><dd id="pSchool">—</dd></dl>
+      </div>
+      <div id="profilePanel"></div>
+      <div class="panel">
+        <div class="panel-head"><h2>Changer de mot de passe</h2></div>
+        <form id="pwForm" class="form-grid">
+          <div class="field"><label for="pwCurrent">Mot de passe actuel</label><input type="password" id="pwCurrent" required autocomplete="current-password" /></div>
+          <div class="field"><label for="pwNew">Nouveau mot de passe</label><input type="password" id="pwNew" required autocomplete="new-password" />
+            <ul class="pw-rules" id="pwRules"><li data-rule="length">8 caractères minimum</li><li data-rule="upper">Une majuscule</li><li data-rule="lower">Une minuscule</li><li data-rule="digit">Un chiffre</li><li data-rule="special">Un caractère spécial</li></ul>
+          </div>
+          <div class="full row between"><p class="form-msg" id="pwMsg"></p><button type="submit" class="btn btn-lime btn-sm" id="pwBtn">Mettre à jour</button></div>
+        </form>
+      </div>
+      <div id="settingsPanels"></div>
+
+      <!-- SUPPRESSION DE COMPTE — obligatoire pour une distribution mobile, et
+           de toute façon dû à l'utilisateur. Placée en bas, dans un panneau
+           distinct, pour qu'on ne la déclenche pas en cherchant autre chose.
+           Elle supprime le COMPTE, pas le dossier des élèves ni la comptabilité
+           de l'établissement : la page le dit avant de demander confirmation. -->
+      <div class="panel danger-zone" id="suppressionCompte">
+        <div class="panel-head"><h2>Supprimer mon compte</h2><span class="sub">Action définitive</span></div>
+        <div id="suppressionCorps"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/js/ui.js?v=1790400001"></script>
+<script src="../assets/js/loader.js?v=1789400003"></script>
+<script src="../assets/js/app.js?v=1790400001"></script>
+<script src="../assets/js/admin.js?v=1790400014"></script>
+<script src="../assets/js/page-parametres.js?v=1790400014"></script>
+</body>
+</html>

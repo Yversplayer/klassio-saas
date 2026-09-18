@@ -1,0 +1,469 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Démonstration — Klassio</title>
+<meta name="description" content="Découvrez Classio en quelques minutes : une visite interactive de l'espace de gestion d'un établissement." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;1,500;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css?v=1790400015" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; base-uri 'self'; form-action 'self'">
+<script src="assets/js/theme.js?v=1790200001"></script>
+<noscript>
+  <!-- Sans JavaScript, l'écran d'entrée n'est jamais retiré (c'est le script
+       qui le fait) : la démonstration devient un panneau fixe que rien ne
+       lève. On le masque, on déplie l'ouverture cinématique sur son état
+       d'arrivée, et on révèle les sections. Tout reste lisible et défilable. -->
+  <style>
+    #demoIntro { display: none !important; }
+    .reveal { opacity: 1 !important; transform: none !important; }
+    .demo-cinema { min-height: 0 !important; }
+    .cinema-viewport {
+      position: relative !important; height: auto !important; overflow: visible !important;
+      flex-direction: column; gap: 32px; padding: 56px 0 64px;
+    }
+    .cinema-intro, .cinema-stage, .cinema-outro {
+      position: relative !important; inset: auto !important;
+      opacity: 1 !important; transform: none !important;
+    }
+    .cinema-card { width: min(92vw, 1320px) !important; height: auto !important; }
+    .cinema-inner { height: auto; grid-template-columns: 1fr !important; gap: 28px; }
+    .cinema-col-left { order: 1 !important; text-align: center !important; }
+    .cinema-col-mid { order: 2 !important; }
+    .cinema-col-right { order: 3 !important; }
+    .cinema-col-left p { display: block !important; max-width: 620px; margin: 0 auto; }
+    .cinema-roles { flex-direction: row; flex-wrap: wrap; justify-content: center; }
+    .cinema-badge { position: static !important; display: inline-flex; margin: 10px 6px 0; }
+    .cinema-device-wrap { flex-direction: column; }
+    .cinema-sheen, .cinema-hint { display: none !important; }
+  </style>
+</noscript>
+</head>
+<body data-page="demo">
+
+<!-- INTRO — écran furtif, disparaît de lui-même (comme le splash de la landing) -->
+<div class="demo-intro" id="demoIntro">
+  <div class="demo-intro-card">
+    <img src="assets/logo.png?v=1789000492" class="brand-mark" alt="Klassio" style="width:44px;height:44px;margin-bottom:22px;" />
+    <h1>Découvrez Classio.</h1>
+    <p>Une visite de l'espace de gestion d'un établissement — données fictives, aucune écriture réelle.</p>
+  </div>
+</div>
+
+<!-- =========================================================
+     OUVERTURE CINÉMATIQUE
+     Scène épinglée : le texte s'efface, la carte monte et occupe l'écran,
+     la fenêtre produit arrive en profondeur, les badges apparaissent, puis la
+     carte recule et rend la main à la visite guidée.
+     Les états d'ARRIVÉE sont décrits en CSS ; les états de départ sont posés
+     par page-demo.js — sans script, ou en mouvement réduit, tout s'affiche
+     déjà en place (voir les replis en fin du bloc CSS).
+     ========================================================= -->
+<div class="demo-cinema" id="demoCinema">
+  <div class="cinema-viewport" id="cinemaViewport">
+    <div class="cinema-grid" aria-hidden="true"></div>
+
+    <!-- 1. Le texte d'ouverture -->
+    <div class="cinema-intro" id="cinemaIntro">
+      <span class="cinema-kicker"><span class="ck-dot" aria-hidden="true"></span>Démonstration · données fictives</span>
+      <h1 class="cinema-title">Toute la vie de l'établissement,<br><span class="ct-em">vue de l'intérieur</span>.</h1>
+      <p class="cinema-sub">Élèves, présences, résultats, frais, discipline — et quatre rôles qui ne voient chacun que ce qui les regarde.</p>
+      <p class="cinema-hint" aria-hidden="true"><span class="ch-rail"></span>Défilez pour entrer</p>
+    </div>
+
+    <!-- 2. La carte : l'espace de travail -->
+    <div class="cinema-stage" aria-hidden="false">
+      <div class="cinema-card" id="cinemaCard">
+        <div class="cinema-sheen" aria-hidden="true"></div>
+
+        <div class="cinema-inner">
+
+          <div class="cinema-col cinema-col-left" id="cinemaLeft">
+            <h3>Un seul espace, quatre regards.</h3>
+            <p>La direction voit l'établissement entier. Le directeur des disciplines voit la vie scolaire. L'enseignant voit ses classes. Le parent voit <span class="ccl-em">son enfant, et seulement le sien</span>.</p>
+          </div>
+
+          <div class="cinema-col cinema-col-mid">
+            <div class="cinema-device-wrap" id="cinemaDeviceWrap">
+              <div class="cinema-device" id="cinemaDevice">
+                <div class="cinema-device-bar" aria-hidden="true">
+                  <i></i><i></i><i></i>
+                  <span class="cdb-url">klassio · Accueil — Direction</span>
+                </div>
+                <div class="cinema-device-body">
+                  <div class="cinema-device-head">
+                    <b>Bienvenue, Mudeyi.</b>
+                    <span>Année 2026–2027</span>
+                  </div>
+                  <div class="cinema-kpis">
+                    <!-- La valeur d'ARRIVÉE est écrite ici, pas un zéro : sans script,
+                         ou en mouvement réduit, ces chiffres doivent être justes.
+                         Le défilement ne fait que les compter depuis 0. -->
+                    <div class="cinema-kpi"><div class="ck-k">Élèves</div><div class="ck-v" data-count="2340">2 340</div></div>
+                    <div class="cinema-kpi"><div class="ck-k">Attendu</div><div class="ck-v" data-count="1053000" data-suffix=" $">1 053 000 $</div></div>
+                    <div class="cinema-kpi"><div class="ck-k">Encaissé</div><div class="ck-v lime" data-count="874500" data-suffix=" $">874 500 $</div></div>
+                    <div class="cinema-kpi"><div class="ck-k">Classes</div><div class="ck-v" data-count="42">42</div></div>
+                  </div>
+                  <div class="cinema-rows">
+                    <div class="cinema-row"><span class="cr-ic" aria-hidden="true">🧾</span><span class="cr-main">Reçu REC-2027-00412 — Jean Kabeya</span><span class="cr-val">300 $</span></div>
+                    <div class="cinema-row"><span class="cr-ic" aria-hidden="true">✓</span><span class="cr-main">Appel fait — 38 classes sur 42</span><span class="cr-val">90 %</span></div>
+                    <div class="cinema-row"><span class="cr-ic" aria-hidden="true">📣</span><span class="cr-main">Période 1 proclamée — 4e Scientifique</span><span class="cr-val">58</span></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="cinema-badge cinema-badge-a" id="cinemaBadgeA">
+                <span class="cb-ic" aria-hidden="true">🧾</span>
+                <div><div class="cb-t">Reçu émis</div><div class="cb-s">Numéroté, traçable</div></div>
+              </div>
+              <div class="cinema-badge cinema-badge-b" id="cinemaBadgeB">
+                <span class="cb-ic" aria-hidden="true">🔒</span>
+                <div><div class="cb-t">Parent notifié</div><div class="cb-s">Son enfant uniquement</div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="cinema-col cinema-col-right" id="cinemaRight">
+            <div class="cinema-roles">
+              <div class="cinema-role" data-role-dot="directeur"><span class="cr-dot" aria-hidden="true"></span>Direction</div>
+              <div class="cinema-role" data-role-dot="discipline"><span class="cr-dot" aria-hidden="true"></span>Discipline</div>
+              <div class="cinema-role" data-role-dot="professeur"><span class="cr-dot" aria-hidden="true"></span>Professeur</div>
+              <div class="cinema-role" data-role-dot="parent"><span class="cr-dot" aria-hidden="true"></span>Parent</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Le relais vers la visite -->
+    <div class="cinema-outro" id="cinemaOutro">
+      <h2>Entrons dans <span class="ct-em">l'espace</span>.</h2>
+      <p>La suite est une visite guidée de l'application réelle, remplie de données fictives. Rien n'y est enregistré.</p>
+      <div class="cinema-outro-actions">
+        <a href="#demoShell" class="btn btn-lime btn-sm" id="cinemaGoTour">Commencer la visite</a>
+        <a href="app/inscription.html" class="btn btn-ghost btn-sm">Créer mon espace établissement</a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="demo-shell" id="demoShell">
+
+  <div class="demo-ribbon">
+    <span>Environnement de démonstration — données fictives, rien n'est enregistré</span>
+    <a href="index.html" class="demo-exit-link">← Retour à Klassio</a>
+  </div>
+
+  <div class="app-shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="s-brand"><img src="assets/logo.png?v=1789000492" class="brand-mark" alt="Klassio">Klassio</div>
+    <nav id="sidebarNav"></nav>
+    <div class="s-role" id="roleTag"></div>
+  </aside>
+
+  <div class="main-col">
+    <div class="topbar">
+      <div class="topbar-left">
+        <button class="icon-btn" id="sidebarToggle" title="Afficher / masquer le menu">☰</button>
+        <div class="school-badge"><span class="sb-kicker">Compte scolaire</span><span class="sb-name" id="schoolBadgeName">Collège Horizon</span></div>
+      </div>
+      <div class="topbar-right">
+        <div class="theme-toggle" id="themeToggle" role="group" aria-label="Thème"><button type="button" data-theme-choice="light" aria-label="Thème clair"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg></button><button type="button" data-theme-choice="dark" aria-label="Thème sombre"><svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z"/></svg></button></div>
+        <div class="avatar" id="avatarInitial">J</div>
+      </div>
+    </div>
+
+    <div class="demo-progress" id="demoProgress"></div>
+
+    <div class="dash-body" id="demoContent">
+
+      <!-- 01 — ÉTABLISSEMENT -->
+      <section class="demo-step reveal" data-step="establishment">
+        <div class="page-header">
+          <div><h1>Collège Horizon</h1><p>Année scolaire 2026–2027</p></div>
+        </div>
+        <div class="summary-strip">
+          <div class="info-card"><div class="k">Élèves</div><div class="v lime">2 340</div></div>
+          <div class="info-card"><div class="k">Classes</div><div class="v">42</div></div>
+          <div class="info-card"><div class="k">Enseignants</div><div class="v">86</div></div>
+          <div class="info-card"><div class="k">Responsables</div><div class="v">1 870</div></div>
+        </div>
+        <div class="panel">
+          <p style="margin:0; font-size:14.5px; color:var(--ink-soft); line-height:1.6;">Voici un établissement fictif de démonstration. Toutes les informations qui suivent — élèves, classes, finances, paiements — restent cohérentes d'un écran à l'autre, exactement comme dans votre futur espace réel.</p>
+        </div>
+      </section>
+
+      <!-- 02 — IMPORT -->
+      <section class="demo-step reveal" data-step="import">
+        <div class="page-header">
+          <div><h1>Vos données existantes</h1><p>Klassio transforme un fichier Excel en espace de gestion complet.</p></div>
+        </div>
+        <div class="panel">
+          <h2>Fichier importé (extrait)</h2>
+          <table class="data-table">
+            <thead><tr><th>Élève</th><th>Classe</th><th>Parent</th><th>Frais</th><th>Payé</th></tr></thead>
+            <tbody id="importPreviewBody"></tbody>
+          </table>
+        </div>
+        <div class="panel" id="importAnalyzePanel">
+          <button class="btn btn-lime" id="runAnalysisBtn">Analyser le fichier</button>
+        </div>
+        <div class="panel" id="importResultPanel" hidden>
+          <h2 id="importResultTitle">Analyse en cours…</h2>
+          <div id="importChecklist" class="demo-checklist"></div>
+          <div class="summary-strip" id="importSummary" hidden></div>
+          <div id="importMapping" hidden>
+            <p class="dash-section-title">Colonnes automatiquement identifiées</p>
+            <div id="mappingList" class="demo-mapping"></div>
+          </div>
+          <div id="importQuality" hidden>
+            <p class="dash-section-title">Qualité des données — <strong id="qualityScoreText">92 %</strong></p>
+            <ul class="demo-quality-list" id="qualityGood"></ul>
+            <ul class="demo-quality-list warn" id="qualityWarn"></ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- 03 — DASHBOARD -->
+      <section class="demo-step reveal" data-step="dashboard">
+        <h1 class="dash-greet">Bienvenue, Jean.</h1>
+        <p class="dash-question">Collège Horizon · Année 2026–2027</p>
+        <p class="dash-section-title">Informations importantes</p>
+        <div class="info-grid" id="dashInfoGrid"></div>
+        <div class="ai-insight">
+          <span class="ai-insight-ic">✨</span>
+          <div class="ai-insight-body">
+            <div class="ai-insight-text">Sur 2 340 élèves, <strong>178 500 $</strong> restent à encaisser sur 1 053 000 $ facturés.</div>
+            <button class="ai-insight-action" data-jump="finance">Voir le détail</button>
+          </div>
+        </div>
+        <p class="dash-section-title">Accès rapide</p>
+        <div class="quick-grid">
+          <button class="quick-card" data-jump="students"><div class="q-ic">🎓</div><div class="q-label">Voir les élèves</div></button>
+          <button class="quick-card" data-jump="finance"><div class="q-ic">💳</div><div class="q-label">Finance & paiements</div></button>
+          <button class="quick-card" data-jump="roles"><div class="q-ic">👥</div><div class="q-label">Les 3 espaces Klassio</div></button>
+        </div>
+      </section>
+
+      <!-- 04 — ÉLÈVES & CLASSES -->
+      <section class="demo-step reveal" data-step="students">
+        <div class="page-header">
+          <div><h1>Élèves</h1><p>2 340 élèves · 42 classes</p></div>
+        </div>
+        <div class="panel">
+          <h2>Classes</h2>
+          <table class="data-table"><thead><tr><th>Classe</th><th>Niveau</th><th>Élèves</th></tr></thead>
+            <tbody id="classesBody"></tbody></table>
+        </div>
+        <div class="panel">
+          <h2>Tous les élèves</h2>
+          <table class="data-table"><thead><tr><th>Nom</th><th>Classe</th><th>Solde</th></tr></thead>
+            <tbody id="studentsBody"></tbody></table>
+        </div>
+        <div id="studentDossier" hidden>
+          <a href="#" class="page-back" id="closeDossier">← Retour aux élèves</a>
+          <div class="page-header"><div><h1 id="dossierName">—</h1><p>Le même dossier que dans l'application : six onglets, tous cliquables.</p></div></div>
+          <!-- Peint par page-demo.js : entête, barre d'onglets, panneau actif. -->
+          <div id="dossierBody"></div>
+        </div>
+      </section>
+
+      <!-- 05 — FINANCE & PAIEMENTS -->
+      <section class="demo-step reveal" data-step="finance">
+        <div class="page-header"><div><h1>Finance & Paiements</h1><p>Frais, obligations, soldes — et le cycle de vie d'un paiement.</p></div></div>
+        <div class="panel">
+          <h2>Vue d'ensemble</h2>
+          <div class="summary-strip">
+            <div class="info-card"><div class="k">Total attendu</div><div class="v">1 053 000 $</div></div>
+            <div class="info-card"><div class="k">Total encaissé</div><div class="v lime">874 500 $</div></div>
+            <div class="info-card"><div class="k">Solde restant</div><div class="v warn">178 500 $</div></div>
+          </div>
+        </div>
+        <div class="panel">
+          <h2>Cycle d'un paiement</h2>
+          <div class="payment-chain">
+            <span>Paiement</span><span class="pc-arrow">→</span>
+            <span>Confirmation</span><span class="pc-arrow">→</span>
+            <span>Enregistrement</span><span class="pc-arrow">→</span>
+            <span>Reçu</span><span class="pc-arrow">→</span>
+            <span>Notification</span>
+          </div>
+          <div class="demo-payment-sample">
+            <div><strong>Jean Kabeya</strong> — 4e Scientifique A</div>
+            <div>300 $ · Espèces au comptoir</div>
+            <span class="badge paid">Confirmé — reçu REC-2027-00412</span>
+          </div>
+          <p style="font-size:13px; color:var(--ink-faint); margin:14px 0 0;">
+            Un encaissement en espèces ou par banque est confirmé sur-le-champ : la personne qui
+            l'enregistre en est la preuve. Un paiement annoncé par mobile reste <strong>en attente</strong>
+            jusqu'à sa confirmation par l'établissement. Klassio ne se connecte aujourd'hui à
+            <strong>aucun opérateur Mobile Money</strong> — le suivi est tenu par l'école, pas par un automate.
+          </p>
+        </div>
+      </section>
+
+      <!-- 06 — PRÉSENCES & DISCIPLINE -->
+      <section class="demo-step reveal" data-step="attendance">
+        <div class="page-header"><div><h1>Présences & discipline</h1><p>L'appel du jour, les incidents, et les seuils qui déclenchent une convocation.</p></div></div>
+        <div class="panel">
+          <h2>L'appel, classe par classe</h2>
+          <div class="summary-strip">
+            <div class="info-card"><div class="k">Classes appelées</div><div class="v">38 / 42</div></div>
+            <div class="info-card"><div class="k">Présents</div><div class="v lime">2 187</div></div>
+            <div class="info-card"><div class="k">Absents</div><div class="v warn">84</div></div>
+            <div class="info-card"><div class="k">Retards</div><div class="v">69</div></div>
+          </div>
+          <p style="font-size:13px; color:var(--ink-faint); margin:14px 0 0;">Le directeur des disciplines voit d'un coup d'œil les classes qui n'ont pas encore fait l'appel — c'est son écran de travail du matin.</p>
+        </div>
+        <div class="panel">
+          <h2>Un incident, et ce qu'il déclenche</h2>
+          <div class="payment-chain">
+            <span>Incident saisi</span><span class="pc-arrow">→</span>
+            <span>Règle appliquée</span><span class="pc-arrow">→</span>
+            <span>Points de conduite</span><span class="pc-arrow">→</span>
+            <span>Seuil atteint</span><span class="pc-arrow">→</span>
+            <span>Convocation</span>
+          </div>
+          <div class="demo-payment-sample">
+            <div><strong>Retard répété</strong> — 3e fois ce mois</div>
+            <div>Conduite : 100 → 92</div>
+            <span class="badge warn">Seuil de convocation atteint</span>
+          </div>
+          <p style="font-size:13px; color:var(--ink-faint); margin:14px 0 0;">Les règles et les seuils sont définis par l'établissement, pas par Klassio. Le logiciel applique ce que l'école a décidé, et garde la trace de chaque décision.</p>
+        </div>
+      </section>
+
+      <!-- 07 — RÉSULTATS & PROCLAMATION -->
+      <section class="demo-step reveal" data-step="results">
+        <div class="page-header"><div><h1>Résultats & proclamation</h1><p>Importer des notes ne les publie pas. La proclamation est une décision distincte.</p></div></div>
+        <div class="panel">
+          <h2>Deux gestes, jamais confondus</h2>
+          <div class="demo-mapping">
+            <div class="dm-row"><span>Import des notes</span><span class="dm-arrow">→</span><span class="dm-target">visible par l'équipe uniquement</span></div>
+            <div class="dm-row"><span>Proclamation d'une période</span><span class="dm-arrow">→</span><span class="dm-target">visible par les parents concernés</span></div>
+          </div>
+          <p style="font-size:13px; color:var(--ink-soft); margin:0;">Tant qu'une période n'est pas proclamée, aucun parent ne voit la moindre note. C'est l'établissement qui choisit le moment, et l'audience.</p>
+        </div>
+        <div class="panel">
+          <h2>Une correction ne s'écrase pas</h2>
+          <div class="summary-strip">
+            <div class="info-card"><div class="k">Version courante</div><div class="v lime">14,5 / 20</div></div>
+            <div class="info-card"><div class="k">Version précédente</div><div class="v">13,0 / 20</div></div>
+            <div class="info-card"><div class="k">Conservée depuis</div><div class="v" style="font-size:16px;">12 janv. 2027</div></div>
+          </div>
+          <p style="font-size:13px; color:var(--ink-faint); margin:14px 0 0;">Un résultat corrigé crée une nouvelle version. L'ancienne est datée, rattachée à l'import qui l'a remplacée, et conservée. Rien n'est supprimé.</p>
+        </div>
+      </section>
+
+      <!-- 08 — NOTIFICATIONS -->
+      <section class="demo-step reveal" data-step="notifications">
+        <div class="page-header"><div><h1>Notifications</h1><p>Chaque événement a une audience. Personne ne reçoit ce qui ne le regarde pas.</p></div></div>
+        <div class="panel">
+          <div id="demoNotifs"></div>
+          <p style="font-size:13px; color:var(--ink-faint); margin:14px 0 0;">
+            L'audience est recalculée par le serveur à partir des rôles et des périmètres réels — jamais à partir
+            de ce que le navigateur demande. Côté direction, les événements répétitifs sont regroupés pour ne pas
+            noyer l'essentiel.
+          </p>
+        </div>
+      </section>
+
+      <!-- 08 — LES QUATRE RÔLES -->
+      <section class="demo-step reveal" data-step="roles">
+        <div class="page-header"><div><h1>Quatre rôles, un seul établissement</h1><p>Le même Collège Horizon, vu par quatre personnes différentes. Il n'existe aucun compte « élève ».</p></div></div>
+        <div class="role-switch" id="roleSwitch">
+          <button type="button" class="active" data-role="directeur">Direction</button>
+          <button type="button" data-role="discipline">Discipline</button>
+          <button type="button" data-role="professeur">Professeur</button>
+          <button type="button" data-role="parent">Parent</button>
+        </div>
+
+        <div id="roleViewDirecteur">
+          <div class="summary-strip">
+            <div class="info-card"><div class="k">Élèves</div><div class="v">2 340</div></div>
+            <div class="info-card"><div class="k">Encaissé</div><div class="v lime">874 500 $</div></div>
+            <div class="info-card"><div class="k">Solde restant</div><div class="v warn">178 500 $</div></div>
+            <div class="info-card"><div class="k">Classes</div><div class="v">42</div></div>
+          </div>
+          <div class="panel">
+            <h2>Ce que la direction voit</h2>
+            <p style="font-size:13.5px; color:var(--ink-soft); margin:0 0 10px;">L'établissement entier : élèves, classes, finances, paiements, résultats, discipline, rapports, abonnement.</p>
+            <p style="font-size:13px; color:var(--ink-faint); margin:0;">C'est le seul rôle qui peut proclamer une période et inviter du personnel.</p>
+          </div>
+        </div>
+
+        <div id="roleViewDiscipline" hidden>
+          <div class="summary-strip">
+            <div class="info-card"><div class="k">Classes appelées</div><div class="v">38 / 42</div></div>
+            <div class="info-card"><div class="k">Absents du jour</div><div class="v warn">84</div></div>
+            <div class="info-card"><div class="k">Incidents ouverts</div><div class="v">7</div></div>
+            <div class="info-card"><div class="k">Convocations</div><div class="v">3</div></div>
+          </div>
+          <div class="panel">
+            <h2>Ce que la discipline voit</h2>
+            <p style="font-size:13.5px; color:var(--ink-soft); margin:0 0 10px;">La vie scolaire : pointage, présences, incidents, convocations, registres imprimables pour l'inspection.</p>
+            <p style="font-size:13px; color:var(--ink-faint); margin:0;">Elle ne voit <strong>ni les finances</strong>, ni l'abonnement de l'établissement.</p>
+          </div>
+        </div>
+
+        <div id="roleViewProfesseur" hidden>
+          <div class="summary-strip">
+            <div class="info-card"><div class="k">4e Scientifique A</div><div class="v">58 élèves</div></div>
+            <div class="info-card"><div class="k">Présents</div><div class="v lime">55</div></div>
+            <div class="info-card"><div class="k">Absents</div><div class="v warn">2</div></div>
+            <div class="info-card"><div class="k">Retards</div><div class="v">1</div></div>
+          </div>
+          <div class="panel">
+            <h2>Ce que l'enseignant voit</h2>
+            <p style="font-size:13.5px; color:var(--ink-soft); margin:0 0 10px;">Ses classes, ses élèves, son appel, ses notes et ses appréciations.</p>
+            <p style="font-size:13px; color:var(--ink-faint); margin:0;">Il ne voit <strong>ni les finances de l'établissement</strong>, ni les classes qui ne lui sont pas attribuées.</p>
+          </div>
+        </div>
+
+        <div id="roleViewParent" hidden>
+          <div class="summary-strip">
+            <div class="info-card"><div class="k">Jean Kabeya — 4e Scientifique A</div><div class="v warn">150 $</div></div>
+            <div class="info-card"><div class="k">Nadège Kabeya — 2e Primaire A</div><div class="v lime">0 $</div></div>
+          </div>
+          <div class="panel">
+            <h2>Ce que le parent voit</h2>
+            <p style="font-size:13.5px; color:var(--ink-soft); margin:0 0 10px;">Ses enfants : frais, reçus, présences, et les résultats <strong>une fois proclamés</strong>.</p>
+            <p style="font-size:13px; color:var(--ink-faint); margin:0;">Il ne voit <strong>jamais</strong> les autres élèves de l'établissement, ni une note non proclamée.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 09 — CE QUI PROTÈGE VOS DONNÉES -->
+      <section class="demo-step reveal" data-step="trust">
+        <div class="page-header"><div><h1>Ce qui protège vos données</h1><p>Quatre garanties tenues par le serveur, jamais par le navigateur.</p></div></div>
+        <div class="info-grid">
+          <div class="info-card"><div class="k">Isolation</div><div class="v" style="font-size:15px;">Un établissement ne peut pas lire les données d'un autre. Une ressource étrangère répond « introuvable », jamais une liste vide.</div></div>
+          <div class="info-card"><div class="k">Autorisation serveur</div><div class="v" style="font-size:15px;">Le rôle et le périmètre viennent de la session. Jamais du navigateur, jamais d'un paramètre d'URL.</div></div>
+          <div class="info-card"><div class="k">Historique</div><div class="v" style="font-size:15px;">Un résultat corrigé crée une version. L'ancienne est datée et conservée. Une nouvelle année ne modifie jamais les précédentes.</div></div>
+          <div class="info-card"><div class="k">IA en lecture seule</div><div class="v" style="font-size:15px;">L'assistant observe et explique. Il n'écrit rien : aucune écriture n'existe dans son code.</div></div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- CTA final -->
+    <div class="demo-cta reveal" id="demoCta">
+      <h2>Votre établissement mérite un espace aussi clair.</h2>
+      <p>Avec Klassio, centralisez vos élèves, vos classes, vos frais et vos paiements dans un seul environnement.</p>
+      <div class="demo-cta-actions">
+        <a href="app/inscription.html" class="btn btn-lime">Créer mon espace établissement</a>
+        <button class="btn btn-ghost" id="restartTourBtn">↑ Revoir depuis le début</button>
+      </div>
+    </div>
+  </div>
+  </div>
+</div>
+
+<script src="assets/js/demo-data.js?v=1790000001"></script>
+<script src="assets/js/page-demo.js?v=1790000001"></script>
+</body>
+</html>
