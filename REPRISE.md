@@ -1180,6 +1180,37 @@ fichier créé seulement dans le miroir sera perdu — c'est déjà arrivé avec
       L'application (`/app/*`) affiche « l'API ne répond pas à cette adresse »
       tant que le backend n'est pas déployé — c'est un cul-de-sac honnête, pas
       une panne silencieuse.
+### Hébergement — décidé le 18/09, à exécuter
+
+**Render, 13 $/mois** : service web 7 $ (0,5 CPU, 512 Mo) + PostgreSQL 6 $
+(256 Mo, 1 Go, 100 connexions, sauvegardes incluses). Heroku est à 12 $
+(Basic 7 $ + Postgres Essential-0 5 $) — **1 $ d'écart ne justifie pas de
+refaire le travail**, `render.yaml` est écrit et poussé. Écarter Heroku Eco
+(5 $) : le dyno s'endort après 30 min, et une école fait l'appel à 7h30.
+
+⚠️ **BLOQUÉ** sur la vérification de carte Render : « your card has
+insufficient funds ». La carte fonctionne (la banque a répondu, donc les
+paiements internationaux ne sont pas bloqués) ; il manque ~2–3 $ de solde pour
+l'autorisation temporaire de 1 $. Rien d'autre ne bloque : dès que la carte
+passe, Render lit `render.yaml` et tout se crée seul.
+
+#### La région ne se choisit PAS pour la proximité
+
+Mesuré le 18/09 depuis Kinshasa (temps d'établissement TCP, 3 relevés) :
+
+| Région | Aller-retour |
+|---|---|
+| Paris | 223 ms |
+| Le Cap | 231 ms |
+| Irlande | 238 ms |
+| Francfort | 254 ms |
+
+**Un serveur en Afrique du Sud ne rapproche rien** — le trafic congolais remonte
+vers l'Europe avant de redescendre. L'intuition « héberger en Afrique » est
+fausse ici, et la mesure a coûté deux minutes. La région se choisit donc pour
+UNE seule raison : que l'application et sa base soient dans la même. C'est ce
+qui fait passer le tableau de bord de 7,5 s à moins de 400 ms.
+
 - [ ] Confier le déploiement Heroku à Emergant — `DEPLOIEMENT.md` §3.3.
 - [ ] Jouer une fois `pg_tests.py --supabase` avant la bascule (seul mode qui
       exerce le pooler en mode transaction).
