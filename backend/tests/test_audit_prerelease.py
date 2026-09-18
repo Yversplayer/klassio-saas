@@ -136,6 +136,63 @@ class DoubleConfirmationDePaiement(Base):
             f"{len(anomalies)} double(s) confirmation(s) sur {self.TOURS} ont crédité deux fois "
             f"le même paiement :\n  " + "\n  ".join(anomalies))
 
+    def test_01bis_un_recu_impossible_a_numeroter_n_annule_pas_l_encaissement(self):
+        """La règle qui compte quand la numérotation échoue : **on ne transforme
+        jamais un paiement réussi en erreur.**
+
+        `next_receipt_number` est un « max + 1 ». Entre le SELECT et le COMMIT,
+        un autre encaissement peut viser le même numéro. Mesuré le 17/09 par
+        tools/k6/recus.js : sur 1 067 paiements confirmés par huit guichets
+        simultanés, UN a épuisé ses essais. Le paiement était déjà CONFIRMED et
+        inscrit au grand livre — l'argent était juste — mais la requête finissait
+        en 500. Le guichetier lisait « échec » sur un encaissement réussi, et la
+        tentation suivante est d'encaisser une seconde fois.
+
+        Ce test force l'échec au lieu de l'attendre : on fige la numérotation sur
+        un numéro déjà pris, donc les 25 essais se soldent tous par une collision.
+
+        Jusqu'ici ce défaut n'était couvert que par le scénario de charge, qui
+        demande un serveur et plusieurs minutes. Ici il est déterministe.
+        """
+        import financial
+
+        h, an = self.ecole("recu-impossible")
+        premier = self._paiement_en_attente(h, an, "recu-impossible-1")
+        r1 = self.c.post(f"/api/payments/{premier}/confirm", json={}, headers=h)
+        self.assertEqual(r1.status_code, 200)
+        numero_pris = r1.get_json()["receipt_number"]
+        self.assertTrue(numero_pris)
+
+        second = self._paiement_en_attente(h, an, "recu-impossible-2")
+        original = financial.next_receipt_number
+        financial.next_receipt_number = lambda conn, tenant_id: numero_pris
+        try:
+            r2 = self.c.post(f"/api/payments/{second}/confirm", json={}, headers=h)
+        finally:
+            financial.next_receipt_number = original
+
+        # 1. Le guichet ne lit PAS un échec.
+        self.assertEqual(r2.status_code, 200,
+                         f"un reçu innumérotable a fait échouer l'encaissement : {r2.get_data(as_text=True)}")
+        corps = r2.get_json()
+        # 2. Le paiement est confirmé, et il le reste.
+        self.assertEqual(corps["status"], "CONFIRMED")
+        # 3. Le reçu manque, et le serveur le dit au lieu d'inventer un numéro.
+        self.assertIsNone(corps["receipt_number"])
+
+        # 4. L'argent est au grand livre, une seule fois.
+        conn = db.get_connection()
+        ecritures = conn.execute(
+            "SELECT COUNT(*) n FROM ledger_entries WHERE reference_id=?", (second,)).fetchone()["n"]
+        recus = conn.execute(
+            "SELECT COUNT(*) n FROM receipts WHERE payment_id=?", (second,)).fetchone()["n"]
+        conn.close()
+        self.assertEqual(ecritures, 1, "l'encaissement n'est pas inscrit au grand livre")
+        self.assertEqual(recus, 0, "un reçu a été créé alors que la numérotation avait échoué")
+
+        # Le reçu manquant se rattrape après coup avec
+        # backend/tools/reparer_recus.py, sans retoucher à l'argent.
+
     def test_02_confirmer_dix_fois_de_suite_ne_credite_quune_fois(self):
         """Le rejeu séquentiel — un webhook réémis toutes les minutes."""
         h, an = self.ecole("rejeu")
