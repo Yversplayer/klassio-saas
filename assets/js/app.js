@@ -142,7 +142,7 @@
       if (!passwordMeetsRules(password)) return showError("accountError", "Le mot de passe ne respecte pas encore toutes les règles ci-dessus.");
       var btn = document.getElementById("createSpaceBtn");
       UI.btnState(btn, "loading", "Création en cours…");
-      if (window.KlassioLoader) window.KlassioLoader.show("Classio prépare votre établissement", [
+      if (window.KlassioLoader) window.KlassioLoader.show("Klassio prépare votre établissement", [
         { label: "Vérification de l'établissement", state: "doing" }, { label: "Création du compte Direction", state: "todo" }, { label: "Ouverture de votre espace", state: "todo" }]);
       apiFetch("/auth/register-school", { method: "POST", body: JSON.stringify({ email: email, password: password, name: name, school_name: school }) })
         .then(function (res) {
@@ -218,7 +218,7 @@
       var btn = document.getElementById("confirmImportBtn");
       UI.btnState(btn, "loading", "Import en cours…");
       var a = state.analysis;
-      if (window.KlassioLoader) window.KlassioLoader.show("Classio construit votre établissement", [
+      if (window.KlassioLoader) window.KlassioLoader.show("Klassio construit votre établissement", [
         { label: "Fichier analysé — " + a.students_count + " élèves, " + a.classes_count + " classes", state: "done" },
         { label: "Création des classes et des dossiers élèves", state: "doing" },
         { label: "Rattachement des responsables", state: "todo" },

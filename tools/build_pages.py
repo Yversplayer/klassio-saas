@@ -2,10 +2,38 @@
 Les fichiers produits sont statiques (aucune dépendance à ce script au
 runtime) ; il sert uniquement à garder une seule source pour la topbar, la
 sidebar et les en-têtes de sécurité."""
-import os, time
+import os, re, time
 
 ROOT = "/Users/macbookpro/klassio-saas/app"
-V = str(int(time.time()))
+
+
+def _version_cache():
+    """Le numéro anti-cache, garanti STRICTEMENT CROISSANT.
+
+    L'horodatage seul ne suffisait pas. Trouvé le 18/09 : des versions posées à
+    la main dans les pages étaient datées dans le futur (elles avaient été
+    recopiées d'une page à l'autre sans vérifier qu'elles correspondaient à une
+    vraie date). Une exécution de ce script les faisait donc RECULER — et une
+    version qui recule est exactement ce qu'un anti-cache ne doit jamais faire :
+    un navigateur qui a déjà vu ce numéro ressort son ancienne copie du fichier,
+    et l'utilisateur garde du JavaScript périmé sans aucun moyen de s'en rendre
+    compte.
+
+    On prend donc le plus grand des deux : l'heure actuelle, ou le plus haut
+    numéro déjà présent dans les pages, plus un. Quoi qu'il arrive à l'horloge
+    ou aux valeurs posées à la main, le numéro monte.
+    """
+    plus_haut = 0
+    for nom in os.listdir(ROOT):
+        if not nom.endswith(".html"):
+            continue
+        with open(os.path.join(ROOT, nom), encoding="utf-8") as f:
+            for m in re.finditer(r"\?v=(\d+)", f.read()):
+                plus_haut = max(plus_haut, int(m.group(1)))
+    return str(max(int(time.time()), plus_haut + 1))
+
+
+V = _version_cache()
 
 CSP = ("default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
        "font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' http://localhost:5001; base-uri 'self'; form-action 'self'")
@@ -177,7 +205,7 @@ PAGES["rapports"] = ("Rapports", "", """
 
 PAGES["ia"] = ("Assistant", " ia-page", """
       <div class="page-header">
-        <div><h1>Assistant Classio</h1><p>Posez une question sur votre établissement — Classio lit et analyse, mais n'exécute jamais d'action à votre place.</p></div>
+        <div><h1>Assistant Klassio</h1><p>Posez une question sur votre établissement — Klassio lit et analyse, mais n'exécute jamais d'action à votre place.</p></div>
       </div>
       <div class="ia-layout">
         <aside class="ia-history-panel">
@@ -192,7 +220,7 @@ PAGES["ia"] = ("Assistant", " ia-page", """
             </div>
           </div>
           <form class="ia-composer" id="iaComposer">
-            <input type="text" id="iaInput" placeholder="Posez une question à Classio…" autocomplete="off" />
+            <input type="text" id="iaInput" placeholder="Posez une question à Klassio…" autocomplete="off" />
             <button type="submit" class="ia-send-btn" id="iaSendBtn" aria-label="Envoyer">↑</button>
           </form>
         </div>

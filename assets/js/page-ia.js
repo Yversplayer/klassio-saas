@@ -108,7 +108,7 @@
     }).catch(function () {
       removeTyping();
       sendBtn.disabled = false;
-      appendMessage("assistant", "Classio est momentanément injoignable — le reste de l'application continue de fonctionner normalement.");
+      appendMessage("assistant", "Klassio est momentanément injoignable — le reste de l'application continue de fonctionner normalement.");
     });
   }
 

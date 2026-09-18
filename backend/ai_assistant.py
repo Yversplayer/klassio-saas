@@ -75,7 +75,7 @@ REFUSAL_BY_ENTITY = {
     "commande": "Je ne peux pas créer, modifier ou annuler une commande ni un produit. Cette opération se fait depuis Boutique.",
 }
 GENERIC_REFUSAL = ("Je peux vous aider à retrouver ou analyser des informations, mais je ne peux "
-                    "pas créer, modifier ou supprimer des données dans Classio. Cette opération doit "
+                    "pas créer, modifier ou supprimer des données dans Klassio. Cette opération doit "
                     "être effectuée directement depuis l'espace approprié.")
 
 
@@ -92,7 +92,7 @@ def _is_write_intent(text):
 # Contexte / permissions — reproduit exactement les règles déjà appliquées
 # ailleurs dans le produit (security.ROLE_PERMISSIONS, _resolve_student_access
 # dans app.py) : l'IA ne voit jamais plus que ce que l'utilisateur verrait en
-# naviguant lui-même dans Classio.
+# naviguant lui-même dans Klassio.
 # ---------------------------------------------------------------------------
 
 def _own_children_ids(conn, ctx):
@@ -516,7 +516,7 @@ def answer_question(conn, ctx, message, previous_intent=None):
     if re.search(r"combien.*[ée]l[èe]ves?", low) and not re.search(r"pay[ée]|impay|absent|retard|pr[ée]sent", low):
         n = get_student_count(conn, ctx)
         if ctx["role"] == "parent":
-            return _result(f"Vous avez **{n}** enfant(s) suivi(s) dans Classio." if n else
+            return _result(f"Vous avez **{n}** enfant(s) suivi(s) dans Klassio." if n else
                             "Aucun enfant n'est encore associé à votre compte.", intent="count_students")
         return _result(f"Votre établissement compte actuellement **{n}** élèves.", intent="count_students",
                         actions=[{"label": "Voir les élèves", "target": "eleves.html"}])

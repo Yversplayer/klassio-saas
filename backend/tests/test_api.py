@@ -598,7 +598,7 @@ class KlassioApiTests(unittest.TestCase):
 
     def test_18_ai_respects_role_permissions_no_cross_role_leak(self):
         """Un parent ne doit jamais obtenir par l'IA une donnée globale qu'il ne
-        pourrait pas consulter en naviguant lui-même dans Classio — et il doit
+        pourrait pas consulter en naviguant lui-même dans Klassio — et il doit
         obtenir la situation réelle de son propre enfant."""
         ctx = self._setup_ai_school("ai18")
         h = ctx["h"]
