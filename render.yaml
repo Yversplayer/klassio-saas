@@ -1,0 +1,75 @@
+# Klassio — l'API sur Render. Le frontend, lui, est chez Vercel.
+#
+# POURQUOI FRANKFURT. Ce n'est pas pour rapprocher le serveur de Kinshasa —
+# aucune région Render ne le ferait vraiment. C'est pour le rapprocher de SA
+# BASE. Mesuré le 18/09 : Kinshasa → Supabase (Irlande) = 270 ms d'aller-retour.
+# Le tableau de bord exécute 28 requêtes SQL. Une application qui tournerait à
+# Kinshasa paierait 28 × 270 ms ≈ 7,5 s pour une seule page. Depuis Francfort,
+# ces 28 requêtes coûtent ~25 ms chacune, et l'utilisateur ne paie qu'UN
+# aller-retour. La distance de l'utilisateur au serveur se paie une fois par
+# page ; celle du serveur à la base, une fois par REQUÊTE.
+#
+# LE PALIER GRATUIT S'ENDORT après 15 minutes sans trafic : la requête suivante
+# attend le réveil (~50 s). Acceptable pour une démonstration, pas pour une
+# école qui fait l'appel le matin. À passer en payant avant le premier
+# établissement réel.
+
+services:
+  - type: web
+    name: klassio-api
+    runtime: python
+    region: frankfurt
+    plan: free
+    branch: main
+    healthCheckPath: /api/health
+
+    # Le schéma est appliqué AVANT que le serveur démarre. `init_db()` ne fait
+    # que CREATE TABLE IF NOT EXISTS et ALTER TABLE ADD COLUMN : rejouer un
+    # déploiement ne détruit rien. Si la base est injoignable, la construction
+    # échoue — et c'est voulu : mieux vaut ne pas déployer qu'exposer une API
+    # sans son schéma.
+    buildCommand: pip install -r requirements.txt && python backend/tools/release.py
+
+    # Mêmes réglages que le Procfile, qui est la configuration éprouvée par la
+    # campagne de charge (100 utilisateurs simultanés, 0 % d'erreur).
+    startCommand: >-
+      gunicorn --chdir backend
+      --workers 2 --threads 4 --worker-class gthread
+      --timeout 60 --graceful-timeout 30
+      --error-logfile - --access-logfile -
+      --bind 0.0.0.0:$PORT app:app
+
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.9"
+      - key: KLASSIO_DB_BACKEND
+        value: postgres
+
+      # Les origines autorisées à appeler cette API. Sans cette valeur, le
+      # navigateur refuse les réponses : le frontend est sur un autre domaine.
+      - key: KLASSIO_ALLOWED_ORIGINS
+        value: https://klassio-saas.vercel.app
+
+      # La base est déclarée plus bas, dans le même fichier. Render injecte sa
+      # chaîne de connexion INTERNE : elle ne sort jamais de son réseau, et
+      # rien n'est à recopier à la main. Aucun secret dans ce dépôt public.
+      - key: DATABASE_URL
+        fromDatabase:
+          name: klassio-db
+          property: connectionString
+
+# LA BASE. Même région que l'API, et c'est tout l'intérêt : application et
+# base côte à côte, ~1 ms entre les deux. Les 28 requêtes du tableau de bord
+# coûtent alors ~30 ms au total, contre 7,5 s si l'application tournait à
+# Kinshasa face à une base en Europe.
+#
+# ⚠️ LE PALIER GRATUIT EST SUPPRIMÉ PAR RENDER AU BOUT DE 30 JOURS. Tenable
+# pour une démonstration, intenable dès la première école réelle : passer en
+# payant AVANT d'y mettre des élèves. Une base d'école qui s'efface toute
+# seule, c'est le genre d'incident dont on ne se relève pas commercialement.
+databases:
+  - name: klassio-db
+    databaseName: klassio
+    user: klassio
+    region: frankfurt
+    plan: free

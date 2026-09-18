@@ -83,9 +83,17 @@ SUPABASE_URL = _normalise_url(get("SUPABASE_URL"))
 SUPABASE_ANON_KEY = get("SUPABASE_PUBLISHABLE_KEY") or get("SUPABASE_ANON_KEY")
 # Clé secrète : serveur uniquement, contourne la RLS. Ne jamais l'exposer.
 SUPABASE_SERVICE_KEY = get("SUPABASE_SECRET_KEY") or get("SUPABASE_SERVICE_KEY")
-# Chaîne de connexion Postgres — nécessaire pour que Klassio stocke vraiment
-# ses données dans Supabase (postgresql://postgres:…@…pooler.supabase.com:6543/postgres).
-SUPABASE_DB_URL = get("SUPABASE_DB_URL")
+# Chaîne de connexion Postgres. `DATABASE_URL` d'abord : c'est le nom que
+# posent d'eux-mêmes Render, Heroku et la plupart des hébergeurs, et c'est la
+# convention de fait. `SUPABASE_DB_URL` reste accepté pour ne rien casser.
+#
+# Le nom historique induisait en erreur : Klassio n'utilise Supabase QUE comme
+# hébergeur PostgreSQL. Aucun chemin de requête n'appelle son API REST — voir
+# supabase_client.py, dont le seul usage est la bannière de démarrage et un
+# outil de diagnostic. N'importe quel PostgreSQL convient donc, et le 18/09 le
+# projet Supabase a disparu (« tenant not found ») sans que le code soit en
+# cause : c'est l'hébergeur qui manquait, pas une dépendance.
+SUPABASE_DB_URL = get("DATABASE_URL") or get("SUPABASE_DB_URL")
 
 # Moteur de stockage effectif. Tant que la migration n'est pas faite et
 # vérifiée, Klassio reste sur SQLite : on ne bascule pas une base d'élèves
