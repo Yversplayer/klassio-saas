@@ -1,0 +1,20 @@
+# Vercel ne sert QUE le frontend statique de Klassio.
+#
+# Tout ce qui suit est soit du code serveur — qui tourne ailleurs, sur un dyno —
+# soit de l'outillage de développement. Le publier ne rendrait service à
+# personne et alourdirait chaque déploiement.
+#
+# Le dépôt reste complet ; seul ce qui part chez Vercel est allégé.
+backend/
+backend_venv/
+tools/
+docs/
+*.md
+!README.md
+Procfile
+runtime.txt
+requirements.txt
+requirements-dev.txt
+.slugignore
+.claude/
+.mcp.json

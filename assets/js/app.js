@@ -39,6 +39,23 @@
         }
         return { ok: res.ok, status: res.status, body: body };
       });
+    }).catch(function () {
+      // LE SERVEUR EST INJOIGNABLE — coupure réseau, dyno endormi, API pas
+      // encore déployée. `fetch` REJETTE dans ce cas, il ne renvoie pas une
+      // réponse. Sans ce filet, la promesse partait en rejet non capturé :
+      // le bouton restait à « Chargement… » indéfiniment et l'écran ne disait
+      // rien. À Kinshasa, où la connexion tombe pour de vrai, c'est le
+      // scénario ordinaire, pas le cas rare.
+      //
+      // On renvoie donc un échec de la MÊME FORME qu'un refus du serveur.
+      // Tous les appelants font déjà « if (!res.ok) showError(res.body.error) » :
+      // ils affichent le message sans avoir à être modifiés, un par un.
+      // `status: 0` distingue « pas de réponse » d'un vrai code HTTP.
+      return {
+        ok: false,
+        status: 0,
+        body: { error: "Le serveur Klassio est injoignable. Vérifiez votre connexion, puis réessayez." },
+      };
     });
   }
 
