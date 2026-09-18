@@ -1171,6 +1171,15 @@ fichier créé seulement dans le miroir sera perdu — c'est déjà arrivé avec
       production, où il n'y a rien à configurer. `tools/configurer_origine.py`
       réécrit la CSP des 37 pages en une commande et **refuse une origine
       `http://` non locale** (les jetons de session transiteraient en clair).
+- [x] ~~Frontend déployé~~ — 18/09, **https://klassio-saas.vercel.app** (Vercel,
+      projet `klassio-saas`, redéploiement automatique à chaque push sur `main`).
+      `vercel.json` déclare `framework: null` : sans lui Vercel détectait Flask
+      via requirements.txt et aurait tenté un déploiement serverless du backend.
+      `.vercelignore` écarte backend/, tools/, docs/. Vérifié : 0 fonction
+      serverless créée. **Lien à partager : /demo.html**, entièrement autonome.
+      L'application (`/app/*`) affiche « l'API ne répond pas à cette adresse »
+      tant que le backend n'est pas déployé — c'est un cul-de-sac honnête, pas
+      une panne silencieuse.
 - [ ] Confier le déploiement Heroku à Emergant — `DEPLOIEMENT.md` §3.3.
 - [ ] Jouer une fois `pg_tests.py --supabase` avant la bascule (seul mode qui
       exerce le pooler en mode transaction).
