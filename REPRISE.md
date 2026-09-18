@@ -1152,7 +1152,14 @@ fichier créé seulement dans le miroir sera perdu — c'est déjà arrivé avec
 - [ ] **P3 — tableau de bord** : 28 requêtes SQL, agrégats sans `LIMIT`.
       Croissance mesurée 92 → 141 ms quand l'historique quadruple. Tient
       aujourd'hui, à traiter si le produit vise de plus gros établissements.
-- [ ] Initialiser le dépôt git (il n'y en a **pas**) avant tout `git push heroku`.
+- [x] ~~Initialiser le dépôt git~~ — fait le 18/09.
+      **`git@github.com:Yversplayer/klassio-saas.git`, dépôt PUBLIC** (choix du
+      propriétaire, après recommandation inverse : le code porte tout le modèle
+      de sécurité). Exclus par `.gitignore` et vérifiés absents du distant :
+      `backend/.env` (clé de service Supabase, mot de passe de la base) et tous
+      les `*.db` (élèves mineurs nommés, responsables, paiements, empreintes de
+      mots de passe). 198 fichiers, 4,7 Mo. Accès par clé SSH ed25519 **sans
+      phrase de passe** — elle vaut donc ce que vaut l'accès au portable.
 - [ ] Confier le déploiement Heroku à Emergant — `DEPLOIEMENT.md` §3.3.
 - [ ] Jouer une fois `pg_tests.py --supabase` avant la bascule (seul mode qui
       exerce le pooler en mode transaction).
