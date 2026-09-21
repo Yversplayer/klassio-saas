@@ -219,12 +219,33 @@ def get_students_by_class(conn, ctx, class_name_fragment):
 
 
 def search_students(conn, ctx, query):
+    """Recherche par nom, DANS LE PÉRIMÈTRE DU RÔLE.
+
+    Cette fonction ne filtrait que sur `tenant_id`. Toutes les autres lectures
+    de ce module passent par `school.students_where_clause()` — celle-ci était
+    la seule à l'oublier, et c'est justement celle qui prend un nom en entrée.
+
+    Mesuré le 20/09 sur la base de test : un professeur dont le périmètre
+    compte 67 élèves sur 400 demandait « trouve Esther » et recevait DIX
+    résultats, dont SEPT hors de ses classes — nom et classe compris. Ce n'était
+    pas une fuite entre établissements (le `tenant_id` tenait), mais une fuite
+    entre RÔLES à l'intérieur de l'école, c'est-à-dire exactement la promesse du
+    produit : chaque rôle ne voit que ce qui le regarde.
+
+    L'appelant écarte déjà le parent. Ce filtre-ci protège le professeur et le
+    DD, dont le périmètre est réel et restreint — et il protégera le parent
+    aussi le jour où quelqu'un lèvera cette condition en amont.
+    """
+    where, params = school.students_where_clause(conn, ctx)
+    if where is None:
+        return []
+    motif = "%" + query.lower() + "%"
     rows = conn.execute(
-        """SELECT s.id, s.first_name, s.last_name, c.name as class_name
-           FROM students s LEFT JOIN classes c ON c.id = s.class_id
-           -- LOWER() des deux côtés : voir get_students_by_class ci-dessus.
-           WHERE s.tenant_id=? AND (LOWER(s.first_name) LIKE ? OR LOWER(s.last_name) LIKE ?)""",
-        (ctx["tenant_id"], "%" + query.lower() + "%", "%" + query.lower() + "%"),
+        f"""SELECT s.id, s.first_name, s.last_name, c.name as class_name
+            FROM students s LEFT JOIN classes c ON c.id = s.class_id
+            -- LOWER() des deux côtés : voir get_students_by_class ci-dessus.
+            WHERE {where} AND (LOWER(s.first_name) LIKE ? OR LOWER(s.last_name) LIKE ?)""",
+        params + (motif, motif),
     ).fetchall()
     return [dict(r) for r in rows]
 

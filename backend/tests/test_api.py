@@ -596,6 +596,61 @@ class KlassioApiTests(unittest.TestCase):
         logs = self.client.get("/api/audit-logs", headers=h).get_json()
         self.assertTrue(any(l["action"] == "ai.ask" and l["status"] == "denied" for l in logs))
 
+    def test_17bis_la_recherche_de_l_ia_reste_dans_le_perimetre_du_role(self):
+        """« Trouve X » ne doit renvoyer que des élèves que le rôle voit déjà.
+
+        Trouvé le 20/09. Toutes les lectures de ai_assistant.py passent par
+        `school.students_where_clause()` — SAUF `search_students()`, qui ne
+        filtrait que sur `tenant_id`. C'était justement celle qui prend un nom
+        en entrée.
+
+        Mesuré sur la base de charge : un professeur dont le périmètre comptait
+        67 élèves sur 400 demandait « trouve Esther » et recevait dix résultats,
+        dont SEPT hors de ses classes, avec leur nom et leur classe. Pas une
+        fuite entre établissements — le tenant tenait — mais une fuite entre
+        RÔLES dans la même école, c'est-à-dire la promesse centrale du produit.
+
+        Le test vérifie les deux sens : le professeur ne voit que sa classe, et
+        la Direction continue de tout voir. Un filtre qui casserait la Direction
+        serait une régression, pas un correctif.
+        """
+        ctx = self._setup_ai_school("ai17b")
+        h = ctx["h"]
+        year_id = self.client.get("/api/academic-years", headers=h).get_json()[0]["id"]
+
+        # Une seconde classe, avec une élève au prénom identique à celle de la
+        # première : c'est le cas qui piège une recherche par nom.
+        autre = self.client.post("/api/classes", json={
+            "academic_year_id": year_id, "name": "5e B"}, headers=h).get_json()
+        cachee = self.client.post("/api/students", json={
+            "academic_year_id": year_id, "class_id": autre["id"],
+            "first_name": "Sarah", "last_name": "Ilunga"}, headers=h).get_json()
+
+        # Un professeur titulaire de la PREMIÈRE classe uniquement.
+        inv = self.client.post("/api/invitations", json={
+            "role": "professeur", "class_ids": [ctx["class"]["id"]]}, headers=h).get_json()
+        prof = self.client.post("/api/invitations/accept", json={
+            "token": inv["token"], "name": "Prof Titulaire",
+            "email": "prof17b@ai.test", "password": "Secret123!"}).get_json()
+        h_prof = self._auth(prof["token"])
+
+        visibles = {s["id"] for s in self.client.get("/api/students", headers=h_prof).get_json()}
+        self.assertNotIn(cachee["id"], visibles,
+                         "le décor est faux : ce professeur voit déjà l'autre classe")
+
+        r = self.client.post("/api/ai/ask", json={"message": "trouve Sarah"}, headers=h_prof).get_json()
+        lignes = (r.get("rich") or {}).get("rows") or []
+        noms = [l[0] for l in lignes]
+        self.assertNotIn("Sarah Ilunga", noms,
+                         "l'IA a livré au professeur une élève hors de son périmètre")
+        self.assertIn("Sarah Mbuyi", noms, "l'IA ne trouve plus sa propre élève")
+
+        # Contre-épreuve : la Direction voit bien les deux.
+        rd = self.client.post("/api/ai/ask", json={"message": "trouve Sarah"}, headers=h).get_json()
+        noms_dir = [l[0] for l in ((rd.get("rich") or {}).get("rows") or [])]
+        self.assertIn("Sarah Ilunga", noms_dir, "le filtre a aussi aveuglé la Direction")
+        self.assertIn("Sarah Mbuyi", noms_dir)
+
     def test_18_ai_respects_role_permissions_no_cross_role_leak(self):
         """Un parent ne doit jamais obtenir par l'IA une donnée globale qu'il ne
         pourrait pas consulter en naviguant lui-même dans Klassio — et il doit
