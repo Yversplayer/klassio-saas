@@ -157,7 +157,7 @@
       var sel = '<select id="resPeriod" style="height:34px;border-radius:100px;border:1px solid var(--line);padding:0 12px;background:var(--surface);font:inherit;font-size:12.5px;color:var(--ink)">' + r.periods.map(function (p) { return '<option value="' + UI.escapeHtml(p) + '"' + (p === r.period ? " selected" : "") + ">" + UI.escapeHtml(p) + "</option>"; }).join("") + "</select>";
       return '<div class="kpi-grid cols-4">' + UI.kpi("Moyenne de classe", avg != null ? avg + " %" : "—", { icon: "reports" }) + UI.kpi("Au-dessus du seuil", passed + " / " + withAvg.length, { icon: "check", tone: passed === withAvg.length ? "ok" : "warn", sub: "seuil de réussite : " + threshold + " %" }) +
         UI.kpi("Élèves classés", String(withAvg.length), { icon: "students" }) + UI.kpi("Période", UI.escapeHtml(r.period || "—"), { icon: "calendar" }) + "</div>" +
-        '<div class="panel"><div class="panel-head"><h2>Conseil de classe</h2><div class="row no-print">' + sel + '<button type="button" class="btn btn-ghost btn-sm" id="printCouncil">' + UI.icon("print", 15) + "Imprimer</button></div></div>" +
+        '<div class="panel"><div class="panel-head"><h2>Conseil de classe</h2><div class="row no-print">' + sel + '<button type="button" class="btn btn-ghost btn-sm" id="printCouncil">' + UI.icon("print", 15) + "Imprimer</button><button type=\"button\" class=\"btn btn-ghost btn-sm\" id=\"printBulletins\">" + UI.icon("book", 15) + "Bulletins de la classe</button></div></div>" +
         '<div id="councilSheet" class="print-sheet"><div class="ps-head"><div class="ps-school"><strong>' + UI.escapeHtml(ctx.tenant_name || "") + "</strong><span>Conseil de classe — " + UI.escapeHtml(r.class.name) + '</span></div><div style="text-align:right"><h2>RÉSULTATS</h2><span class="muted">' + UI.escapeHtml(r.period || "") + '</span></div></div><div class="table-wrap"><table class="data-table responsive"><thead><tr><th>Rang</th><th>Élève</th><th class="num">Moyenne /20</th><th class="num">%</th><th>Conduite</th><th>Décision</th>' + (canCouncil() ? '<th class="actions no-print"></th>' : "") + "</tr></thead><tbody>" +
         r.students.slice().sort(function (a, b) { return (a.rank || 999) - (b.rank || 999); }).map(function (s) {
           var actions = canCouncil() ? '<button type="button" class="btn btn-ghost btn-xs cond-btn" data-id="' + s.id + '" data-name="' + UI.escapeHtml(s.first_name + " " + s.last_name) + '" data-label="' + UI.escapeHtml(s.conduct.label || "") + '">Conduite</button>' + (ctx.role === "directeur" ? ' <button type="button" class="btn btn-ghost btn-xs dec-btn" data-id="' + s.id + '" data-name="' + UI.escapeHtml(s.first_name + " " + s.last_name) + '">Décision</button>' : "") : "";
@@ -343,7 +343,70 @@
         wire(); UI.wireHrefs(document.querySelector('[data-tab-panel="conseil"]'));
       });
     });
-    var pc = document.getElementById("printCouncil"); if (pc) pc.addEventListener("click", function () { UI.printSheet(document.getElementById("councilSheet"), "Conseil de classe — " + C.name); });
+    // BULLETINS DE TOUTE LA CLASSE, EN UNE FOIS.
+  //
+  // Jusqu'ici la Direction ouvrait le dossier de chaque élève et imprimait son
+  // bulletin : quarante-deux fois pour une classe, quatre cents pour l'école.
+  // Personne ne fait ça — en pratique les bulletins repartaient sous Excel, et
+  // Klassio ne servait plus à rien en fin de trimestre.
+  //
+  // Le serveur compose chaque bulletin avec LA MÊME fonction que le bulletin
+  // individuel : le lot ne peut donc pas diverger de l'unité. Ici on ne fait
+  // que mettre en page.
+  function imprimerBulletins() {
+    var btn = document.getElementById("printBulletins");
+    var periode = (document.getElementById("resPeriod") || {}).value || "";
+    UI.btnState(btn, "loading", "Préparation…");
+    api.fetch("/classes/" + classId + "/bulletins" + (periode ? "?period=" + encodeURIComponent(periode) : ""))
+      .then(function (res) {
+        if (!res.ok) {
+          UI.btnState(btn, "error", "Échec");
+          UI.toast((res.body && res.body.error) || "Impossible de générer les bulletins.", "error");
+          return;
+        }
+        var d = res.body;
+        if (!d.count) {
+          UI.btnState(btn, "idle");
+          UI.toast("Aucun élève actif dans cette classe.", "warn");
+          return;
+        }
+        var hote = document.getElementById("bulletinsSheet") || (function () {
+          var el = document.createElement("div");
+          el.id = "bulletinsSheet";
+          el.style.display = "none";
+          document.body.appendChild(el);
+          return el;
+        })();
+        hote.innerHTML = d.bulletins.map(function (b, i) {
+          return unBulletin(b, d, i < d.count - 1);
+        }).join("");
+        UI.btnState(btn, "success", d.count + " bulletin(s)");
+        UI.printSheet(hote, "Bulletins — " + d.class_name + (d.period ? " — " + d.period : ""));
+      });
+  }
+
+  function unBulletin(b, d, saltDePage) {
+    var e = b.student;
+    var lignes = (b.subjects || []).map(function (m) {
+      return "<tr><td>" + UI.escapeHtml(m.subject) + '</td><td class="num">'
+        + (m.average_20 != null ? m.average_20 : "—") + "</td></tr>";
+    }).join("") || '<tr><td colspan="2" class="muted">Aucune note enregistrée pour cette période.</td></tr>';
+    return '<div class="print-sheet"' + (saltDePage ? ' style="page-break-after:always"' : "")
+      + '><div class="ps-head"><div class="ps-school"><strong>' + UI.escapeHtml(d.school_name || "")
+      + "</strong><span>" + UI.escapeHtml(e.last_name + " " + e.first_name)
+      + " — " + UI.escapeHtml(e.class_name || "") + "</span></div>"
+      + '<div style="text-align:right"><h2>BULLETIN</h2><span class="muted">'
+      + UI.escapeHtml(b.period || d.period || "") + "</span></div></div>"
+      + '<div class="table-wrap"><table class="data-table"><thead><tr><th>Matière</th>'
+      + '<th class="num">Moyenne /20</th></tr></thead><tbody>' + lignes + "</tbody></table></div>"
+      + '<p class="ps-foot">Moyenne générale : <strong>'
+      + (b.general_average_20 != null ? b.general_average_20 + " / 20" : "—") + "</strong>"
+      + (b.rank ? " — rang " + b.rank + " / " + b.class_size : "")
+      + (e.code ? " — identifiant " + UI.escapeHtml(e.code) : "") + "</p></div>";
+  }
+
+  var pc = document.getElementById("printCouncil"); if (pc) pc.addEventListener("click", function () { UI.printSheet(document.getElementById("councilSheet"), "Conseil de classe — " + C.name); });
+    var pb = document.getElementById("printBulletins"); if (pb) pb.addEventListener("click", imprimerBulletins);
     document.querySelectorAll(".cond-btn").forEach(function (b) { b.addEventListener("click", function () { openConductModal(b.dataset.id, b.dataset.name, b.dataset.label); }); });
     document.querySelectorAll(".dec-btn").forEach(function (b) { b.addEventListener("click", function () { openDecisionModal(b.dataset.id, b.dataset.name); }); });
 

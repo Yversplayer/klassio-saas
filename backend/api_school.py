@@ -159,6 +159,76 @@ def student_bulletin(student_id):
     return jsonify(result)
 
 
+@bp.get("/api/classes/<class_id>/bulletins")
+@require_auth
+def class_bulletins(class_id):
+    """Les bulletins de TOUTE une classe, en un appel.
+
+    Le seul manque réel du chantier « import → bulletins » : tout le reste
+    existait. `results_import.py` analyse et versionne les fichiers depuis
+    longtemps, `school.bulletin()` compose un bulletin depuis les résultats
+    enregistrés, et 35 tests couvrent déjà la correspondance par identifiant,
+    le refus d'un rapprochement par nom seul et l'isolation entre écoles.
+
+    Ce qui n'existait pas : produire les 42 bulletins d'une classe. En fin de
+    trimestre, la Direction les ouvrait un par un — 42 fois, puis 400 fois pour
+    l'école entière. Personne ne fait ça.
+
+    CE QUE CETTE ROUTE NE FAIT PAS : elle ne publie rien et ne recalcule rien.
+    Elle appelle, élève par élève, exactement la fonction qui sert déjà au
+    bulletin individuel. Deux bulletins du même élève, l'un ouvert seul,
+    l'autre dans le lot, sont donc identiques par construction — et non parce
+    qu'on aurait pris soin de recopier la même logique à deux endroits.
+    """
+    conn = db.get_connection()
+    try:
+        tenant_id = g.ctx["tenant_id"]
+        classe = conn.execute("SELECT * FROM classes WHERE id=? AND tenant_id=?",
+                              (class_id, tenant_id)).fetchone()
+        if not classe:
+            return _not_found("class.bulletins", "class", class_id, "Classe introuvable.")
+
+        # LE PÉRIMÈTRE, AVANT TOUT. Un professeur n'obtient les bulletins que
+        # des classes qu'il enseigne ; la Direction les obtient toutes.
+        # `visible_class_ids` renvoie None pour « aucune restriction ».
+        autorisees = school.visible_class_ids(conn, g.ctx)
+        if autorisees is not None and class_id not in autorisees:
+            return _denied("class.bulletins", "class", class_id)
+        # Un parent n'imprime pas la classe de son enfant : il a le bulletin de
+        # SON enfant, et rien du reste du groupe.
+        if g.ctx["role"] == "parent":
+            return _denied("class.bulletins", "class", class_id)
+
+        periode = request.args.get("period") or None
+        eleves = conn.execute(
+            """SELECT * FROM students WHERE tenant_id=? AND class_id=? AND status='active'
+               ORDER BY last_name, first_name""", (tenant_id, class_id)).fetchall()
+
+        tenant = conn.execute("SELECT name FROM tenants WHERE id=?", (tenant_id,)).fetchone()
+        sortie = []
+        for e in eleves:
+            eleve = dict(e)
+            eleve["class_name"] = classe["name"]
+            b = school.bulletin(conn, tenant_id, eleve, period=periode,
+                                only_published=(g.ctx["role"] == "parent"))
+            b["student"] = {"id": eleve["id"], "code": eleve["code"],
+                            "first_name": eleve["first_name"], "last_name": eleve["last_name"],
+                            "class_name": classe["name"]}
+            sortie.append(b)
+
+        audit(tenant_id, g.ctx["user_id"], "class.bulletins", "class", class_id, "success",
+              after={"count": len(sortie), "period": periode})
+        return jsonify({
+            "class_name": classe["name"],
+            "school_name": tenant["name"] if tenant else "",
+            "period": periode,
+            "count": len(sortie),
+            "bulletins": sortie,
+        })
+    finally:
+        conn.close()
+
+
 # ===========================================================================
 # ÉQUIPE & CLASSES
 # ===========================================================================
