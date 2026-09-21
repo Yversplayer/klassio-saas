@@ -516,6 +516,40 @@ CREATE TABLE IF NOT EXISTS deliveries (
   UNIQUE(tenant_id, idempotency_key)
 );
 CREATE INDEX IF NOT EXISTS idx_deliveries_tenant ON deliveries(tenant_id, created_at);
+
+-- Exports. L'établissement doit pouvoir REPRENDRE ses données.
+--
+-- Klassio savait importer depuis Excel depuis longtemps ; rien ne sortait.
+-- Pour un logiciel payant c'est d'abord une question de confiance : « et si
+-- j'arrête de payer, je perds tout ? » est la première question d'un directeur
+-- prudent, et la réponse doit être bonne.
+--
+-- Une ligne = UNE demande d'export, avec son état RÉEL. L'écran n'affiche
+-- jamais « prêt » parce qu'un bouton a été cliqué : il l'affiche parce que le
+-- serveur a écrit READY. `counts` garde le nombre de lignes par feuille, ce
+-- qui permet de vérifier qu'une archive est complète sans l'ouvrir.
+--
+-- ARCHIVER N'EST PAS SUPPRIMER. Rien ici n'efface quoi que ce soit : un export
+-- est une COPIE. La suppression des données d'une année close, si elle arrive
+-- un jour, sera une décision distincte et explicite.
+CREATE TABLE IF NOT EXISTS exports (
+  id TEXT PRIMARY KEY,
+  tenant_id TEXT NOT NULL REFERENCES tenants(id),
+  academic_year_id TEXT REFERENCES academic_years(id),
+  kind TEXT NOT NULL,                 -- students | classes | ... | annual
+  scope TEXT,                         -- JSON des filtres appliqués
+  status TEXT NOT NULL DEFAULT 'CREATED',
+  -- CREATED | PROCESSING | READY | FAILED | EXPIRED
+  file_name TEXT,
+  file_size INTEGER,
+  counts TEXT,                        -- JSON {feuille: nombre de lignes}
+  error_message TEXT,
+  requested_by TEXT NOT NULL REFERENCES users(id),
+  created_at TEXT NOT NULL,
+  completed_at TEXT,
+  expires_at TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_exports_tenant ON exports(tenant_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_deliveries_status ON deliveries(tenant_id, status);
 CREATE INDEX IF NOT EXISTS idx_deliveries_notification ON deliveries(notification_id);
 

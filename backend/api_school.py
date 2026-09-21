@@ -10,11 +10,12 @@ Chaque route :
 Aucune de ces trois étapes ne dépend d'un champ envoyé par le client.
 """
 import json
+import os
 import re
 import time
 from datetime import date, timedelta
 
-from flask import Blueprint, request, jsonify, g
+from flask import Blueprint, request, jsonify, g, send_file
 
 import db
 import security
@@ -25,6 +26,7 @@ import school
 import discipline as disc
 import deliveries as deliveries_module
 import mailer
+import exports as exports_module
 from security import require_auth, new_id, audit, has_permission
 from validation import (json_object, ValidationError, required_text, positive_amount, valid_phone, valid_hex_color,
                         valid_password, valid_email, image_data_uri, DATA_URI_IMAGE)
@@ -1566,6 +1568,182 @@ def _resolve_reset(conn, token):
     if not row or row["used_at"] or float(row["expires_at"]) < time.time():
         return None
     return row
+
+
+# ---------------------------------------------------------------------------
+# Exports — l'établissement reprend ses données
+# ---------------------------------------------------------------------------
+
+@bp.post("/api/exports")
+@require_auth
+def create_export():
+    """Génère un export et retourne son ÉTAT RÉEL.
+
+    La génération est synchrone : il n'y a pas de file d'attente dans Klassio
+    (vérifié à l'audit — ni Celery, ni RQ, ni scheduler), et en monter une pour
+    quelques archives par an coûterait plus à exploiter que le problème
+    qu'elle résout. Une école de 2 000 élèves produit son archive en quelques
+    secondes. Le statut n'en est pas moins réel : PROCESSING est écrit avant de
+    commencer, READY seulement quand le fichier existe sur le disque.
+
+    `data.export` est une permission DISTINCTE de la lecture. Consulter sa
+    classe et sortir un fichier de l'établissement ne sont pas le même acte :
+    le second emporte les données hors de tout contrôle d'accès.
+    """
+    if not has_permission(g.ctx["role"], "data.export"):
+        return _denied("export.create", "export", None)
+
+    data = json_object(request.get_json(force=True))
+    kind = required_text(data.get("kind"), "kind", max_length=40)
+    annee_id = (data.get("academic_year_id") or "").strip() or None
+    tenant_id = g.ctx["tenant_id"]
+
+    if kind != "annual" and kind not in exports_module.JEUX:
+        raise ValidationError(f"Type d'export inconnu : {kind}.")
+
+    conn = db.get_connection()
+    try:
+        # L'ANNÉE EST REVÉRIFIÉE CONTRE L'ÉTABLISSEMENT. Un identifiant venu du
+        # navigateur ne prouve rien : sans ce contrôle, `academic_year_id`
+        # d'une autre école ouvrirait ses données.
+        libelle = None
+        if annee_id:
+            an = conn.execute("SELECT label FROM academic_years WHERE id=? AND tenant_id=?",
+                              (annee_id, tenant_id)).fetchone()
+            if not an:
+                return _not_found("export.create", "academic_year", annee_id,
+                                  "Année scolaire introuvable pour cet établissement.")
+            libelle = an["label"]
+
+        exports_module.purger_expires(conn, tenant_id)
+
+        ecole = conn.execute("SELECT name FROM tenants WHERE id=?", (tenant_id,)).fetchone()
+        demandeur = conn.execute("SELECT name FROM users WHERE id=?", (g.ctx["user_id"],)).fetchone()
+        export_id = new_id()
+        maintenant = time.time()
+        conn.execute(
+            """INSERT INTO exports (id, tenant_id, academic_year_id, kind, scope, status,
+                                    requested_by, created_at, expires_at)
+               VALUES (?,?,?,?,?,?,?,?,?)""",
+            (export_id, tenant_id, annee_id, kind, json.dumps({"kind": kind}), "PROCESSING",
+             g.ctx["user_id"], str(maintenant),
+             str(maintenant + exports_module.CONSERVATION_SECONDES)))
+        conn.commit()
+
+        try:
+            jeux = None if kind == "annual" else [kind]
+            contenu, comptes = exports_module.construire_archive(
+                conn, tenant_id, annee_id, ecole["name"] if ecole else "",
+                libelle, demandeur["name"] if demandeur else "", jeux=jeux)
+            chemin = exports_module.chemin_archive(tenant_id, export_id)
+            with open(chemin, "wb") as f:
+                f.write(contenu)
+            nom_fichier = f"Klassio_{exports_module._assainir(libelle or kind)}.zip"
+            conn.execute(
+                """UPDATE exports SET status='READY', file_name=?, file_size=?, counts=?,
+                          completed_at=? WHERE id=?""",
+                (nom_fichier, len(contenu), json.dumps(comptes), str(time.time()), export_id))
+            conn.commit()
+            audit(tenant_id, g.ctx["user_id"], "export.created", "export", export_id, "success",
+                  after={"kind": kind, "rows": sum(comptes.values())})
+        except Exception as e:  # noqa: BLE001
+            # L'échec est consigné et RENVOYÉ. Un écran qui afficherait « prêt »
+            # sur une archive absente enverrait la Direction télécharger du vide.
+            #
+            # ROLLBACK D'ABORD. En PostgreSQL, une requête en erreur AVORTE la
+            # transaction : toute instruction suivante échoue à son tour avec
+            # « current transaction is aborted ». Sans cette ligne, l'écriture
+            # du statut FAILED échouait elle-même et l'export restait
+            # éternellement en PROCESSING — un état qui ne se résout jamais et
+            # que personne ne peut expliquer. Invisible en SQLite, qui tolère
+            # de poursuivre après une erreur.
+            conn.rollback()
+            conn.execute("UPDATE exports SET status='FAILED', error_message=?, completed_at=? WHERE id=?",
+                         (str(e)[:400], str(time.time()), export_id))
+            conn.commit()
+            audit(tenant_id, g.ctx["user_id"], "export.failed", "export", export_id, "error")
+            return jsonify({"id": export_id, "status": "FAILED",
+                            "error": "La génération a échoué. Réessayez ou choisissez moins de données."}), 500
+
+        ligne = conn.execute("SELECT * FROM exports WHERE id=?", (export_id,)).fetchone()
+        return jsonify(_export_json(ligne)), 201
+    finally:
+        conn.close()
+
+
+def _export_json(row):
+    d = dict(row)
+    return {
+        "id": d["id"], "kind": d["kind"], "status": d["status"],
+        "academic_year_id": d["academic_year_id"], "file_name": d["file_name"],
+        "file_size": d["file_size"],
+        "counts": json.loads(d["counts"]) if d.get("counts") else {},
+        "created_at": d["created_at"], "completed_at": d["completed_at"],
+        "expires_at": d["expires_at"],
+    }
+
+
+@bp.get("/api/exports")
+@require_auth
+def list_exports():
+    """L'historique : a-t-on déjà sauvegardé cette année ?
+
+    C'est la question qui compte avant de clôturer. L'historique reste même
+    quand le fichier a expiré — la trace de l'export est une information en
+    soi, distincte de l'archive elle-même.
+    """
+    if not has_permission(g.ctx["role"], "data.export"):
+        return _denied("export.read", "export", None)
+    conn = db.get_connection()
+    try:
+        exports_module.purger_expires(conn, g.ctx["tenant_id"])
+        rows = conn.execute(
+            """SELECT e.*, u.name AS requested_by_name, a.label AS year_label
+               FROM exports e LEFT JOIN users u ON u.id = e.requested_by
+               LEFT JOIN academic_years a ON a.id = e.academic_year_id
+               WHERE e.tenant_id=? ORDER BY e.created_at DESC LIMIT 50""",
+            (g.ctx["tenant_id"],)).fetchall()
+        sortie = []
+        for r in rows:
+            item = _export_json(r)
+            item["requested_by_name"] = r["requested_by_name"]
+            item["year_label"] = r["year_label"]
+            sortie.append(item)
+        return jsonify(sortie)
+    finally:
+        conn.close()
+
+
+@bp.get("/api/exports/<export_id>/download")
+@require_auth
+def download_export(export_id):
+    """Le téléchargement revérifie TOUT, à chaque fois.
+
+    Posséder l'identifiant d'un export ne donne rien : il est revérifié contre
+    l'établissement de la session. Sans ce contrôle, un identifiant deviné ou
+    récupéré dans un journal ouvrirait l'archive complète d'une autre école —
+    c'est-à-dire tous ses élèves, ses familles et sa comptabilité.
+    """
+    if not has_permission(g.ctx["role"], "data.export"):
+        return _denied("export.download", "export", export_id)
+    conn = db.get_connection()
+    try:
+        row = conn.execute("SELECT * FROM exports WHERE id=? AND tenant_id=?",
+                           (export_id, g.ctx["tenant_id"])).fetchone()
+        if not row:
+            return _not_found("export.download", "export", export_id, "Export introuvable.")
+        if row["status"] != "READY":
+            return jsonify({"error": f"Cet export n'est pas disponible (état : {row['status']})."}), 409
+        chemin = exports_module.chemin_archive(g.ctx["tenant_id"], export_id)
+        if not os.path.exists(chemin):
+            conn.execute("UPDATE exports SET status='EXPIRED' WHERE id=?", (export_id,))
+            conn.commit()
+            return jsonify({"error": "L'archive a expiré. Relancez l'export."}), 410
+        audit(g.ctx["tenant_id"], g.ctx["user_id"], "export.downloaded", "export", export_id, "success")
+        return send_file(chemin, mimetype="application/zip", as_attachment=True,
+                         download_name=row["file_name"] or "export.zip")
+    finally:
+        conn.close()
 
 
 @bp.post("/api/auth/forgot-password")

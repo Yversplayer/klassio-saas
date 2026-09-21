@@ -42,3 +42,4 @@ tools/k6/resultats/*.txt
 
 # macOS
 .DS_Store
+exports_store/

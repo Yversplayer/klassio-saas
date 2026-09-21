@@ -335,6 +335,11 @@ ROLE_PERMISSIONS = {
         "discipline.read", "discipline.manage", "discipline.internal", "discipline.rules.manage",
         "grades.read", "grades.manage", "schedule.read", "schedule.manage",
         "store.read", "store.manage", "orders.read", "orders.manage", "receipts.read",
+        # Exporter n'est PAS lire. Un professeur consulte légitimement sa
+        # classe ; sortir un fichier de l'établissement est un autre acte, qui
+        # emporte les données hors de tout contrôle d'accès. La permission est
+        # donc explicite et distincte, et la Direction seule la détient.
+        "data.export",
     },
     "discipline": {
         "students.read.secondary", "classes.read", "dashboard.discipline",
