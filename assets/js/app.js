@@ -328,6 +328,10 @@
   window.KlassioApi = {
     fetch: apiFetch, roleMenus: ROLE_MENUS, platformMenu: PLATFORM_MENU, roleLabels: ROLE_LABELS, firstName: firstName,
     passwordMeetsRules: passwordMeetsRules, wirePasswordRules: wirePasswordRules, storeSession: storeSession, getToken: getToken,
+    // Origine de l'API, pour les rares appels qui ne passent pas par
+    // apiFetch — un téléchargement de fichier, qui doit lire un blob et non
+    // du JSON, tout en portant le même en-tête d'authentification.
+    base: API_BASE,
     homeFor: UI.homeFor,
   };
 })();

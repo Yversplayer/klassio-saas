@@ -61,6 +61,10 @@
         paiements: ["finance"],
         documents: ["etablissement"],
         registres: ["discipline"],
+        // Exporter ses données, c'est les faire sortir — la même famille que
+        // les rapports. Une douzième entrée de menu pour une page qu'on
+        // ouvre trois fois par an encombrerait la navigation quotidienne.
+        exports: ["rapports"],
       };
       var pagesDuMenu = menus.map(function (item) { return item[2].replace(".html", ""); });
       var porte = null;
