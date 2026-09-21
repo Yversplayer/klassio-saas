@@ -27,6 +27,7 @@ import discipline as disc
 import deliveries as deliveries_module
 import mailer
 import exports as exports_module
+import promotions
 from security import require_auth, new_id, audit, has_permission
 from validation import (json_object, ValidationError, required_text, positive_amount, valid_phone, valid_hex_color,
                         valid_password, valid_email, image_data_uri, DATA_URI_IMAGE)
@@ -111,11 +112,36 @@ def update_student(student_id):
         if data["status"] not in ("active", "archived", "transferred"):
             raise ValidationError("status invalide.")
         fields.append("status=?"); params.append(data["status"])
+    annee_suivie = None
     if "class_id" in data:
         cid = data["class_id"] or None
-        if cid and not conn.execute("SELECT 1 FROM classes WHERE id=? AND tenant_id=?", (cid, g.ctx["tenant_id"])).fetchone():
+        # L'ANNÉE SUIT LA CLASSE, ET NE RECULE JAMAIS DANS UNE ANNÉE ARCHIVÉE.
+        #
+        # Le contrôle ne portait que sur l'établissement. Un élève pouvait donc
+        # rester rattaché à l'année 2026 tout en pointant une classe de 2027 :
+        # incohérence invisible tant qu'une école n'avait qu'une année, et qui
+        # depuis le passage le faisait disparaître des listes — présent dans
+        # aucune des deux. Déplacer un élève vers la classe d'une autre année
+        # reste permis (c'est la promotion manuelle d'un seul élève), mais son
+        # année le suit, et l'inscription quittée est consignée.
+        #
+        # Une année ARCHIVÉE est close : y renvoyer un élève vivant n'est pas
+        # une correction, c'est une réécriture de l'histoire. La correction
+        # d'affectation a sa propre route, qui exige un motif et laisse une
+        # trace.
+        cls = conn.execute("SELECT * FROM classes WHERE id=? AND tenant_id=?",
+                           (cid, g.ctx["tenant_id"])).fetchone() if cid else None
+        if cid and not cls:
             conn.close()
             return jsonify({"error": "Classe introuvable pour cet établissement."}), 404
+        if cls and cls["academic_year_id"] != student["academic_year_id"]:
+            an = conn.execute("SELECT status FROM academic_years WHERE id=? AND tenant_id=?",
+                              (cls["academic_year_id"], g.ctx["tenant_id"])).fetchone()
+            if an and an["status"] == "ARCHIVED":
+                conn.close()
+                return jsonify({"error": "Cette classe appartient à une année archivée."}), 404
+            annee_suivie = cls["academic_year_id"]
+            fields.append("academic_year_id=?"); params.append(annee_suivie)
         fields.append("class_id=?"); params.append(cid)
     if "photo_data" in data:
         # Forme stricte imposée (voir validation.image_data_uri) : un simple
@@ -127,7 +153,18 @@ def update_student(student_id):
         conn.close()
         return jsonify({"error": "Aucune modification fournie."}), 400
     params += [student_id, g.ctx["tenant_id"]]
+    if annee_suivie:
+        # L'inscription que l'élève quitte, consignée avant de l'être — même
+        # règle qu'au passage d'année, pour le même motif : c'est la seule
+        # information que le déplacement ferait disparaître.
+        promotions.consigner_inscription(conn, g.ctx["tenant_id"], student_id,
+                                         student["academic_year_id"], student["class_id"],
+                                         source="MANUELLE")
     conn.execute(f"UPDATE students SET {', '.join(fields)} WHERE id=? AND tenant_id=?", params)
+    if annee_suivie:
+        promotions.consigner_inscription(conn, g.ctx["tenant_id"], student_id,
+                                         annee_suivie, data.get("class_id") or None,
+                                         source="MANUELLE")
     conn.commit()
     conn.close()
     audit(g.ctx["tenant_id"], g.ctx["user_id"], "student.updated", "student", student_id, "success",
@@ -348,7 +385,9 @@ def update_class(class_id):
     if "cycle" in data:
         if data["cycle"] not in ("maternelle", "primaire", "secondaire"):
             raise ValidationError("cycle doit être maternelle, primaire ou secondaire.")
+        # La Direction se prononce : le cycle cesse d'être une déduction.
         fields.append("cycle=?"); params.append(data["cycle"])
+        fields.append("cycle_source=?"); params.append("declare")
     if not fields:
         conn.close()
         return jsonify({"error": "Aucune modification fournie."}), 400

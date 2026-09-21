@@ -308,9 +308,18 @@
   function parcoursBlock() {
     if (parcours.length < 2) return "";
     var lignes = parcours.map(function (p) {
+      // Une classe changée en cours d'année sans explication visible serait
+      // une anomalie de plus pour qui relit le dossier. La correction se lit.
+      var corr = p.corrected_reason
+        ? '<div class="muted" style="font-size:12px">Corrigé depuis '
+          + UI.escapeHtml(p.previous_class_name || "—") + " — "
+          + UI.escapeHtml(p.corrected_reason)
+          + (p.corrected_by_name ? " (" + UI.escapeHtml(p.corrected_by_name) + ")" : "")
+          + "</div>"
+        : "";
       return "<dt>" + UI.escapeHtml(p.year_label) + "</dt><dd>"
         + UI.escapeHtml(p.class_name || "Non affecté")
-        + (p.courante ? " " + UI.badge("ok", "Année en cours") : "") + "</dd>";
+        + (p.courante ? " " + UI.badge("ok", "Année en cours") : "") + corr + "</dd>";
     }).join("");
     return '<div class="panel-head" style="margin-top:18px"><h2>Parcours</h2></div>'
       + '<dl class="dl">' + lignes + "</dl>";

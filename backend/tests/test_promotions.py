@@ -589,3 +589,388 @@ class AnneeDarrivee(Base):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ApresLaRentree(Base):
+    """Ce qui doit continuer de marcher une fois les élèves passés."""
+
+    def test_proclamer_lannee_terminee_atteint_encore_les_parents(self):
+        """Les élèves ont avancé ; les résultats de l'année close restent les
+        leurs.
+
+        L'audience d'une proclamation se calculait sur l'année COURANTE de
+        l'élève. Après un passage, proclamer une période de l'année terminée ne
+        touchait plus personne : les parents n'ont jamais reçu les résultats de
+        l'année que leur enfant venait de finir, et rien ne le signalait.
+        """
+        ctx = self.ecole("proclamation", eleves=("Alpha",))
+        eleve = ctx["students"][0]["id"]
+        self.c.post("/api/periods", json={"label": "Période 1", "sort": 0}, headers=ctx["h"])
+        periodes = self.c.get("/api/periods", headers=ctx["h"]).get_json()["periods"]
+        p1 = [p for p in periodes if p["label"] == "Période 1"][0]
+        r = self.c.post(f"/api/classes/{ctx['class']['id']}/grades", json={
+            "period": "Période 1", "subject": "Mathématiques",
+            "entries": [{"student_id": eleve, "score": 14, "max_score": 20}]}, headers=ctx["h"])
+        self.assertEqual(r.status_code, 200, r.get_data(as_text=True))
+
+        self.decider(ctx, eleve, "PASSAGE")
+        plan = self.plan(ctx)
+        cible = self.classe_cible(ctx, plan["id"], "6e A")
+        self.c.patch(f"/api/promotion-plans/{plan['id']}/assignments/{eleve}",
+                     json={"target_class_id": cible}, headers=ctx["h"])
+        self.c.post(f"/api/promotion-plans/{plan['id']}/status",
+                    json={"status": "VALIDE"}, headers=ctx["h"])
+        self.c.post(f"/api/promotion-plans/{plan['id']}/apply",
+                    json={"confirm": True}, headers=ctx["h"])
+
+        # L'élève est passé. On proclame maintenant la période de l'an dernier.
+        pub = self.c.post(f"/api/periods/{p1['id']}/publish", json={}, headers=ctx["h"])
+        self.assertEqual(pub.status_code, 200, pub.get_data(as_text=True))
+        self.assertEqual(pub.get_json().get("included"), 1,
+                         "la proclamation n'a atteint personne")
+
+        inv = self.c.post("/api/invitations", json={
+            "role": "parent", "student_ids": [eleve]}, headers=ctx["h"]).get_json()
+        u = self.c.post("/api/invitations/accept", json={
+            "token": inv["token"], "name": "Parent", "email": "parent.proc@promo.test",
+            "password": "Secret123!"}).get_json()
+        hp = {"Authorization": f"Bearer {u['token']}"}
+        dossier = self.c.get(f"/api/students/{eleve}", headers=hp).get_json()
+        vus = [(x["period"], x["score"]) for x in (dossier.get("grades") or [])]
+        self.assertEqual(vus, [("Période 1", 14.0)],
+                         f"le parent ne voit pas les résultats de l'année terminée : {vus}")
+
+
+# ---------------------------------------------------------------------------
+# Le cycle : une donnée déclarée, jamais redevinée
+# ---------------------------------------------------------------------------# ---------------------------------------------------------------------------
+# Le cycle : une donnée déclarée, jamais redevinée
+# ---------------------------------------------------------------------------
+
+class CycleExplicite(Base):
+
+    def creer_classe(self, ctx, nom, level=None, cycle=None, annee=None):
+        corps = {"academic_year_id": annee or ctx["year"], "name": nom}
+        if level:
+            corps["level"] = level
+        if cycle:
+            corps["cycle"] = cycle
+        r = self.c.post("/api/classes", json=corps, headers=ctx["h"])
+        self.assertEqual(r.status_code, 201, r.get_data(as_text=True))
+        return r.get_json()
+
+    def test_un_cycle_declare_fait_foi(self):
+        """LE PRINCIPE. Ce que la Direction déclare ne se redevine jamais."""
+        ctx = self.ecole("cycledeclare")
+        c = self.creer_classe(ctx, "5e Scientifique A", level="5e", cycle="secondaire")
+        self.assertEqual(c["cycle"], "secondaire")
+        self.assertEqual(c["cycle_source"], "declare")
+
+    def test_une_classe_a_section_nest_plus_rangee_en_primaire(self):
+        """« 5e Scientifique A » tombait en primaire : le chiffre l'emportait
+        sur la section. Deux systèmes coexistent en RDC et numérotent
+        différemment ; seule la section lève le doute dans les deux."""
+        ctx = self.ecole("cyclesection")
+        for nom, level in [("5e Scientifique A", "5e"), ("3e Littéraire B", "3e"),
+                           ("2e Pédagogique", "2e"), ("6e Commerciale A", "6e")]:
+            c = self.creer_classe(ctx, nom, level=level)
+            self.assertEqual(c["cycle"], "secondaire", f"{nom} rangée en {c['cycle']}")
+            self.assertEqual(c["cycle_source"], "deduit", "une déduction se dit déduite")
+
+    def test_les_classes_primaires_restent_primaires(self):
+        ctx = self.ecole("cycleprimaire")
+        for nom, level in [("4e année primaire", "4e"), ("6e A", "6e"), ("2e B", "2e")]:
+            c = self.creer_classe(ctx, nom, level=level)
+            self.assertEqual(c["cycle"], "primaire", f"{nom} rangée en {c['cycle']}")
+
+    def test_un_secondaire_sans_section_est_reconnu(self):
+        ctx = self.ecole("cyclesecondaire")
+        for nom, level in [("7e A", "7e"), ("8e B", "8e"),
+                           ("1re Humanités", "1re"), ("Secondaire 2", None)]:
+            c = self.creer_classe(ctx, nom, level=level)
+            self.assertEqual(c["cycle"], "secondaire", f"{nom} rangée en {c['cycle']}")
+
+    def test_la_maternelle_reste_reconnue(self):
+        ctx = self.ecole("cyclematernelle")
+        for nom in ("Maternelle 2", "Jardin d'enfants", "Pré-scolaire A"):
+            self.assertEqual(self.creer_classe(ctx, nom)["cycle"], "maternelle")
+
+    def test_corriger_le_cycle_le_rend_declare(self):
+        ctx = self.ecole("cyclecorrige")
+        c = self.creer_classe(ctx, "5e A", level="5e")
+        self.assertEqual(c["cycle_source"], "deduit")
+        r = self.c.put(f"/api/classes/{c['id']}", json={"cycle": "secondaire"}, headers=ctx["h"])
+        self.assertEqual(r.status_code, 200, r.get_data(as_text=True))
+        cls = self.c.get(f"/api/classes/{c['id']}", headers=ctx["h"]).get_json()
+        self.assertEqual(cls["cycle"], "secondaire")
+        self.assertEqual(cls["cycle_source"], "declare")
+
+    def test_la_copie_conserve_le_cycle_au_lieu_de_le_redeviner(self):
+        """LE POINT QUI COMPTE POUR LE PASSAGE D'ANNÉE.
+
+        Redéduire le cycle à chaque rentrée rejouerait l'approximation
+        d'origine — et effacerait la correction que la Direction aurait faite
+        entre-temps. La copie recopie, elle ne recalcule pas.
+        """
+        ctx = self.ecole("cyclecopie")
+        # Une classe dont le cycle DÉCLARÉ contredit ce qu'on devinerait.
+        corrigee = self.creer_classe(ctx, "5e A", level="5e", cycle="secondaire")
+        self.creer_classe(ctx, "3e Littéraire", level="3e")   # déduit secondaire
+        p = self.plan(ctx)
+        r = self.c.post(f"/api/promotion-plans/{p['id']}/copy-classes", headers=ctx["h"])
+        self.assertEqual(r.status_code, 200, r.get_data(as_text=True))
+        copies = {c["name"]: c for c in self.c.get(
+            f"/api/classes?academic_year_id={p['target_year_id']}", headers=ctx["h"]).get_json()}
+        self.assertEqual(copies["5e A"]["cycle"], "secondaire",
+                         "le cycle déclaré a été redeviné à la copie")
+        self.assertEqual(copies["5e A"]["cycle_source"], "declare",
+                         "une classe déclarée est redevenue une déduction")
+        self.assertEqual(copies["3e Littéraire"]["cycle"], "secondaire")
+        self.assertEqual(copies["3e Littéraire"]["cycle_source"], "deduit")
+        # Et la classe d'origine n'a pas bougé.
+        self.assertEqual(self.c.get(f"/api/classes/{corrigee['id']}",
+                                    headers=ctx["h"]).get_json()["cycle"], "secondaire")
+
+
+# ---------------------------------------------------------------------------
+# Le titulaire consulte, il ne pilote pas
+# ---------------------------------------------------------------------------
+
+class VisibiliteTitulaire(Base):
+
+    def enseignant(self, ctx, mail, class_ids, titulaire=None):
+        payload = {"role": "professeur", "class_ids": class_ids}
+        if titulaire:
+            payload["titulaire_class_id"] = titulaire
+        inv = self.c.post("/api/invitations", json=payload, headers=ctx["h"]).get_json()
+        u = self.c.post("/api/invitations/accept", json={
+            "token": inv["token"], "name": "Prof", "email": mail,
+            "password": "Secret123!"}).get_json()
+        return {"Authorization": f"Bearer {u['token']}"}
+
+    def deux_classes(self, suffixe):
+        ctx = self.ecole(suffixe)
+        autre = self.c.post("/api/classes", json={
+            "academic_year_id": ctx["year"], "name": "5e B"}, headers=ctx["h"]).get_json()
+        self.c.post("/api/students", json={
+            "academic_year_id": ctx["year"], "class_id": autre["id"],
+            "first_name": "Eve", "last_name": "Zoulou"}, headers=ctx["h"])
+        for e in ctx["students"]:
+            self.decider(ctx, e["id"], "PASSAGE")
+        p = self.plan(ctx)
+        return ctx, autre, p
+
+    def test_le_titulaire_consulte_le_plan_de_sa_classe(self):
+        ctx, autre, p = self.deux_classes("titvoit")
+        h = self.enseignant(ctx, "tit1@promo.test", [ctx["class"]["id"]],
+                            titulaire=ctx["class"]["id"])
+        liste = self.c.get("/api/promotion-plans", headers=h)
+        self.assertEqual(liste.status_code, 200, liste.get_data(as_text=True))
+        corps = liste.get_json()
+        self.assertEqual(len(corps["plans"]), 1)
+        self.assertEqual(corps["plans"][0]["student_count"], 3, "effectif hors périmètre")
+        self.assertFalse(corps["peut_piloter"])
+
+        detail = self.c.get(f"/api/promotion-plans/{p['id']}", headers=h)
+        self.assertEqual(detail.status_code, 200, detail.get_data(as_text=True))
+        d = detail.get_json()
+        # Il voit ses élèves, leurs décisions et la destination proposée.
+        self.assertEqual(len(d["assignments"]), 3)
+        self.assertTrue(all(a["source_class_id"] == ctx["class"]["id"] for a in d["assignments"]))
+        self.assertTrue(all(a["action"] == "PASSAGE" for a in d["assignments"]))
+        self.assertIn("target_class_id", d["assignments"][0])
+        # Mais l'écran ne lui propose rien à modifier.
+        self.assertFalse(d["modifiable"])
+        self.assertFalse(d["peut_piloter"])
+
+    def test_le_titulaire_ne_voit_pas_la_classe_dun_collegue(self):
+        ctx, autre, p = self.deux_classes("titcloison")
+        h = self.enseignant(ctx, "tit2@promo.test", [ctx["class"]["id"]],
+                            titulaire=ctx["class"]["id"])
+        d = self.c.get(f"/api/promotion-plans/{p['id']}", headers=h).get_json()
+        self.assertEqual([c["id"] for c in d["classes_source"]], [ctx["class"]["id"]])
+        noms = [a["last_name"] for a in d["assignments"]]
+        self.assertNotIn("Zoulou", noms, "un élève d'une autre classe a fuité")
+        # Et le demander explicitement ne donne rien.
+        force = self.c.get(f"/api/promotion-plans/{p['id']}?source_class_id={autre['id']}",
+                           headers=h)
+        self.assertEqual(force.status_code, 404)
+
+    def test_le_titulaire_ne_pilote_rien(self):
+        """Le refus est au serveur. Masquer les boutons ne protège personne."""
+        ctx, autre, p = self.deux_classes("titrefus")
+        h = self.enseignant(ctx, "tit3@promo.test", [ctx["class"]["id"]],
+                            titulaire=ctx["class"]["id"])
+        eleve = ctx["students"][0]["id"]
+        interdits = [
+            ("POST", f"/api/promotion-plans/{p['id']}/status", {"status": "VALIDE"}),
+            ("POST", f"/api/promotion-plans/{p['id']}/apply", {"confirm": True}),
+            ("POST", f"/api/promotion-plans/{p['id']}/distribute",
+             {"source_class_id": ctx["class"]["id"], "target_class_ids": [autre["id"]]}),
+            ("POST", f"/api/promotion-plans/{p['id']}/copy-classes", {}),
+            ("POST", f"/api/promotion-plans/{p['id']}/refresh", {}),
+            ("PATCH", f"/api/promotion-plans/{p['id']}/assignments/{eleve}",
+             {"action": "REDOUBLEMENT"}),
+            ("POST", f"/api/students/{eleve}/class-correction",
+             {"class_id": autre["id"], "reason": "Essai."}),
+            ("POST", "/api/promotion-plans",
+             {"source_year_id": ctx["year"], "target_year_label": "2099-2100"}),
+        ]
+        for methode, chemin, corps in interdits:
+            r = self.c.open(chemin, method=methode, json=corps, headers=h)
+            self.assertEqual(r.status_code, 403, f"{methode} {chemin} → {r.status_code}")
+
+    def test_un_professeur_non_titulaire_nentre_pas(self):
+        """Enseigner dans une classe n'est pas la préparer."""
+        ctx, autre, p = self.deux_classes("nontit")
+        h = self.enseignant(ctx, "simple@promo.test", [ctx["class"]["id"]])
+        self.assertEqual(self.c.get("/api/promotion-plans", headers=h).status_code, 403)
+        self.assertEqual(self.c.get(f"/api/promotion-plans/{p['id']}", headers=h).status_code, 403)
+
+    def test_le_dd_et_le_parent_nentrent_pas(self):
+        """Le DD dépose des éléments disciplinaires en délibération ; il ne
+        devient pas décideur du passage, ni lecteur du plan."""
+        ctx, autre, p = self.deux_classes("ddparent")
+        inv = self.c.post("/api/invitations", json={
+            "role": "discipline", "scope_cycles": ["secondaire"]}, headers=ctx["h"]).get_json()
+        dd = self.c.post("/api/invitations/accept", json={
+            "token": inv["token"], "name": "DD", "email": "dd@promo.test",
+            "password": "Secret123!"}).get_json()
+        hdd = {"Authorization": f"Bearer {dd['token']}"}
+        self.assertEqual(self.c.get("/api/promotion-plans", headers=hdd).status_code, 403)
+        self.assertEqual(self.c.get(f"/api/promotion-plans/{p['id']}", headers=hdd).status_code, 403)
+
+        inv2 = self.c.post("/api/invitations", json={
+            "role": "parent", "student_ids": [ctx["students"][0]["id"]]},
+            headers=ctx["h"]).get_json()
+        par = self.c.post("/api/invitations/accept", json={
+            "token": inv2["token"], "name": "Parent", "email": "par@promo.test",
+            "password": "Secret123!"}).get_json()
+        hpar = {"Authorization": f"Bearer {par['token']}"}
+        self.assertEqual(self.c.get("/api/promotion-plans", headers=hpar).status_code, 403)
+        self.assertEqual(self.c.get(f"/api/promotion-plans/{p['id']}", headers=hpar).status_code, 403)
+
+    def test_un_titulaire_dune_autre_ecole_ne_voit_rien(self):
+        ctx, autre, p = self.deux_classes("titiso")
+        b = self.ecole("titisoB")
+        hb = self.enseignant(b, "titb@promo.test", [b["class"]["id"]],
+                             titulaire=b["class"]["id"])
+        r = self.c.get(f"/api/promotion-plans/{p['id']}", headers=hb)
+        self.assertEqual(r.status_code, 404, "un plan a fuité entre établissements")
+
+
+# ---------------------------------------------------------------------------
+# Corriger après application — local, motivé, tracé
+# ---------------------------------------------------------------------------
+
+class CorrectionApresApplication(Base):
+
+    def _rentree_faite(self, suffixe):
+        noms = ["Alpha", "Bravo", "Charlie"]
+        ctx = self.ecole(suffixe, eleves=noms)
+        for e in ctx["students"]:
+            self.decider(ctx, e["id"], "PASSAGE")
+        p = self.plan(ctx)
+        a = self.classe_cible(ctx, p["id"], "6e A")
+        b = self.classe_cible(ctx, p["id"], "6e B")
+        for e in ctx["students"]:
+            self.c.patch(f"/api/promotion-plans/{p['id']}/assignments/{e['id']}",
+                         json={"target_class_id": a}, headers=ctx["h"])
+        self.c.post(f"/api/promotion-plans/{p['id']}/status",
+                    json={"status": "VALIDE"}, headers=ctx["h"])
+        r = self.c.post(f"/api/promotion-plans/{p['id']}/apply",
+                        json={"confirm": True}, headers=ctx["h"])
+        self.assertEqual(r.status_code, 200, r.get_data(as_text=True))
+        return ctx, p, a, b
+
+    def test_corriger_un_eleve_sans_defaire_la_rentree(self):
+        ctx, p, a, b = self._rentree_faite("corrige")
+        eleve = ctx["students"][0]["id"]
+        r = self.c.post(f"/api/students/{eleve}/class-correction", json={
+            "class_id": b, "reason": "Erreur de répartition : devait être en 6e B."},
+            headers=ctx["h"])
+        self.assertEqual(r.status_code, 200, r.get_data(as_text=True))
+        self.assertEqual(r.get_json()["ancienne_classe_id"], a)
+        self.assertEqual(r.get_json()["nouvelle_classe_id"], b)
+        # L'élève a bougé, son identité n'a pas changé.
+        dossier = self.c.get(f"/api/students/{eleve}", headers=ctx["h"]).get_json()["student"]
+        self.assertEqual(dossier["id"], eleve)
+        self.assertEqual(dossier["class"]["id"], b)
+        # Les autres n'ont pas bougé : la correction est LOCALE.
+        for e in ctx["students"][1:]:
+            autre = self.c.get(f"/api/students/{e['id']}", headers=ctx["h"]).get_json()["student"]
+            self.assertEqual(autre["class"]["id"], a)
+
+    def test_la_classe_quittee_et_le_motif_sont_conserves(self):
+        ctx, p, a, b = self._rentree_faite("trace")
+        eleve = ctx["students"][0]["id"]
+        self.c.post(f"/api/students/{eleve}/class-correction", json={
+            "class_id": b, "reason": "Effectif déséquilibré."}, headers=ctx["h"])
+        parcours = self.c.get(f"/api/students/{eleve}/enrollments",
+                              headers=ctx["h"]).get_json()["parcours"]
+        courante = [x for x in parcours if x["courante"]][0]
+        self.assertEqual(courante["class_id"], b)
+        self.assertEqual(courante["previous_class_name"], "6e A",
+                         "la classe quittée a été effacée par la correction")
+        self.assertEqual(courante["corrected_reason"], "Effectif déséquilibré.")
+        self.assertTrue(courante["corrected_at"])
+        self.assertTrue(courante["corrected_by_name"])
+
+    def test_lhistorique_de_lannee_precedente_nest_pas_touche(self):
+        ctx, p, a, b = self._rentree_faite("histoire")
+        eleve = ctx["students"][0]["id"]
+        avant = [x for x in self.c.get(f"/api/students/{eleve}/enrollments",
+                                       headers=ctx["h"]).get_json()["parcours"]
+                 if not x["courante"]][0]
+        self.c.post(f"/api/students/{eleve}/class-correction", json={
+            "class_id": b, "reason": "Correction."}, headers=ctx["h"])
+        apres = [x for x in self.c.get(f"/api/students/{eleve}/enrollments",
+                                       headers=ctx["h"]).get_json()["parcours"]
+                 if not x["courante"]][0]
+        self.assertEqual(apres, avant, "l'année passée a été réécrite")
+
+    def test_une_correction_sans_motif_est_refusee(self):
+        ctx, p, a, b = self._rentree_faite("motif")
+        eleve = ctx["students"][0]["id"]
+        for corps in ({"class_id": b}, {"class_id": b, "reason": "  "},
+                      {"class_id": b, "reason": "x"}):
+            r = self.c.post(f"/api/students/{eleve}/class-correction",
+                            json=corps, headers=ctx["h"])
+            self.assertEqual(r.status_code, 400, r.get_data(as_text=True))
+        dossier = self.c.get(f"/api/students/{eleve}", headers=ctx["h"]).get_json()["student"]
+        self.assertEqual(dossier["class"]["id"], a, "l'élève a bougé sans motif")
+
+    def test_on_ne_renvoie_pas_un_eleve_dans_une_annee_archivee(self):
+        """Renvoyer un élève dans une classe de l'an dernier n'est pas une
+        correction : c'est une corruption de l'historique."""
+        ctx, p, a, b = self._rentree_faite("archivee")
+        eleve = ctx["students"][0]["id"]
+        r = self.c.post(f"/api/students/{eleve}/class-correction", json={
+            "class_id": ctx["class"]["id"], "reason": "Retour en arrière."},
+            headers=ctx["h"])
+        self.assertEqual(r.status_code, 404)
+        # Le chemin générique est fermé lui aussi.
+        r2 = self.c.put(f"/api/students/{eleve}",
+                        json={"class_id": ctx["class"]["id"]}, headers=ctx["h"])
+        self.assertEqual(r2.status_code, 404, "l'élève a pu repartir dans l'année archivée")
+
+    def test_la_correction_laisse_une_entree_daudit(self):
+        ctx, p, a, b = self._rentree_faite("audit")
+        eleve = ctx["students"][0]["id"]
+        self.c.post(f"/api/students/{eleve}/class-correction", json={
+            "class_id": b, "reason": "Erreur de saisie."}, headers=ctx["h"])
+        lignes = self.c.get("/api/audit-logs", headers=ctx["h"]).get_json()
+        trace = [x for x in lignes if x.get("action") == "student.class_corrected"]
+        self.assertEqual(len(trace), 1, "aucune trace d'audit")
+        self.assertEqual(trace[0]["resource_id"], eleve)
+
+    def test_une_correction_dun_autre_etablissement_est_refusee(self):
+        ctx, p, a, b = self._rentree_faite("corriso")
+        autre = self.ecole("corrisoB")
+        r = self.c.post(f"/api/students/{autre['students'][0]['id']}/class-correction",
+                        json={"class_id": b, "reason": "Tentative."}, headers=ctx["h"])
+        self.assertEqual(r.status_code, 404)
+        r2 = self.c.post(f"/api/students/{ctx['students'][0]['id']}/class-correction",
+                         json={"class_id": autre["class"]["id"], "reason": "Tentative."},
+                         headers=ctx["h"])
+        self.assertEqual(r2.status_code, 404)

@@ -13,6 +13,10 @@
   var UI = window.KlassioUI, api = window.KlassioApi, admin = window.KlassioAdmin;
   var ctx = null, annees = [], plans = [], plan = null, detail = null;
   var classeCourante = null;
+  // Piloter (Direction) ou consulter (titulaire) : deux écrans, un seul
+  // backend. Le frontend ne fait que refléter ce que le serveur autorise —
+  // qui refuse de toute façon, bouton masqué ou non.
+  var peutPiloter = true;
 
   var TON = {
     PASSAGE: ["ok", "Passage"],
@@ -41,6 +45,8 @@
   // ---- Liste des plans -------------------------------------------------
 
   function rendreListe() {
+    // Le titulaire n'ouvre pas de rentrée : il consulte celle qui se prépare.
+    if (!peutPiloter) return rendreListeConsultation();
     var actives = annees.filter(function (a) { return a.is_active; });
     var optSource = annees.map(function (a) {
       return '<option value="' + a.id + '"' + (a.is_active ? " selected" : "") + ">"
@@ -82,6 +88,31 @@
     });
   }
 
+  function rendreListeConsultation() {
+    var lignes = plans.length ? plans.map(function (p) {
+      var e = ETATS_PLAN[p.status] || ETATS_PLAN.BROUILLON;
+      return '<tr data-open="' + p.id + '" style="cursor:pointer">'
+        + "<td><strong>" + UI.escapeHtml(p.source_year_label) + "</strong> → "
+        + UI.escapeHtml(p.target_year_label) + "</td>"
+        + "<td>" + p.student_count + " élève(s) de votre classe</td>"
+        + "<td>" + UI.badge(e[0], e[1]) + "</td></tr>";
+    }).join("") : "";
+
+    document.getElementById("passageContent").innerHTML = lignes
+      ? '<div class="panel"><div class="panel-head"><h2>Passage de votre classe</h2>'
+        + '<span class="sub">Vous consultez. La Direction prépare et arrête la rentrée ; '
+        + "votre avis sur chaque élève se dépose en délibération.</span></div>"
+        + '<div class="table-wrap"><table class="table"><thead><tr><th>Années</th>'
+        + "<th>Effectif</th><th>État</th></tr></thead><tbody>" + lignes + "</tbody></table></div></div>"
+      : UI.emptyState("Aucune rentrée en préparation",
+          "Quand la Direction ouvrira le plan de passage, votre classe apparaîtra ici.",
+          '<a href="deliberations.html" class="btn btn-ghost btn-sm">Délibérations</a>', "calendar");
+
+    Array.prototype.forEach.call(document.querySelectorAll("[data-open]"), function (tr) {
+      tr.addEventListener("click", function () { ouvrir(tr.dataset.open); });
+    });
+  }
+
   // « 2026-2027 » → « 2027-2028 ». Une suggestion modifiable, pas une règle :
   // les établissements ne nomment pas tous leurs années de la même façon, et
   // le champ reste libre.
@@ -118,13 +149,15 @@
 
   function rendrePlan() {
     var e = detail.etat, st = ETATS_PLAN[plan.status] || ETATS_PLAN.BROUILLON;
+    peutPiloter = detail.peut_piloter !== false;
     var fige = !detail.modifiable;
 
     document.getElementById("passageContent").innerHTML =
       '<div class="row" style="justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap">'
       + "<div><h2 style=\"margin:0\">" + UI.escapeHtml(detail.source_year.label) + " → "
       + UI.escapeHtml(detail.target_year.label) + " " + UI.badge(st[0], st[1]) + "</h2>"
-      + '<p class="muted" style="margin:4px 0 0">' + e.total + " élève(s) concerné(s).</p></div>"
+      + '<p class="muted" style="margin:4px 0 0">' + e.total + " élève(s) concerné(s)"
+      + (peutPiloter ? "" : " dans votre classe") + ".</p></div>"
       + '<button type="button" class="btn btn-ghost btn-sm" id="pRetour">Tous les plans</button></div>'
       + carteEtat(e, fige)
       + bandeauClasses()
@@ -161,6 +194,17 @@
       : '<p style="margin:0">Chaque élève a un sort et, s\'il revient, une classe. '
         + "Le plan peut être validé puis appliqué.</p>";
 
+    if (!peutPiloter) {
+      // Un titulaire voit où en est SA classe, et ce qui manque encore. Aucun
+      // bouton : ni valider, ni appliquer, ni répartir. Ce n'est pas un
+      // masquage de confort — le serveur refuse ces routes pour son rôle.
+      return '<div class="panel" style="margin-top:16px"><div class="panel-head">'
+        + "<h2>Où en est votre classe</h2></div>" + corps
+        + '<p class="note-inline" style="margin-top:12px">' + UI.icon("info", 15)
+        + "<span>Vous consultez ce plan. Pour vous prononcer sur un élève, passez par "
+        + '<a class="link-btn" href="deliberations.html">la délibération</a>.</span></p></div>';
+    }
+
     var actions = [];
     if (!fige) {
       actions.push('<button type="button" class="btn btn-ghost btn-sm" id="pClasses">'
@@ -188,6 +232,7 @@
   }
 
   function bandeauClasses() {
+    if (!peutPiloter) return "";
     var opts = '<option value="">— Toutes les classes —</option>'
       + detail.classes_source.map(function (c) {
         return '<option value="' + c.id + '"' + (c.id === classeCourante ? " selected" : "") + ">"
@@ -239,6 +284,9 @@
   }
 
   function tableau(fige) {
+    // Corriger n'a de sens qu'APRÈS coup, et seulement pour la Direction :
+    // avant l'application, il suffit de changer la classe d'arrivée.
+    var corrigeable = peutPiloter && plan.status === "APPLIQUE";
     var optCibles = detail.classes_cible.map(function (c) {
       return '<option value="' + c.id + '">' + UI.escapeHtml(c.name) + "</option>";
     }).join("");
@@ -266,6 +314,15 @@
                                   'value="' + a.target_class_id + '" selected') + "</select>"
             : '<span class="muted">—</span>');
 
+      // UNE RENTRÉE APPLIQUÉE NE SE DÉFAIT PAS — mais une affectation se
+      // corrige. Pas de « tout annuler » : la rentrée a produit des listes
+      // d'appel et des inscriptions. Un élève, une classe, un motif.
+      var corr = "";
+      if (corrigeable && (a.action === "PASSAGE" || a.action === "REDOUBLEMENT")) {
+        corr = '<button type="button" class="btn btn-ghost btn-sm" data-corriger="' + a.student_id
+          + '" data-nom="' + UI.escapeHtml(a.last_name + " " + a.first_name)
+          + '" data-classe="' + UI.escapeHtml(a.target_class_name || "") + '">Corriger</button>';
+      }
       return "<tr>"
         + "<td><strong>" + UI.escapeHtml(a.last_name + " " + a.first_name) + "</strong>"
         + '<div class="muted" style="font-size:12px">' + UI.escapeHtml(a.code || "") + "</div></td>"
@@ -273,16 +330,21 @@
         + "<td>" + sel + "</td>"
         + "<td>" + cible + "</td>"
         + '<td class="muted">' + UI.escapeHtml(source) + "</td>"
-        + '<td class="muted">' + UI.escapeHtml(a.note || "") + "</td></tr>";
+        + '<td class="muted">' + UI.escapeHtml(a.note || "") + "</td>"
+        + (corrigeable ? "<td>" + corr + "</td>" : "") + "</tr>";
     }).join("");
 
+    var colonnes = corrigeable ? 7 : 6;
     if (!lignes) {
-      lignes = '<tr><td colspan="6" class="muted" style="padding:18px 0">Aucun élève.</td></tr>';
+      lignes = '<tr><td colspan="' + colonnes + '" class="muted" style="padding:18px 0">Aucun élève.</td></tr>';
     }
     return '<div class="panel" style="margin-top:16px"><div class="panel-head"><h2>Élèves</h2>'
-      + '<span class="sub">Chaque élève de l\'année qui se termine, sans exception.</span></div>'
+      + '<span class="sub">' + (corrigeable
+          ? "La rentrée est faite. Une erreur d\'affectation se corrige élève par élève, avec son motif."
+          : "Chaque élève de l\'année qui se termine, sans exception.") + "</span></div>"
       + '<div class="table-wrap"><table class="table"><thead><tr><th>Élève</th><th>Classe actuelle</th>'
-      + "<th>Situation</th><th>Classe d'arrivée</th><th>Origine</th><th>Note</th></tr></thead><tbody>"
+      + "<th>Situation</th><th>Classe d'arrivée</th><th>Origine</th><th>Note</th>"
+      + (corrigeable ? "<th></th>" : "") + "</tr></thead><tbody>"
       + lignes + "</tbody></table></div></div>";
   }
 
@@ -336,6 +398,12 @@
       if (b) b.addEventListener("click", boutons[id]);
     });
 
+    Array.prototype.forEach.call(document.querySelectorAll("[data-corriger]"), function (b) {
+      b.addEventListener("click", function () {
+        ouvrirCorrection(b.dataset.corriger, b.dataset.nom, b.dataset.classe);
+      });
+    });
+
     if (fige) return;
     Array.prototype.forEach.call(document.querySelectorAll("[data-action]"), function (s) {
       s.addEventListener("change", function () {
@@ -374,6 +442,43 @@
       }) }).then(function (res) {
         if (!res.ok) { UI.toast(erreur(res, "Répartition impossible."), "error"); return; }
         UI.toast(res.body.places + " élève(s) placé(s).", "ok");
+        ouvrir(plan.id);
+      });
+    });
+  }
+
+  function ouvrirCorrection(studentId, nom, classeActuelle) {
+    var options = detail.classes_cible.map(function (c) {
+      return '<option value="' + c.id + '">' + UI.escapeHtml(c.name) + "</option>";
+    }).join("");
+    var m = UI.modal({
+      title: "Corriger l'affectation — " + nom,
+      body: '<p class="modal-text">Actuellement en <strong>' + UI.escapeHtml(classeActuelle || "—")
+        + "</strong>. La classe quittée, le motif, votre nom et la date seront conservés. "
+        + "L'année précédente et les résultats déjà enregistrés ne sont pas touchés.</p>"
+        + '<div class="field"><label for="corrClasse">Nouvelle classe</label>'
+        + '<select id="corrClasse">' + options + "</select></div>"
+        + '<div class="field"><label for="corrMotif">Motif</label>'
+        + '<input type="text" id="corrMotif" maxlength="500" placeholder="Ex. erreur de répartition" /></div>'
+        + '<p class="form-error" id="corrErr" hidden></p>',
+      footer: '<button type="button" class="btn btn-ghost btn-sm" id="corrAnnuler">Annuler</button>'
+        + '<button type="button" class="btn btn-lime btn-sm" id="corrOk">Enregistrer la correction</button>',
+    });
+    m.querySelector("#corrAnnuler").addEventListener("click", UI.closeModal);
+    m.querySelector("#corrOk").addEventListener("click", function () {
+      var err = m.querySelector("#corrErr");
+      var motif = m.querySelector("#corrMotif").value.trim();
+      // Le motif est exigé au serveur ; le dire ici évite un aller-retour,
+      // sans jamais remplacer le contrôle.
+      if (motif.length < 3) {
+        err.textContent = "Indiquez le motif de la correction."; err.hidden = false; return;
+      }
+      api.fetch("/students/" + studentId + "/class-correction", { method: "POST", body: JSON.stringify({
+        class_id: m.querySelector("#corrClasse").value, reason: motif,
+      }) }).then(function (res) {
+        if (!res.ok) { err.textContent = erreur(res, "Correction refusée."); err.hidden = false; return; }
+        UI.closeModal();
+        UI.toast(nom + " est désormais en " + res.body.class_name + ".", "ok");
         ouvrir(plan.id);
       });
     });
@@ -419,23 +524,29 @@
 
   function charger() {
     return api.fetch("/promotion-plans").then(function (res) {
+      if (res.status === 403) return refuser(ctx);
       if (!res.ok) { UI.toast(erreur(res, "Chargement impossible."), "error"); return; }
       plans = res.body.plans || [];
       annees = res.body.academic_years || [];
+      peutPiloter = res.body.peut_piloter !== false;
       rendreListe();
     });
   }
 
   admin.initShell("passage").then(function (c) {
     ctx = c;
-    if (c.role !== "directeur") {
-      document.getElementById("passageContent").innerHTML = UI.emptyState(
-        "Réservé à la Direction",
-        "Le passage d'année engage toute l'école. Votre contribution au sort de vos élèves se "
-        + "dépose en délibération, sous forme d'avis.",
-        '<a href="' + UI.homeFor(c.role) + '" class="btn btn-ghost btn-sm">Retour à l\'accueil</a>', "lock");
-      return;
-    }
+    // Direction et titulaire entrent ; le serveur décide ensuite de ce que
+    // chacun voit. Les autres rôles reçoivent un 403 et l'écran l'explique
+    // plutôt que d'afficher une page vide.
+    if (c.role !== "directeur" && c.role !== "professeur") return refuser(c);
     charger();
   });
+
+  function refuser(c) {
+    document.getElementById("passageContent").innerHTML = UI.emptyState(
+      "Réservé à la Direction et aux titulaires",
+      "Le passage d'année engage toute l'école. Votre contribution au sort des élèves se "
+      + "dépose en délibération, sous forme d'avis.",
+      '<a href="' + UI.homeFor(c.role) + '" class="btn btn-ghost btn-sm">Retour à l\'accueil</a>', "lock");
+  }
 })();

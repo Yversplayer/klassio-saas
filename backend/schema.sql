@@ -1058,8 +1058,18 @@ CREATE TABLE IF NOT EXISTS student_enrollments (
   student_id TEXT NOT NULL REFERENCES students(id),
   academic_year_id TEXT NOT NULL REFERENCES academic_years(id),
   class_id TEXT REFERENCES classes(id),
-  source TEXT NOT NULL DEFAULT 'PROMOTION',  -- PROMOTION | MANUELLE
+  source TEXT NOT NULL DEFAULT 'PROMOTION',  -- PROMOTION | MANUELLE | CORRECTION
   created_at TEXT NOT NULL,
+  -- CORRECTION APRÈS COUP. Une rentrée appliquée ne se défait pas, mais une
+  -- erreur de répartition se corrige, élève par élève. La classe QUITTÉE reste
+  -- ici : sans elle, corriger effacerait ce qu'on corrige, et personne ne
+  -- pourrait plus dire ce qui avait été décidé. L'enchaînement complet des
+  -- corrections successives vit dans `audit_logs` ; cette colonne porte la
+  -- dernière, celle qu'on lit dans le dossier de l'élève.
+  previous_class_id TEXT REFERENCES classes(id),
+  corrected_reason TEXT,
+  corrected_by TEXT REFERENCES users(id),
+  corrected_at TEXT,
   UNIQUE(tenant_id, student_id, academic_year_id)
 );
 CREATE INDEX IF NOT EXISTS idx_enrollments_year ON student_enrollments(tenant_id, academic_year_id);

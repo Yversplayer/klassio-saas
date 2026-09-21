@@ -470,12 +470,21 @@ def create_class():
         return jsonify({"error": "Année scolaire introuvable pour cet établissement"}), 404
     cid = new_id()
     level = (data.get("level") or "").strip() or None
-    cycle = data.get("cycle") if data.get("cycle") in ("maternelle", "primaire", "secondaire") else school.infer_cycle(level, class_name)
-    conn.execute("INSERT INTO classes (id, tenant_id, academic_year_id, name, level, cycle, created_at) VALUES (?,?,?,?,?,?,?)",
-                 (cid, g.ctx["tenant_id"], academic_year_id, class_name, level, cycle, str(time.time())))
+    # DÉCLARÉ ou DÉDUIT — la différence est enregistrée, pas seulement subie.
+    # Un cycle choisi par l'établissement fait foi et ne sera jamais recalculé ;
+    # un cycle deviné reste provisoire, s'affiche comme à confirmer, et se
+    # recopie tel quel au passage d'année plutôt que d'être redeviné.
+    if data.get("cycle") in ("maternelle", "primaire", "secondaire"):
+        cycle, source = data["cycle"], "declare"
+    else:
+        cycle, source = school.infer_cycle(level, class_name), "deduit"
+    conn.execute(
+        """INSERT INTO classes (id, tenant_id, academic_year_id, name, level, cycle, cycle_source, created_at)
+           VALUES (?,?,?,?,?,?,?,?)""",
+        (cid, g.ctx["tenant_id"], academic_year_id, class_name, level, cycle, source, str(time.time())))
     conn.commit()
     conn.close()
-    return jsonify({"id": cid, "name": class_name, "cycle": cycle}), 201
+    return jsonify({"id": cid, "name": class_name, "cycle": cycle, "cycle_source": source}), 201
 
 
 @app.get("/api/classes")

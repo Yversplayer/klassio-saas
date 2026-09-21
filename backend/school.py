@@ -123,14 +123,34 @@ def display_email(email):
     return None if hidden_email(email) else email
 
 
+# Sections et options du secondaire en RDC. Leur présence dans un libellé dit
+# « humanités », quel que soit le chiffre qui précède : les deux systèmes en
+# vigueur numérotent différemment (1re→4e après la réforme, 1re→6e avant).
+SECTIONS_SECONDAIRE = r"sc|lit|p[ée]d|com|tech|latin|math|bio|chim|[ée]lec|m[ée]ca|coup|couture|nutri|social|info"
+
+
 def infer_cycle(level, name=""):
-    """Devine le cycle d'une classe à partir de son niveau — révisable par la
-    Direction depuis la page Classes (jamais figé). Convention RDC : primaire
-    1re→6e, secondaire à partir de la 7e (ou humanités 1re→4e sur libellé)."""
+    """SUGGESTION de cycle, jamais une vérité.
+
+    Le cycle qui fait foi est `classes.cycle`, déclaré par la Direction et
+    marqué comme tel par `classes.cycle_source`. Cette fonction ne sert que
+    lorsque RIEN n'a été déclaré : création par l'API sans cycle, import d'un
+    fichier de classes, rattrapage d'une base ancienne. Ce qu'elle produit est
+    enregistré avec `cycle_source = 'deduit'`, s'affiche comme à confirmer, et
+    n'est jamais redevinée ensuite — le passage d'année recopie le cycle tel
+    quel plutôt que de le recalculer.
+
+    Pourquoi la déduction ne peut pas suffire : deux systèmes coexistent en
+    RDC. « 5e » est primaire dans l'un, humanités dans l'autre. Aucune règle ne
+    tranche de l'extérieur — seul l'établissement sait. La présence d'une
+    SECTION (scientifique, littéraire, pédagogique, commerciale, technique…)
+    lève le doute dans les deux systèmes, et c'est la seule prise que le
+    libellé offre honnêtement.
+    """
     text = f"{level or ''} {name or ''}".lower()
     if re.search(r"matern|pr[ée]-?scol|jardin", text):
         return "maternelle"
-    if re.search(r"humanit|secondaire|\b(7|8)e?\b|\b[1-4](?:re|e|ème)?\s*(?:sc|lit|péd|ped|com|tech)", text):
+    if re.search(r"humanit|secondaire|\b(7|8)e?\b|\b[1-6](?:re|e|ème)?\s*(?:" + SECTIONS_SECONDAIRE + r")", text):
         return "secondaire"
     m = re.search(r"\b(\d{1,2})", text)
     if m:
@@ -661,12 +681,29 @@ def compute_publication_audience(conn, tenant_id, period, audience_filter=None):
     f = audience_filter or {}
     division = f.get("division") or period.get("division")
 
-    sql = """SELECT s.id, s.first_name, s.last_name, s.class_id, c.name AS class_name,
-                    c.level AS class_level, c.cycle AS class_cycle
+    # QUI ÉTAIT LÀ CETTE ANNÉE-LÀ, pas qui y est aujourd'hui.
+    #
+    # L'audience se calculait sur `students.academic_year_id`, c'est-à-dire sur
+    # l'année COURANTE de l'élève. Tant que personne ne changeait d'année,
+    # c'était la même chose. Depuis le passage d'année, proclamer une période
+    # de l'an dernier ne touchait plus personne : les élèves avaient avancé, et
+    # leurs parents ne recevaient jamais les résultats de l'année terminée.
+    #
+    # L'inscription de l'année (`student_enrollments`) répond exactement à la
+    # question posée, et fournit au passage la classe que l'élève occupait
+    # ALORS — sans quoi le filtre par classe porterait sur sa classe actuelle.
+    sql = """SELECT s.id, s.first_name, s.last_name,
+                    COALESCE(e.class_id, s.class_id) AS class_id,
+                    c.name AS class_name, c.level AS class_level, c.cycle AS class_cycle
              FROM students s
-             LEFT JOIN classes c ON c.id = s.class_id AND c.tenant_id = s.tenant_id
-             WHERE s.tenant_id = ? AND s.status = 'active' AND s.academic_year_id = ?"""
-    params = [tenant_id, period["academic_year_id"]]
+             LEFT JOIN student_enrollments e
+                    ON e.tenant_id = s.tenant_id AND e.student_id = s.id
+                   AND e.academic_year_id = ?
+             LEFT JOIN classes c
+                    ON c.id = COALESCE(e.class_id, s.class_id) AND c.tenant_id = s.tenant_id
+             WHERE s.tenant_id = ? AND s.status = 'active'
+               AND (s.academic_year_id = ? OR e.id IS NOT NULL)"""
+    params = [period["academic_year_id"], tenant_id, period["academic_year_id"]]
     if division:
         sql += " AND c.cycle = ?"
         params.append(division)

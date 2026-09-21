@@ -179,7 +179,7 @@ def lignes(conn, tenant_id, plan_id, class_ids=None):
     return [dict(r) for r in conn.execute(" ".join(sql), tuple(params)).fetchall()]
 
 
-def _non_couverts(conn, tenant_id, plan):
+def _non_couverts(conn, tenant_id, plan, classes=None):
     """Élèves actifs de l'année source ABSENTS du plan.
 
     Trouvé en écrivant les tests : un élève inscrit après l'ouverture du plan
@@ -191,18 +191,24 @@ def _non_couverts(conn, tenant_id, plan):
     suppose qu'on ait pensé à le faire. La couverture est donc revérifiée à
     chaque lecture de l'état, et bloque la validation comme l'application.
     """
+    filtre, extra = "", []
+    if classes is not None:
+        if not classes:
+            return []
+        filtre = f" AND s.class_id IN ({','.join('?' for _ in classes)})"
+        extra = list(classes)
     return conn.execute(
-        """SELECT s.id, s.first_name, s.last_name, c.name AS source_class_name
+        f"""SELECT s.id, s.first_name, s.last_name, c.name AS source_class_name
              FROM students s
              LEFT JOIN classes c ON c.id = s.class_id
             WHERE s.tenant_id=? AND s.academic_year_id=? AND s.status='active'
               AND NOT EXISTS (SELECT 1 FROM promotion_assignments a
-                               WHERE a.plan_id=? AND a.student_id=s.id)
+                               WHERE a.plan_id=? AND a.student_id=s.id){filtre}
             ORDER BY c.name, s.last_name""",
-        (tenant_id, plan["source_year_id"], plan["id"])).fetchall()
+        tuple([tenant_id, plan["source_year_id"], plan["id"]] + extra)).fetchall()
 
 
-def etat(conn, tenant_id, plan):
+def etat(conn, tenant_id, plan, classes=None):
     """Ce qui manque encore, en clair, avant de pouvoir appliquer.
 
     Trois comptes séparés, parce que ce sont trois problèmes différents avec
@@ -213,16 +219,26 @@ def etat(conn, tenant_id, plan):
     """
     par_action = {a: 0 for a in ACTIONS}
     sans_decision = sans_classe = 0
+    # `classes` restreint l'état au périmètre du lecteur : un titulaire voit
+    # où en est SA classe, pas où en est l'école.
+    filtre, extra = "", []
+    if classes is not None:
+        if not classes:
+            return {"total": 0, "par_action": par_action, "sans_decision": 0,
+                    "sans_classe": 0, "non_couverts": 0, "applicable": False}
+        filtre = f" AND source_class_id IN ({','.join('?' for _ in classes)})"
+        extra = list(classes)
     for r in conn.execute(
-        """SELECT action, target_class_id FROM promotion_assignments
-            WHERE tenant_id=? AND plan_id=?""", (tenant_id, plan["id"])):
+        f"""SELECT action, target_class_id FROM promotion_assignments
+            WHERE tenant_id=? AND plan_id=?{filtre}""",
+            tuple([tenant_id, plan["id"]] + extra)):
         par_action[r["action"]] = par_action.get(r["action"], 0) + 1
         if r["action"] == EN_ATTENTE:
             sans_decision += 1
         elif r["action"] in ACTIONS_AVEC_CLASSE and not r["target_class_id"]:
             sans_classe += 1
     total = sum(par_action.values())
-    non_couverts = len(_non_couverts(conn, tenant_id, plan))
+    non_couverts = len(_non_couverts(conn, tenant_id, plan, classes))
     return {
         "total": total,
         "par_action": par_action,
@@ -234,19 +250,25 @@ def etat(conn, tenant_id, plan):
     }
 
 
-def bloquants(conn, tenant_id, plan, limite=50):
+def bloquants(conn, tenant_id, plan, limite=50, classes=None):
     """Les élèves qui empêchent l'application, nommés. Un compte ne suffit pas :
     la Direction doit savoir QUI aller chercher, et pour quoi faire."""
+    filtre, extra = "", []
+    if classes is not None:
+        if not classes:
+            return [], 0
+        filtre = f" AND a.source_class_id IN ({','.join('?' for _ in classes)})"
+        extra = list(classes)
     rows = conn.execute(
-        """SELECT a.student_id, a.action, a.target_class_id, s.first_name, s.last_name,
+        f"""SELECT a.student_id, a.action, a.target_class_id, s.first_name, s.last_name,
                   c.name AS source_class_name
              FROM promotion_assignments a
              JOIN students s ON s.id = a.student_id
              LEFT JOIN classes c ON c.id = a.source_class_id
             WHERE a.tenant_id=? AND a.plan_id=?
-              AND (a.action=? OR (a.action IN (?,?) AND a.target_class_id IS NULL))
+              AND (a.action=? OR (a.action IN (?,?) AND a.target_class_id IS NULL)){filtre}
             ORDER BY c.name, s.last_name""",
-        (tenant_id, plan["id"], EN_ATTENTE, PASSAGE, REDOUBLEMENT)).fetchall()
+        tuple([tenant_id, plan["id"], EN_ATTENTE, PASSAGE, REDOUBLEMENT] + extra)).fetchall()
     sortie = []
     for r in rows[:limite]:
         sortie.append({
@@ -255,7 +277,7 @@ def bloquants(conn, tenant_id, plan, limite=50):
             "classe": r["source_class_name"],
             "manque": "décision" if r["action"] == EN_ATTENTE else "classe d'arrivée",
         })
-    absents = _non_couverts(conn, tenant_id, plan)
+    absents = _non_couverts(conn, tenant_id, plan, classes)
     for r in absents[:max(0, limite - len(sortie))]:
         sortie.append({
             "student_id": r["id"],
@@ -336,6 +358,24 @@ def repartir(conn, tenant_id, plan_id, source_class_id, destinations, auteur_id,
 # Application — le seul moment où quelque chose bouge
 # ---------------------------------------------------------------------------
 
+def consigner_inscription(conn, tenant_id, student_id, academic_year_id, class_id,
+                          source="PROMOTION"):
+    """Note où l'élève était cette année-là. Sans écraser ce qui s'y trouve.
+
+    `DO NOTHING` sur conflit : une inscription déjà consignée — par un passage
+    d'année, ou par une correction et son motif — ne doit pas être réécrite
+    par un déplacement ultérieur.
+    """
+    if not academic_year_id:
+        return
+    conn.execute(
+        """INSERT INTO student_enrollments
+           (id, tenant_id, student_id, academic_year_id, class_id, source, created_at)
+           VALUES (?,?,?,?,?,?,?)
+           ON CONFLICT(tenant_id, student_id, academic_year_id) DO NOTHING""",
+        (new_id(), tenant_id, student_id, academic_year_id, class_id, source, _maintenant()))
+
+
 def appliquer(conn, tenant_id, plan, auteur_id):
     """Exécute le plan. Aucune donnée n'est supprimée, aucune n'est recopiée.
 
@@ -357,15 +397,8 @@ def appliquer(conn, tenant_id, plan, auteur_id):
         """SELECT student_id, action, source_class_id, target_class_id
              FROM promotion_assignments WHERE tenant_id=? AND plan_id=?""",
             (tenant_id, plan["id"])).fetchall():
-        # 1. L'inscription qui se termine. ON CONFLICT parce qu'un plan
-        #    partiellement appliqué puis repris ne doit pas échouer ici.
-        conn.execute(
-            """INSERT INTO student_enrollments
-               (id, tenant_id, student_id, academic_year_id, class_id, source, created_at)
-               VALUES (?,?,?,?,?,?,?)
-               ON CONFLICT(tenant_id, student_id, academic_year_id) DO NOTHING""",
-            (new_id(), tenant_id, a["student_id"], source, a["source_class_id"],
-             "PROMOTION", maintenant))
+        # 1. L'inscription qui se termine.
+        consigner_inscription(conn, tenant_id, a["student_id"], source, a["source_class_id"])
 
         if a["action"] == DEPART:
             conn.execute(
@@ -384,13 +417,7 @@ def appliquer(conn, tenant_id, plan, auteur_id):
             """UPDATE students SET academic_year_id=?, class_id=?
                 WHERE id=? AND tenant_id=?""",
             (cible, a["target_class_id"], a["student_id"], tenant_id))
-        conn.execute(
-            """INSERT INTO student_enrollments
-               (id, tenant_id, student_id, academic_year_id, class_id, source, created_at)
-               VALUES (?,?,?,?,?,?,?)
-               ON CONFLICT(tenant_id, student_id, academic_year_id) DO NOTHING""",
-            (new_id(), tenant_id, a["student_id"], cible, a["target_class_id"],
-             "PROMOTION", maintenant))
+        consigner_inscription(conn, tenant_id, a["student_id"], cible, a["target_class_id"])
         deplaces += 1
 
     # LA BASCULE, dans la même opération que le déplacement des élèves.
@@ -425,6 +452,12 @@ def copier_classes(conn, tenant_id, source_year_id, target_year_id):
     cycle — rien d'autre : ni les élèves, ni les titulaires, ni l'horaire, qui
     sont des choix de la nouvelle année.
 
+    LE CYCLE EST RECOPIÉ, JAMAIS REDEVINÉ. Le déduire à nouveau à partir du
+    nom rejouerait l'approximation d'origine à chaque rentrée — et effacerait
+    une correction que la Direction aurait faite entre-temps. `cycle_source`
+    voyage avec lui : une classe déclarée reste déclarée, une classe déduite
+    reste signalée comme à confirmer.
+
     Idempotent : une classe dont le nom existe déjà dans l'année cible est
     laissée en place. Relancer la copie ne crée pas de doublons.
     """
@@ -434,15 +467,17 @@ def copier_classes(conn, tenant_id, source_year_id, target_year_id):
     maintenant = _maintenant()
     creees = 0
     for c in conn.execute(
-        """SELECT name, level, cycle FROM classes
+        """SELECT name, level, cycle, cycle_source FROM classes
             WHERE tenant_id=? AND academic_year_id=? ORDER BY name""",
             (tenant_id, source_year_id)).fetchall():
         if c["name"] in existantes:
             continue
         conn.execute(
-            """INSERT INTO classes (id, tenant_id, academic_year_id, name, level, cycle, created_at)
-               VALUES (?,?,?,?,?,?,?)""",
-            (new_id(), tenant_id, target_year_id, c["name"], c["level"], c["cycle"], maintenant))
+            """INSERT INTO classes (id, tenant_id, academic_year_id, name, level, cycle,
+                                    cycle_source, created_at)
+               VALUES (?,?,?,?,?,?,?,?)""",
+            (new_id(), tenant_id, target_year_id, c["name"], c["level"], c["cycle"],
+             c["cycle_source"] or "deduit", maintenant))
         creees += 1
     conn.commit()
     return creees
@@ -459,15 +494,25 @@ def inscriptions(conn, tenant_id, student_id):
     parcours = {}
     for r in conn.execute(
         """SELECT e.academic_year_id, e.class_id, c.name AS class_name, y.label AS year_label,
-                  y.created_at AS year_created
+                  y.created_at AS year_created, e.previous_class_id, e.corrected_reason,
+                  e.corrected_at, pc.name AS previous_class_name, u.name AS corrected_by_name
              FROM student_enrollments e
              LEFT JOIN classes c ON c.id = e.class_id
+             LEFT JOIN classes pc ON pc.id = e.previous_class_id
+             LEFT JOIN users u ON u.id = e.corrected_by
              JOIN academic_years y ON y.id = e.academic_year_id
             WHERE e.tenant_id=? AND e.student_id=?""", (tenant_id, student_id)):
         parcours[r["academic_year_id"]] = {
             "academic_year_id": r["academic_year_id"], "year_label": r["year_label"],
             "class_id": r["class_id"], "class_name": r["class_name"],
-            "year_created": r["year_created"], "courante": False}
+            "year_created": r["year_created"], "courante": False,
+            # La correction se lit dans le parcours : une classe changée en
+            # cours d'année sans explication visible serait une anomalie de
+            # plus pour qui relit le dossier.
+            "previous_class_name": r["previous_class_name"],
+            "corrected_reason": r["corrected_reason"],
+            "corrected_at": r["corrected_at"],
+            "corrected_by_name": r["corrected_by_name"]}
     actuel = conn.execute(
         """SELECT s.academic_year_id, s.class_id, c.name AS class_name, y.label AS year_label,
                   y.created_at AS year_created
@@ -476,8 +521,70 @@ def inscriptions(conn, tenant_id, student_id):
              JOIN academic_years y ON y.id = s.academic_year_id
             WHERE s.id=? AND s.tenant_id=?""", (student_id, tenant_id)).fetchone()
     if actuel:
+        # `students` fait foi pour l'année courante ; la trace de correction,
+        # elle, vient de l'inscription et doit survivre à cette fusion.
+        garde = parcours.get(actuel["academic_year_id"], {})
         parcours[actuel["academic_year_id"]] = {
             "academic_year_id": actuel["academic_year_id"], "year_label": actuel["year_label"],
             "class_id": actuel["class_id"], "class_name": actuel["class_name"],
-            "year_created": actuel["year_created"], "courante": True}
+            "year_created": actuel["year_created"], "courante": True,
+            "previous_class_name": garde.get("previous_class_name"),
+            "corrected_reason": garde.get("corrected_reason"),
+            "corrected_at": garde.get("corrected_at"),
+            "corrected_by_name": garde.get("corrected_by_name")}
     return sorted(parcours.values(), key=lambda p: p["year_created"] or "", reverse=True)
+
+
+# ---------------------------------------------------------------------------
+# Correction après coup — locale, motivée, tracée
+# ---------------------------------------------------------------------------
+
+def corriger_affectation(conn, tenant_id, student_id, eleve, nouvelle_classe,
+                         motif, auteur_id):
+    """Change la classe d'un élève DANS SON ANNÉE COURANTE, et garde la trace.
+
+    Ce n'est pas un retour en arrière sur la rentrée. Une rentrée appliquée ne
+    se défait pas : elle a produit des inscriptions, des listes d'appel, des
+    bulletins en cours. Ce qui se corrige, c'est UNE affectation — « cet élève
+    devait aller en 6e B » — sans rien toucher d'autre.
+
+    Ce qui n'est jamais modifié :
+      - l'élève lui-même, qui garde son `student_id` et tout ce qui y pend ;
+      - les inscriptions des ANNÉES PASSÉES, qui sont de l'histoire ;
+      - les résultats, présences, incidents et frais déjà enregistrés, qui
+        portent leur propre année.
+
+    La classe quittée est conservée dans `previous_class_id` : corriger sans
+    elle effacerait précisément ce qu'on corrige. Les corrections successives
+    s'empilent dans `audit_logs` ; l'inscription ne porte que la dernière,
+    celle qui se lit dans le dossier.
+    """
+    maintenant = _maintenant()
+    ancienne = eleve["class_id"]
+    annee = eleve["academic_year_id"]
+
+    conn.execute("UPDATE students SET class_id=? WHERE id=? AND tenant_id=?",
+                 (nouvelle_classe, student_id, tenant_id))
+    # L'inscription de l'année COURANTE uniquement. Le WHERE porte l'année :
+    # sans lui, une correction réécrirait aussi le passé de l'élève.
+    modifiees = conn.execute(
+        """UPDATE student_enrollments
+              SET class_id=?, previous_class_id=?, corrected_reason=?,
+                  corrected_by=?, corrected_at=?, source='CORRECTION'
+            WHERE tenant_id=? AND student_id=? AND academic_year_id=?""",
+        (nouvelle_classe, ancienne, motif, auteur_id, maintenant,
+         tenant_id, student_id, annee)).rowcount or 0
+    if not modifiees:
+        # Aucune inscription pour cette année : l'élève n'est pas passé par un
+        # plan (inscription directe). On en crée une plutôt que de perdre la
+        # correction — c'est le même fait, il mérite la même trace.
+        conn.execute(
+            """INSERT INTO student_enrollments
+               (id, tenant_id, student_id, academic_year_id, class_id, source, created_at,
+                previous_class_id, corrected_reason, corrected_by, corrected_at)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
+            (new_id(), tenant_id, student_id, annee, nouvelle_classe, "CORRECTION",
+             maintenant, ancienne, motif, auteur_id, maintenant))
+    conn.commit()
+    return {"ancienne_classe_id": ancienne, "nouvelle_classe_id": nouvelle_classe,
+            "academic_year_id": annee, "corrected_at": maintenant}

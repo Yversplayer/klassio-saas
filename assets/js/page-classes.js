@@ -157,7 +157,11 @@
 
   function card(c) {
     var rec = c.attendance_recorded_today;
-    return '<a class="class-card" href="classe.html?id=' + c.id + '"><div class="cc-head"><h3>' + UI.escapeHtml(c.name) + "</h3>" + (c.is_titulaire ? UI.badge("ok", "Titulaire") : c.level ? UI.badge("neutral", c.level) : "") + "</div>" +
+    // Un cycle DÉDUIT est provisoire : le signaler permet de le corriger avant
+    // qu'il ne se recopie d'année en année.
+    var aConfirmer = c.cycle_source === "deduit"
+      ? ' <span class="badge warn" title="Cycle déduit du libellé — ouvrez la classe pour le confirmer">Cycle à confirmer</span>' : "";
+    return '<a class="class-card" href="classe.html?id=' + c.id + '"><div class="cc-head"><h3>' + UI.escapeHtml(c.name) + "</h3>" + (c.is_titulaire ? UI.badge("ok", "Titulaire") : c.level ? UI.badge("neutral", c.level) : "") + aConfirmer + "</div>" +
       '<div class="cc-meta"><span>' + UI.icon("students", 14) + UI.plural(c.student_count, "élève") + "</span><span>" + UI.icon("user", 14) + (c.titulaire_name ? "Titulaire : " + UI.escapeHtml(c.titulaire_name) : "Sans titulaire") + "</span><span>" + UI.icon("clipboard", 14) + (rec ? "Appel fait — " + c.absent_today + " absent(s)" : "Appel non fait aujourd'hui") + "</span></div>" +
       '<div class="cc-foot"><span>' + UI.plural(c.teacher_count, "enseignant") + '</span><span class="link-btn">Ouvrir ' + UI.icon("chevronRight", 12) + "</span></div></a>";
   }
@@ -165,7 +169,7 @@
   function openAddModal() {
     var m = UI.modal({ title: "Ajouter une classe", body:
       '<form id="classForm" class="form-grid"><div class="field"><label for="cName">Nom</label><input id="cName" placeholder="Ex. 6e A" required maxlength="100" /></div><div class="field"><label for="cLevel">Niveau</label><input id="cLevel" placeholder="Ex. 6e" /></div>' +
-      '<div class="field full"><label for="cCycle">Cycle</label><select id="cCycle"><option value="">Déduire du niveau</option><option value="maternelle">Maternelle</option><option value="primaire">Primaire</option><option value="secondaire">Secondaire</option></select><span class="hint">Le cycle définit le périmètre du Directeur des disciplines (secondaire).</span></div><p class="form-error full" id="cErr" hidden></p></form>',
+      '<div class="field full"><label for="cCycle">Cycle</label><select id="cCycle"><option value="">À déduire du niveau — à confirmer ensuite</option><option value="maternelle">Maternelle</option><option value="primaire">Primaire</option><option value="secondaire">Secondaire</option></select><span class="hint">Le cycle définit le périmètre du Directeur des disciplines (secondaire). Deux systèmes coexistent en RDC : « 5e » est primaire dans l\'un, humanités dans l\'autre — le préciser ici évite une déduction approximative.</span></div><p class="form-error full" id="cErr" hidden></p></form>',
       footer: '<button type="button" class="btn btn-ghost btn-sm" id="cCancel">Annuler</button><button type="submit" form="classForm" class="btn btn-lime btn-sm" id="cSubmit">Créer</button>' });
     m.querySelector("#cCancel").addEventListener("click", UI.closeModal);
     m.querySelector("#classForm").addEventListener("submit", function (e) {
@@ -173,8 +177,18 @@
       var btn = m.querySelector("#cSubmit"), err = m.querySelector("#cErr");
       UI.btnState(btn, "loading", "Création…");
       api.fetch("/academic-years").then(function (y) {
-        return api.fetch("/classes", { method: "POST", body: JSON.stringify({ name: m.querySelector("#cName").value.trim(), level: m.querySelector("#cLevel").value.trim(), cycle: m.querySelector("#cCycle").value || undefined, academic_year_id: y.body[0] && y.body[0].id }) });
+        // L'ANNÉE ACTIVE, pas la première de la liste.
+        //
+        // `/academic-years` trie par date de création : après une rentrée, la
+        // première est l'année ARCHIVÉE. La classe créée y atterrissait, donc
+        // disparaissait de l'écran aussitôt créée — sans erreur, sans
+        // explication. Invisible tant qu'une école n'avait qu'une année.
+        var annees = (y.ok && y.body) || [];
+        var active = annees.filter(function (a) { return a.is_active; })[0] || annees[annees.length - 1];
+        if (!active) { UI.btnState(btn, "error"); err.textContent = "Aucune année scolaire."; err.hidden = false; return { ok: false, body: {} }; }
+        return api.fetch("/classes", { method: "POST", body: JSON.stringify({ name: m.querySelector("#cName").value.trim(), level: m.querySelector("#cLevel").value.trim(), cycle: m.querySelector("#cCycle").value || undefined, academic_year_id: active.id }) });
       }).then(function (res) {
+        if (!res) return;
         if (!res.ok) { UI.btnState(btn, "error"); err.textContent = res.body.error || "Erreur."; err.hidden = false; return; }
         UI.btnState(btn, "success", "Créée"); UI.toast("Classe créée.", "success");
         setTimeout(function () { UI.closeModal(); load(); }, 500);

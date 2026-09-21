@@ -502,6 +502,24 @@ def _migrate(conn):
     _add_column_if_missing(conn, "academic_years", "ends_on", "TEXT")
     _add_column_if_missing(conn, "academic_years", "updated_at", "TEXT")
 
+    # Correction d'affectation après une rentrée déjà appliquée.
+    _add_column_if_missing(conn, "student_enrollments", "previous_class_id", "TEXT")
+    _add_column_if_missing(conn, "student_enrollments", "corrected_reason", "TEXT")
+    _add_column_if_missing(conn, "student_enrollments", "corrected_by", "TEXT")
+    _add_column_if_missing(conn, "student_enrollments", "corrected_at", "TEXT")
+
+    # LE CYCLE EST DÉCLARÉ, OU IL EST DÉDUIT — et il faut pouvoir le dire.
+    #
+    # `classes.cycle` portait déjà le cycle, mais rien ne distinguait un cycle
+    # CHOISI par la Direction d'un cycle DEVINÉ à partir du libellé. La nuance
+    # n'était pas théorique : « 5e Scientifique A » était classée en primaire,
+    # et le passage d'année recopiait cette erreur dans chaque nouvelle année.
+    # Une déduction est provisoire et doit s'afficher comme telle ; une
+    # déclaration fait foi et ne se redevine jamais.
+    #
+    # Les classes existantes passent en « deduit » : c'est ce qu'elles sont.
+    _add_column_if_missing(conn, "classes", "cycle_source", "TEXT NOT NULL DEFAULT 'deduit'")
+
     # Division concernée par une période. NULL = toutes les divisions, ce qui
     # préserve exactement le comportement des périodes déjà créées.
     _add_column_if_missing(conn, "academic_periods", "division", "TEXT")
@@ -594,7 +612,10 @@ def _migrate(conn):
         conn.execute("UPDATE tenants SET slug = ? WHERE id = ?", (school.unique_slug(conn, row["name"]), row["id"]))
     no_cycle = conn.execute("SELECT id, level, name FROM classes WHERE cycle IS NULL OR cycle = ''").fetchall()
     for row in no_cycle:
-        conn.execute("UPDATE classes SET cycle = ? WHERE id = ?", (school.infer_cycle(row["level"], row["name"]), row["id"]))
+        # Déduit, donc marqué comme tel : la Direction verra qu'il reste à
+        # confirmer, et le passage d'année ne le redevinera jamais.
+        conn.execute("UPDATE classes SET cycle = ?, cycle_source = 'deduit' WHERE id = ?",
+                     (school.infer_cycle(row["level"], row["name"]), row["id"]))
     conn.commit()
 
     # Rattachement des résultats à leur ANNÉE SCOLAIRE.

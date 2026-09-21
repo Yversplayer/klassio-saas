@@ -1527,10 +1527,53 @@ def historique_resultats():
 # déjà exprimés là où c'était leur rôle — l'AVIS en délibération.
 
 def _plan_direction(action):
-    """Vérifie le rôle et renvoie (conn, None) ou (None, réponse d'erreur)."""
+    """Vérifie le rôle et renvoie (conn, None) ou (None, réponse d'erreur).
+
+    Utilisé par tout ce qui ÉCRIT : créer, arbitrer, répartir, valider,
+    appliquer, corriger. La lecture passe par `_plan_lecture`, plus large.
+    """
     if g.ctx["role"] != "directeur":
         return None, _denied(action)
     return db.get_connection(), None
+
+
+def _classes_titulaire(conn, ctx):
+    """Les classes dont l'utilisateur est TITULAIRE. Liste, éventuellement vide.
+
+    Titulaire, et pas simplement « rattaché » : un professeur de mathématiques
+    intervient dans huit classes sans être responsable d'aucune. Le titulaire,
+    lui, prépare la rentrée de SA classe — c'est à ce titre, et seulement
+    celui-là, qu'il consulte le plan.
+    """
+    return [r["id"] for r in school.teacher_class_rows(conn, ctx) if r["is_titulaire"]]
+
+
+def _plan_lecture(action):
+    """Qui peut LIRE un plan, et sur quelles classes.
+
+    Retourne (conn, erreur, classes). `classes` vaut None pour la Direction —
+    aucune restriction — ou la liste des classes du titulaire.
+
+    Le titulaire consulte, il ne décide pas. Il voit les élèves de sa classe,
+    les décisions déjà prises et la destination proposée : de quoi préparer sa
+    rentrée et signaler une erreur. Aucune route d'écriture ne lui est
+    ouverte — son avis se dépose en délibération, là où il a sa place.
+
+    Le professeur non titulaire et le DD n'entrent pas : ni l'un ni l'autre
+    n'a de classe à préparer. Le parent non plus, évidemment.
+    """
+    role = g.ctx["role"]
+    if role == "directeur":
+        return db.get_connection(), None, None
+    if role != "professeur":
+        return None, _denied(action), None
+    conn = db.get_connection()
+    classes = _classes_titulaire(conn, g.ctx)
+    if not classes:
+        conn.close()
+        return None, _denied(action, "Seul le titulaire d'une classe consulte "
+                                     "le plan de passage de cette classe."), None
+    return conn, None, classes
 
 
 def _plan_ou_404(conn, plan_id):
@@ -1546,26 +1589,40 @@ def _annee_ou_none(conn, tenant_id, year_id):
 @bp.get("/api/promotion-plans")
 @require_auth
 def list_promotion_plans():
-    conn, erreur = _plan_direction("promotion.read")
+    conn, erreur, mes_classes = _plan_lecture("promotion.read")
     if erreur:
         return erreur
     try:
+        tenant_id = g.ctx["tenant_id"]
+        where, params = ["p.tenant_id=?"], [tenant_id]
+        if mes_classes is not None:
+            # Un plan n'intéresse le titulaire que s'il y figure des élèves DE
+            # SA CLASSE. Les autres ne le regardent pas, et le compte d'élèves
+            # renvoyé plus bas est celui de son périmètre, pas de l'école.
+            where.append(
+                f"""EXISTS (SELECT 1 FROM promotion_assignments a
+                             WHERE a.plan_id = p.id
+                               AND a.source_class_id IN ({','.join('?' for _ in mes_classes)}))""")
+            params.extend(mes_classes)
+        effectif = "SELECT COUNT(*) FROM promotion_assignments a WHERE a.plan_id = p.id"
+        if mes_classes is not None:
+            effectif += f" AND a.source_class_id IN ({','.join('?' for _ in mes_classes)})"
         rows = conn.execute(
-            """SELECT p.*, sy.label AS source_year_label, ty.label AS target_year_label,
-                      (SELECT COUNT(*) FROM promotion_assignments a
-                        WHERE a.plan_id = p.id) AS student_count
+            f"""SELECT p.*, sy.label AS source_year_label, ty.label AS target_year_label,
+                      ({effectif}) AS student_count
                  FROM promotion_plans p
                  JOIN academic_years sy ON sy.id = p.source_year_id
                  JOIN academic_years ty ON ty.id = p.target_year_id
-                WHERE p.tenant_id=? ORDER BY p.created_at DESC""",
-            (g.ctx["tenant_id"],)).fetchall()
+                WHERE {' AND '.join(where)} ORDER BY p.created_at DESC""",
+            tuple((mes_classes or []) + params)).fetchall()
         annees = conn.execute(
             "SELECT * FROM academic_years WHERE tenant_id=? ORDER BY created_at DESC",
-            (g.ctx["tenant_id"],)).fetchall()
+            (tenant_id,)).fetchall()
         return jsonify({"plans": [dict(r) for r in rows],
                         "academic_years": [dict(r) for r in annees],
                         "actions": promotions.ACTIONS,
-                        "actions_ordre": list(promotions.ACTIONS.keys())})
+                        "actions_ordre": list(promotions.ACTIONS.keys()),
+                        "peut_piloter": mes_classes is None})
     finally:
         conn.close()
 
@@ -1640,7 +1697,7 @@ def create_promotion_plan():
 def get_promotion_plan(plan_id):
     """Le plan complet : son état, ses classes de départ, celles d'arrivée,
     et ce qui bloque encore."""
-    conn, erreur = _plan_direction("promotion.read")
+    conn, erreur, mes_classes = _plan_lecture("promotion.read")
     if erreur:
         return erreur
     try:
@@ -1649,9 +1706,19 @@ def get_promotion_plan(plan_id):
         if not plan:
             return _not_found("promotion.read")
         classe = request.args.get("source_class_id")
-        lignes = promotions.lignes(conn, tenant_id, plan_id, [classe] if classe else None)
-        etat = promotions.etat(conn, tenant_id, plan)
-        liste_bloquants, total_bloquants = promotions.bloquants(conn, tenant_id, plan)
+        # Le périmètre du titulaire est appliqué AU SERVEUR, sur chaque liste
+        # renvoyée. Demander explicitement la classe d'un collègue avec
+        # `source_class_id` ne donne rien : l'intersection est vide.
+        if mes_classes is not None:
+            portee = [classe] if (classe and classe in mes_classes) else list(mes_classes)
+            if classe and classe not in mes_classes:
+                return _not_found("promotion.read",
+                                  "Vous n'êtes pas titulaire de cette classe.")
+        else:
+            portee = [classe] if classe else None
+        lignes = promotions.lignes(conn, tenant_id, plan_id, portee)
+        etat = promotions.etat(conn, tenant_id, plan, mes_classes)
+        liste_bloquants, total_bloquants = promotions.bloquants(conn, tenant_id, plan, classes=mes_classes)
 
         # Effectif PLANIFIÉ de chaque classe d'arrivée : c'est le chiffre qui
         # permet d'équilibrer, et il n'existe nulle part ailleurs puisque
@@ -1668,8 +1735,12 @@ def get_promotion_plan(plan_id):
             classes_cible.append({**dict(c), "planned": prevus.get(c["id"], 0)})
 
         classes_source = []
+        filtre_source, params_source = "", []
+        if mes_classes is not None:
+            filtre_source = f" AND c.id IN ({','.join('?' for _ in mes_classes)})"
+            params_source = list(mes_classes)
         for c in conn.execute(
-            """SELECT c.id, c.name, c.level, c.cycle,
+            f"""SELECT c.id, c.name, c.level, c.cycle,
                       (SELECT COUNT(*) FROM promotion_assignments a
                         WHERE a.plan_id=? AND a.source_class_id=c.id) AS total,
                       (SELECT COUNT(*) FROM promotion_assignments a
@@ -1677,8 +1748,8 @@ def get_promotion_plan(plan_id):
                           AND a.action IN ('PASSAGE','REDOUBLEMENT')
                           AND a.target_class_id IS NULL) AS a_placer
                  FROM classes c
-                WHERE c.tenant_id=? AND c.academic_year_id=? ORDER BY c.name""",
-                (plan_id, plan_id, tenant_id, plan["source_year_id"])):
+                WHERE c.tenant_id=? AND c.academic_year_id=?{filtre_source} ORDER BY c.name""",
+                tuple([plan_id, plan_id, tenant_id, plan["source_year_id"]] + params_source)):
             classes_source.append(dict(c))
 
         return jsonify({
@@ -1696,7 +1767,13 @@ def get_promotion_plan(plan_id):
             # route et « Départ » se retrouvait en tête de chaque liste
             # déroulante. L'ordre voyage donc dans un TABLEAU, qui le conserve.
             "actions_ordre": list(promotions.ACTIONS.keys()),
-            "modifiable": plan["status"] in promotions.MODIFIABLE,
+            # Deux choses différentes, longtemps confondues : le plan est-il
+            # encore MODIFIABLE (état), et cet utilisateur a-t-il le droit de
+            # le modifier (rôle) ? Le titulaire lit un plan modifiable sans
+            # pouvoir y toucher. Le frontend s'appuie sur les deux — et le
+            # backend refuse de toute façon.
+            "modifiable": plan["status"] in promotions.MODIFIABLE and mes_classes is None,
+            "peut_piloter": mes_classes is None,
         })
     finally:
         conn.close()
@@ -1943,6 +2020,69 @@ def apply_promotion_plan(plan_id):
               "success", after={**resultat, "target_year": plan["target_year_id"]})
         return jsonify({**resultat, "status": promotions.APPLIQUE,
                         "target_year_id": plan["target_year_id"]})
+    finally:
+        conn.close()
+
+
+@bp.post("/api/students/<student_id>/class-correction")
+@require_auth
+def correct_student_class(student_id):
+    """Corriger l'affectation d'UN élève, après une rentrée déjà appliquée.
+
+    Il n'existe volontairement aucun « annuler la rentrée ». Une rentrée
+    appliquée a produit des listes d'appel, des inscriptions, des bulletins en
+    cours : la défaire globalement ferait plus de dégâts que l'erreur qu'on
+    veut réparer. Ce qui se corrige est donc local — un élève, une classe — et
+    ne passe jamais inaperçu :
+
+      - la Direction seule ;
+      - un motif est exigé, parce qu'une correction sans raison est
+        indistinguable d'une erreur de manipulation ;
+      - la classe quittée est conservée ;
+      - l'auteur et l'horodatage sont enregistrés, et une entrée d'audit
+        garde l'enchaînement complet des corrections successives.
+
+    La classe d'arrivée doit appartenir à l'ANNÉE COURANTE DE L'ÉLÈVE. Sans ce
+    contrôle, une correction pouvait le renvoyer dans une classe d'une année
+    archivée — ce qui n'est pas une correction, c'est une corruption de
+    l'historique.
+    """
+    data = json_object(request.get_json(force=True))
+    conn, erreur = _plan_direction("student.class_correction")
+    if erreur:
+        return erreur
+    try:
+        tenant_id = g.ctx["tenant_id"]
+        eleve = conn.execute("SELECT * FROM students WHERE id=? AND tenant_id=?",
+                             (student_id, tenant_id)).fetchone()
+        if not eleve:
+            return _not_found("student.class_correction")
+        nouvelle = required_text(data.get("class_id"), "class_id")
+        motif = (data.get("reason") or "").strip()
+        if len(motif) < 3:
+            raise ValidationError(
+                "Indiquez le motif de la correction : sans lui, la trace ne dira "
+                "rien à qui la relira.")
+        motif = motif[:500]
+        cible = conn.execute(
+            "SELECT id, name FROM classes WHERE id=? AND tenant_id=? AND academic_year_id=?",
+            (nouvelle, tenant_id, eleve["academic_year_id"])).fetchone()
+        if not cible:
+            return _not_found("student.class_correction",
+                              "Cette classe n'appartient pas à l'année en cours de l'élève.")
+        if eleve["class_id"] == nouvelle:
+            return jsonify({"error": "L'élève est déjà dans cette classe."}), 409
+
+        avant = conn.execute("SELECT name FROM classes WHERE id=?",
+                             (eleve["class_id"],)).fetchone() if eleve["class_id"] else None
+        resultat = promotions.corriger_affectation(
+            conn, tenant_id, student_id, eleve, nouvelle, motif, g.ctx["user_id"])
+        audit(tenant_id, g.ctx["user_id"], "student.class_corrected", "student", student_id,
+              "success",
+              before={"class_id": eleve["class_id"], "class_name": avant["name"] if avant else None},
+              after={"class_id": nouvelle, "class_name": cible["name"],
+                     "academic_year_id": eleve["academic_year_id"], "motif": motif})
+        return jsonify({"ok": True, **resultat, "class_name": cible["name"]})
     finally:
         conn.close()
 
