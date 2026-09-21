@@ -316,8 +316,50 @@
       '<div class="field full" id="ddPicker" hidden><label>Périmètre du Directeur des disciplines</label><div class="chips" id="cycleChips">' + CYCLES.map(function (c) { return '<button type="button" class="chip' + (selectedCycles[c] ? " active" : "") + '" data-cycle="' + c + '">' + c.charAt(0).toUpperCase() + c.slice(1) + "</button>"; }).join("") + '</div><div class="field" style="margin-top:10px"><label for="ddTitle">Titre</label><input id="ddTitle" maxlength="60" placeholder="Ex. Adjoint" /><span class="hint">Un DD adjoint a exactement la même interface, limitée aux cycles cochés.</span></div></div>' +
       '<div class="field full" id="parentPicker" hidden><label for="studentSearchInvite">Enfant(s) concerné(s)</label><input id="studentSearchInvite" placeholder="Rechercher un élève par nom ou identifiant…" autocomplete="off" /><div id="studentCheckList" style="max-height:220px;overflow-y:auto;border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-size:13.5px;margin-top:8px"></div></div>' +
       '<div class="full row between"><p class="form-msg" id="inviteMsg"></p><button type="button" class="btn btn-lime btn-sm" id="createInviteBtn">' + UI.icon("users", 15) + "Générer l'invitation</button></div></div>" +
-      '<div class="panel" id="linkResultPanel" hidden style="margin-top:16px;background:var(--surface-soft)"><div class="panel-head"><h2>Invitation créée</h2></div><p class="muted" style="margin-bottom:10px">Ce lien est valable 7 jours et ne peut être utilisé qu\'une seule fois. Partagez-le uniquement avec la personne concernée.</p><div class="row"><input type="text" id="linkOutput" readonly style="flex:2;min-width:220px;font-size:12.5px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:inherit;color:var(--ink)" /><button class="btn btn-ghost btn-sm" id="copyLinkBtn" type="button">Copier</button><a class="btn btn-ghost btn-sm" id="whatsappShareBtn" href="#" target="_blank" rel="noopener">Partager via WhatsApp</a></div></div>' +
+      '<div class="panel" id="linkResultPanel" hidden style="margin-top:16px;background:var(--surface-soft)"><div class="panel-head"><h2>Invitation créée</h2></div><p class="muted" style="margin-bottom:10px">Ce lien est valable 7 jours et ne peut être utilisé qu\'une seule fois. Partagez-le uniquement avec la personne concernée.</p><div class="row"><input type="text" id="linkOutput" readonly style="flex:2;min-width:220px;font-size:12.5px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:inherit;color:var(--ink)" /><button class="btn btn-ghost btn-sm" id="copyLinkBtn" type="button">Copier</button><a class="btn btn-ghost btn-sm" id="whatsappShareBtn" href="#" target="_blank" rel="noopener">Partager via WhatsApp</a></div>' +
+      // Envoi par e-mail. Le statut affiché vient du serveur, jamais du clic :
+      // annoncer « envoyé » sans que le fournisseur l'ait accepté ferait croire
+      // à l'école qu'une famille est prévenue alors que personne n'a rien reçu.
+      '<div class="row" style="margin-top:10px"><input type="email" id="inviteEmail" placeholder="Envoyer par e-mail (adresse du destinataire)" autocomplete="off" style="flex:2;min-width:220px;font-size:13px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:inherit;color:var(--ink)" /><button class="btn btn-ghost btn-sm" id="sendInviteEmailBtn" type="button">Envoyer</button></div>' +
+      '<p class="form-msg" id="inviteSendMsg" style="margin-top:8px"></p></div>' +
       '<div class="panel-head" style="margin-top:22px"><h2>Invitations envoyées</h2></div>' + list + "</div>";
+  }
+
+  // Jeton de la DERNIÈRE invitation créée. Il n'est rendu qu'une fois par le
+  // serveur et n'est jamais stocké en clair : après un rafraîchissement, il
+  // n'existe plus nulle part et l'envoi n'est plus possible — il faut créer
+  // une nouvelle invitation. C'est la contrepartie assumée d'un jeton haché.
+  var dernierJeton = null;
+
+  function wireEnvoiInvitation() {
+    var btn = document.getElementById("sendInviteEmailBtn");
+    var champ = document.getElementById("inviteEmail");
+    var msg = document.getElementById("inviteSendMsg");
+    if (!btn || !champ || !msg) return;
+    btn.addEventListener("click", function () {
+      var adresse = (champ.value || "").trim();
+      if (!adresse) { msg.textContent = "Indiquez l'adresse du destinataire."; msg.className = "form-msg error"; return; }
+      if (!dernierJeton) {
+        msg.textContent = "Ce lien n'est plus en mémoire. Créez une nouvelle invitation pour l'envoyer par e-mail.";
+        msg.className = "form-msg error"; return;
+      }
+      UI.btnState(btn, "loading", "Envoi…");
+      msg.textContent = ""; msg.className = "form-msg";
+      api.fetch("/invitations/send", { method: "POST", body: JSON.stringify({
+        token: dernierJeton, email: adresse,
+      }) }).then(function (res) {
+        if (res.ok && res.body.status === "ACCEPTED") {
+          UI.btnState(btn, "success", "Envoyé");
+          msg.textContent = "Message remis au fournisseur. La réception dépend ensuite de la boîte du destinataire.";
+          msg.className = "form-msg ok";
+          return;
+        }
+        UI.btnState(btn, "error", "Échec");
+        msg.textContent = (res.body && res.body.error) || "L'envoi a échoué."
+          + (res.body && res.body.retryable ? " Vous pouvez réessayer." : " Copiez le lien et transmettez-le autrement.");
+        msg.className = "form-msg error";
+      });
+    });
   }
 
   function wire() {
@@ -752,6 +794,7 @@
     api.fetch("/invitations", { method: "POST", body: JSON.stringify(payload) }).then(function (res) {
       if (!res.ok) { UI.btnState(btn, "error"); msg.textContent = res.body.error || "Impossible de créer l'invitation."; msg.className = "form-msg error"; return; }
       UI.btnState(btn, "success", "Invitation créée");
+      dernierJeton = res.body.token;
       var link = window.location.origin + "/app/invitation.html?token=" + encodeURIComponent(res.body.token);
       document.getElementById("linkOutput").value = link;
       document.getElementById("whatsappShareBtn").href = "https://wa.me/?text=" + encodeURIComponent("Bonjour, voici votre invitation Klassio pour " + (ctx.tenant_name || "notre établissement") + " : " + link);
@@ -765,6 +808,7 @@
         document.getElementById("whatsappShareBtn").href = "https://wa.me/?text=" + encodeURIComponent("Bonjour, voici votre invitation Klassio : " + link);
         document.getElementById("linkResultPanel").hidden = false;
         wireInvitations();
+        wireEnvoiInvitation();
       });
     }).catch(function () { UI.btnState(btn, "error"); msg.textContent = "Le serveur Klassio est injoignable."; msg.className = "form-msg error"; });
   }

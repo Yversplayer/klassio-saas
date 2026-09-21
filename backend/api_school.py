@@ -23,6 +23,8 @@ import events as events_module
 import notifications as notif_module
 import school
 import discipline as disc
+import deliveries as deliveries_module
+import mailer
 from security import require_auth, new_id, audit, has_permission
 from validation import (json_object, ValidationError, required_text, positive_amount, valid_phone, valid_hex_color,
                         valid_password, valid_email, image_data_uri, DATA_URI_IMAGE)
@@ -1564,6 +1566,107 @@ def _resolve_reset(conn, token):
     if not row or row["used_at"] or float(row["expires_at"]) < time.time():
         return None
     return row
+
+
+@bp.post("/api/auth/forgot-password")
+def forgot_password():
+    """Mot de passe oublié — EN LIBRE-SERVICE. C'est nouveau.
+
+    Avant le 21/09, `password_resets.created_by` était NOT NULL et la seule
+    route qui créait une réinitialisation était réservée à la Direction : un
+    parent qui perdait son mot de passe devait joindre l'école, qui lui
+    transmettait un lien à la main. La docstring de cette route le disait
+    elle-même — « aucun canal email/SMS n'existe encore ». Maintenant si.
+
+    TROIS RÈGLES QUI NE SE NÉGOCIENT PAS
+
+    1. LA RÉPONSE EST TOUJOURS LA MÊME. Qu'un compte existe ou non, qu'il
+       porte une vraie adresse ou une adresse technique, qu'un message parte ou
+       échoue : 200 et la même phrase. Sinon ce formulaire devient un annuaire
+       — on y teste des adresses jusqu'à savoir qui est client de l'école.
+
+    2. LE JETON EST HACHÉ. On réutilise le mécanisme existant
+       (`security.hash_invitation_token`, colonne `token_hash`) : rien de neuf,
+       et une fuite de la base ne donne aucun lien utilisable.
+
+    3. LE MOT DE PASSE EXISTANT N'EST JAMAIS ENVOYÉ. Il n'est d'ailleurs pas
+       lisible : la base ne contient qu'une empreinte PBKDF2.
+
+    `created_by` reçoit l'identifiant de l'utilisateur lui-même : c'est lui qui
+    demande. La colonne garde ainsi son sens — qui est à l'origine du lien.
+    """
+    # Même plafond que les autres routes publiques qui gardent un secret, et
+    # même règle depuis le 18/09 : seul un échec consomme le budget.
+    allowed, retry_after = security.check_rate_limit("forgot_password", request.remote_addr, 10, 300)
+    if not allowed:
+        return jsonify({"error": f"Trop de tentatives. Réessayez dans {retry_after} secondes."}), 429
+
+    data = json_object(request.get_json(force=True))
+    saisie = (data.get("email") or "").strip().lower()
+
+    # La réponse ne varie JAMAIS. Elle est construite ici, une fois, et
+    # retournée à l'identique par tous les chemins ci-dessous.
+    reponse = jsonify({
+        "ok": True,
+        "message": "Si un compte correspond à cette adresse, un message vient d'être envoyé. "
+                   "Pensez à regarder vos courriers indésirables.",
+    })
+
+    if not saisie or "@" not in saisie:
+        security.record_attempt("forgot_password", request.remote_addr)
+        return reponse
+
+    conn = db.get_connection()
+    try:
+        user = conn.execute(
+            "SELECT id, name, email FROM users WHERE LOWER(email)=?", (saisie,)).fetchone()
+        if not user or not mailer.adresse_utilisable(user["email"]):
+            # Compte inconnu, ou compte créé au téléphone seul (adresse
+            # technique @klassio.invalid). Dans les deux cas : même réponse,
+            # et l'échec compte contre le budget anti-énumération.
+            security.record_attempt("forgot_password", request.remote_addr)
+            return reponse
+
+        membership = conn.execute(
+            """SELECT m.tenant_id, t.name AS tenant_name FROM memberships m
+               JOIN tenants t ON t.id = m.tenant_id
+               WHERE m.user_id=? AND m.status='active' LIMIT 1""", (user["id"],)).fetchone()
+        if not membership:
+            # Compte sans accès actif : rien à réinitialiser. Un compte révoqué
+            # ne doit pas pouvoir se réactiver par ce chemin.
+            security.record_attempt("forgot_password", request.remote_addr)
+            return reponse
+
+        tenant_id = membership["tenant_id"]
+        now = time.time()
+        token = security.generate_invitation_token()
+        # Une demande annule les précédentes : un seul lien vivant à la fois.
+        conn.execute("UPDATE password_resets SET used_at=? WHERE tenant_id=? AND user_id=? AND used_at IS NULL",
+                     (str(now), tenant_id, user["id"]))
+        conn.execute(
+            "INSERT INTO password_resets (id, tenant_id, user_id, token_hash, created_by, created_at, expires_at) "
+            "VALUES (?,?,?,?,?,?,?)",
+            (new_id(), tenant_id, user["id"], security.hash_invitation_token(token),
+             user["id"], str(now), str(now + RESET_TTL_SECONDS)))
+        conn.commit()
+
+        lien = mailer.APP_BASE_URL + "/app/connexion.html?reset=" + token
+        sujet, html, texte = mailer.gabarit_reinitialisation(
+            user["name"], membership["tenant_name"], lien, RESET_TTL_SECONDS // 3600)
+        livraison, _ = deliveries_module.creer(
+            conn, tenant_id, canal=deliveries_module.CANAL_EMAIL,
+            gabarit="password_reset", adresse=user["email"], sujet=sujet,
+            recipient_user_id=user["id"],
+            # Une demande par minute et par compte au maximum : un utilisateur
+            # qui s'impatiente et clique cinq fois ne reçoit pas cinq messages.
+            cle_idempotence=f"reset:{user['id']}:{int(now // 60)}")
+        deliveries_module.envoyer_email(conn, tenant_id, livraison, sujet, html, texte)
+        audit(tenant_id, user["id"], "password_reset.self_requested", "user", user["id"], "success")
+        # Succès : on efface l'ardoise de cette adresse IP (règle du 18/09).
+        security.clear_attempts("forgot_password", request.remote_addr)
+        return reponse
+    finally:
+        conn.close()
 
 
 @bp.get("/api/password-reset/lookup")

@@ -472,6 +472,52 @@ CREATE TABLE IF NOT EXISTS password_resets (
   used_at TEXT
 );
 
+-- Livraisons (la couche qui manquait entre la notification et l'appareil).
+--
+-- `events` dit CE QUI S'EST PASSÉ, `notifications` dit QUI DOIT LE SAVOIR.
+-- Aucune table ne disait jusqu'ici SI LE MESSAGE EST PARTI. L'audit du 21/09
+-- l'a confirmé : notifications.py se terminait sur un INSERT, et rien ne
+-- quittait le serveur.
+--
+-- Une ligne = UNE tentative d'acheminement par UN canal. Une notification peut
+-- donc avoir zéro livraison (in-app seulement), une, ou plusieurs (e-mail qui
+-- échoue puis réussit). `notification_id` est NULLABLE : une invitation et une
+-- réinitialisation de mot de passe s'envoient à quelqu'un qui n'a pas encore
+-- de compte, donc pas de notification interne.
+--
+-- ACCEPTED N'EST PAS DELIVERED. « Le fournisseur a accepté la demande » ne veut
+-- pas dire « le parent l'a reçue ». On ne passe à DELIVERED que si le
+-- fournisseur le confirme réellement — jamais par optimisme.
+CREATE TABLE IF NOT EXISTS deliveries (
+  id TEXT PRIMARY KEY,
+  tenant_id TEXT NOT NULL REFERENCES tenants(id),
+  notification_id TEXT REFERENCES notifications(id),
+  channel TEXT NOT NULL,              -- EMAIL | WHATSAPP_LINK | SMS | PUSH
+  template TEXT NOT NULL,             -- invitation_parent, password_reset, ...
+  recipient_user_id TEXT REFERENCES users(id),
+  recipient_address TEXT NOT NULL,    -- adresse réellement visée, telle qu'utilisée
+  subject TEXT,
+  status TEXT NOT NULL DEFAULT 'CREATED',
+  -- CREATED QUEUED SENDING ACCEPTED DELIVERED FAILED BOUNCED CANCELLED
+  provider TEXT,
+  provider_message_id TEXT,
+  error_code TEXT,
+  error_message TEXT,                 -- message technique, jamais de secret
+  attempts INTEGER NOT NULL DEFAULT 0,
+  -- Même mécanique que les paiements : une clé identifie UNE livraison. Un
+  -- double clic, un rafraîchissement ou un rejeu retombent sur la même ligne
+  -- au lieu d'envoyer deux fois le même message.
+  idempotency_key TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT,
+  sent_at TEXT,
+  failed_at TEXT,
+  UNIQUE(tenant_id, idempotency_key)
+);
+CREATE INDEX IF NOT EXISTS idx_deliveries_tenant ON deliveries(tenant_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_deliveries_status ON deliveries(tenant_id, status);
+CREATE INDEX IF NOT EXISTS idx_deliveries_notification ON deliveries(notification_id);
+
 CREATE INDEX IF NOT EXISTS idx_students_tenant ON students(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_class_teachers_user ON class_teachers(tenant_id, user_id);
 CREATE INDEX IF NOT EXISTS idx_attendance_student ON attendance(tenant_id, student_id, date);

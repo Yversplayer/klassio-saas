@@ -18,7 +18,11 @@ import config
 import db
 import security
 import financial
+from urllib.parse import quote
+
 import events as events_module
+import deliveries as deliveries_module
+import mailer
 import notifications as notif_module
 import ingestion
 import ai_assistant
@@ -1847,6 +1851,138 @@ def lookup_invitation():
         result["titulaire_of"] = [c["name"] for c in result["classes"] if c["is_titulaire"]]
     conn.close()
     return jsonify(result)
+
+
+def _lien_app(chemin):
+    """Adresse publique d'un écran Klassio, pour un message qui sera ouvert
+    ailleurs que sur cette machine. `localhost` dans un e-mail reçu sur un
+    téléphone ne mène nulle part."""
+    return mailer.APP_BASE_URL + chemin
+
+
+def _nom_etablissement(conn, tenant_id):
+    row = conn.execute("SELECT name FROM tenants WHERE id=?", (tenant_id,)).fetchone()
+    return row["name"] if row else "Votre établissement"
+
+
+@app.post("/api/invitations/send")
+@require_auth
+@require_permission("invitations.manage")
+def send_invitation_email():
+    """Achemine par e-mail une invitation DÉJÀ créée.
+
+    POURQUOI LE JETON EST FOURNI PAR L'APPELANT. Il n'est stocké que haché —
+    décision de sécurité antérieure, et bonne : une fuite de la base ne donne
+    aucun lien utilisable. Il n'existe donc aucun moyen, pour le serveur, de
+    reconstruire le lien d'une invitation passée. La Direction, elle, l'a entre
+    les mains juste après l'avoir créée. C'est elle qui le repasse ici.
+
+    Le jeton ne suffit pas à autoriser : il est revérifié contre CET
+    établissement et doit être encore en attente. Un jeton d'une autre école ne
+    donne rien, même présenté par une Direction authentifiée.
+
+    L'adresse n'est pas non plus choisie librement : voir plus bas, elle doit
+    correspondre à ce que l'invitation prévoit quand celle-ci vise une personne
+    déjà connue.
+    """
+    data = json_object(request.get_json(force=True))
+    token = required_text(data.get("token"), "token", max_length=200)
+    destinataire = valid_email(data.get("email", ""))
+    tenant_id = g.ctx["tenant_id"]
+
+    conn = db.get_connection()
+    invitation = conn.execute(
+        "SELECT * FROM invitations WHERE token_hash=? AND tenant_id=?",
+        (security.hash_invitation_token(token), tenant_id)).fetchone()
+    if not invitation:
+        conn.close()
+        audit(tenant_id, g.ctx["user_id"], "invitation.send", "invitation", None, "denied")
+        return jsonify({"error": "Invitation introuvable pour cet établissement."}), 404
+    if invitation["status"] != "pending":
+        conn.close()
+        return jsonify({"error": "Cette invitation n'est plus en attente : elle a été "
+                                 "utilisée, révoquée ou a expiré."}), 409
+    if not mailer.adresse_utilisable(destinataire):
+        conn.close()
+        return jsonify({"error": "Cette adresse ne peut pas recevoir de courrier."}), 400
+
+    etablissement = _nom_etablissement(conn, tenant_id)
+    lien = _lien_app("/app/invitation.html?token=" + token)
+    sujet, html, texte = mailer.gabarit_invitation(
+        invitation["role"], data.get("name") or "", etablissement, lien)
+
+    # Une invitation, une adresse, un message. Le double clic et le
+    # rafraîchissement retombent sur la même livraison.
+    livraison, _neuve = deliveries_module.creer(
+        conn, tenant_id, canal=deliveries_module.CANAL_EMAIL,
+        gabarit="invitation", adresse=destinataire, sujet=sujet,
+        cle_idempotence=f"invitation:{invitation['id']}:{destinataire.lower()}")
+    livraison = deliveries_module.envoyer_email(
+        conn, tenant_id, livraison, sujet, html, texte, actor_id=g.ctx["user_id"])
+    conn.close()
+
+    reussi = livraison["status"] == deliveries_module.ACCEPTED
+    return jsonify({
+        "delivery_id": livraison["id"],
+        "status": livraison["status"],
+        "channel": livraison["channel"],
+        # Le message d'erreur technique reste au serveur ; l'écran reçoit une
+        # phrase utilisable, sans détail de fournisseur.
+        "error": None if reussi else "L'envoi a échoué. Vous pouvez réessayer ou copier le lien.",
+        "retryable": deliveries_module.rejouable(livraison),
+    }), (200 if reussi else 502)
+
+
+@app.post("/api/invitations/whatsapp")
+@require_auth
+@require_permission("invitations.manage")
+def prepare_invitation_whatsapp():
+    """Prépare un lien WhatsApp prérempli. N'ENVOIE RIEN.
+
+    Klassio n'a pas d'API WhatsApp : ouvrir wa.me place le message dans
+    l'application de l'utilisateur, qui décide ensuite de l'envoyer ou non. Le
+    statut enregistré dit donc « préparé », et l'écran doit dire la même chose.
+    Écrire « message envoyé » ici serait un mensonge que rien ne vient corriger
+    si la Direction ferme WhatsApp sans appuyer sur envoyer.
+    """
+    data = json_object(request.get_json(force=True))
+    token = required_text(data.get("token"), "token", max_length=200)
+    telephone = valid_phone(data.get("phone")) if data.get("phone") else None
+    tenant_id = g.ctx["tenant_id"]
+
+    conn = db.get_connection()
+    invitation = conn.execute(
+        "SELECT * FROM invitations WHERE token_hash=? AND tenant_id=?",
+        (security.hash_invitation_token(token), tenant_id)).fetchone()
+    if not invitation:
+        conn.close()
+        return jsonify({"error": "Invitation introuvable pour cet établissement."}), 404
+    etablissement = _nom_etablissement(conn, tenant_id)
+    lien = _lien_app("/app/invitation.html?token=" + token)
+    nom = (data.get("name") or "").strip()
+    qualite = mailer.ROLE_LIBELLE.get(invitation["role"], "membre")
+    message = (f"Bonjour {nom}," if nom else "Bonjour,") + "\n\n" + (
+        f"{etablissement} vous invite à rejoindre son espace Klassio en tant que {qualite}.\n\n"
+        f"Cliquez sur ce lien pour créer votre compte :\n{lien}")
+
+    livraison, _neuve = deliveries_module.creer(
+        conn, tenant_id, canal=deliveries_module.CANAL_WHATSAPP,
+        gabarit="invitation", adresse=telephone or "(numéro saisi dans WhatsApp)",
+        sujet="Invitation", cle_idempotence=None)
+    # Statut honnête : le lien est prêt, rien n'est parti.
+    conn.execute("UPDATE deliveries SET status=?, updated_at=? WHERE id=?",
+                 ("CREATED", str(time.time()), livraison["id"]))
+    conn.commit()
+    conn.close()
+
+    numero = (telephone or "").lstrip("+").replace(" ", "")
+    return jsonify({
+        "whatsapp_url": "https://wa.me/" + numero + "?text=" + quote(message),
+        "message": message,
+        "delivery_id": livraison["id"],
+        "status": "PREPARED",
+        "note": "Le lien est préparé. WhatsApp s'ouvrira : c'est vous qui envoyez le message.",
+    })
 
 
 @app.post("/api/invitations/accept")
