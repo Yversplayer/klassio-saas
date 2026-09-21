@@ -65,6 +65,9 @@
         // les rapports. Une douzième entrée de menu pour une page qu'on
         // ouvre trois fois par an encombrerait la navigation quotidienne.
         exports: ["rapports"],
+        // La délibération examine les résultats de l'année : elle appartient
+        // au domaine Résultats, pas à une entrée de menu à elle.
+        deliberations: ["resultats"],
       };
       var pagesDuMenu = menus.map(function (item) { return item[2].replace(".html", ""); });
       var porte = null;
