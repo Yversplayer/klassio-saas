@@ -22,6 +22,9 @@
       // on ne retire du menu que ce qui reste joignable ailleurs.
       document.getElementById("pageActions").innerHTML =
         '<a href="classes.html" class="btn btn-ghost btn-sm">' + UI.icon("classes", 15) + "Classes</a>" +
+        // Même règle : le passage d'année n'a pas d'entrée de menu, il doit
+        // donc avoir un lien entrant depuis le domaine auquel il appartient.
+        '<a href="passage.html" class="btn btn-ghost btn-sm">' + UI.icon("calendar", 15) + "Passage d'année</a>" +
         '<a href="inscription.html#import" class="btn btn-ghost btn-sm">' + UI.icon("upload", 15) + "Importer</a>" +
         '<button type="button" class="btn btn-lime btn-sm" id="addStudentBtn">' + UI.icon("plus", 15) + "Ajouter un élève</button>";
       document.getElementById("addStudentBtn").addEventListener("click", openAddModal);

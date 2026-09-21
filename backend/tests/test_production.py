@@ -382,6 +382,26 @@ class ReponsesDeServiceTests(unittest.TestCase):
     def test_26_le_joker_cors_reste_impossible(self):
         self.assertNotIn("*", flask_app_module.ALLOWED_ORIGINS)
 
+    def test_26b_cors_autorise_toutes_les_methodes_reellement_servies(self):
+        """Une méthode utilisée par une route DOIT figurer dans Allow-Methods.
+
+        PATCH manquait. Le préflight répondait 200 sans l'autoriser, donc le
+        navigateur bloquait la requête réelle : à l'écran, un formulaire qui ne
+        fait rien, sans erreur ni message — le pire mode de panne possible.
+
+        L'invariant est vérifié sur la table des routes plutôt que sur une
+        liste écrite à la main : la prochaine méthode introduite sera couverte
+        sans que personne ait à y penser.
+        """
+        r = self.client.get("/api/health", headers={"Origin": "http://localhost:4173"})
+        autorisees = {m.strip() for m in r.headers["Access-Control-Allow-Methods"].split(",")}
+        servies = set()
+        for regle in flask_app_module.app.url_map.iter_rules():
+            servies |= regle.methods & {"GET", "POST", "PUT", "PATCH", "DELETE"}
+        manquantes = servies - autorisees
+        self.assertEqual(manquantes, set(),
+                         f"méthodes servies mais refusées au navigateur : {sorted(manquantes)}")
+
     def test_27_une_erreur_inattendue_ne_fuit_pas_la_trace(self):
         """Un 500 ne doit jamais renvoyer chemins de fichiers ni requête SQL."""
         r = self.client.get("/api/_test_erreur_inattendue")

@@ -19,6 +19,7 @@ import ingestion
 import results_import
 import school
 import deliberations as delib
+import promotions
 from security import require_auth, new_id, audit
 from validation import json_object, ValidationError, required_text
 
@@ -111,8 +112,14 @@ def activate_year(year_id):
     if not conn.execute("SELECT 1 FROM academic_years WHERE id=? AND tenant_id=?", (year_id, g.ctx["tenant_id"])).fetchone():
         conn.close()
         return _not_found("year.activate")
+    # `is_active` et `status` doivent rester d'accord : une année activée qui
+    # resterait « PREPARATION » serait affichée partout tout en se déclarant
+    # non ouverte. L'année qui cède la main est ARCHIVÉE — consultable,
+    # jamais supprimée.
+    conn.execute("UPDATE academic_years SET status='ARCHIVED' WHERE tenant_id=? AND is_active=1 AND id<>?",
+                 (g.ctx["tenant_id"], year_id))
     conn.execute("UPDATE academic_years SET is_active=0 WHERE tenant_id=?", (g.ctx["tenant_id"],))
-    conn.execute("UPDATE academic_years SET is_active=1 WHERE id=?", (year_id,))
+    conn.execute("UPDATE academic_years SET is_active=1, status='ACTIVE' WHERE id=?", (year_id,))
     conn.commit()
     conn.close()
     audit(g.ctx["tenant_id"], g.ctx["user_id"], "year.activated", "academic_year", year_id, "success")
@@ -1508,3 +1515,447 @@ def historique_resultats():
             ORDER BY g.subject, g.version DESC""", params)]
     conn.close()
     return jsonify(rows)
+
+
+# ===========================================================================
+# PASSAGE D'ANNÉE & RÉPARTITION
+# ===========================================================================
+#
+# Direction seule, sur toutes les routes. Ce n'est pas un excès de prudence :
+# un plan de passage décide de l'année entière de chaque élève et bascule
+# l'établissement d'une année à l'autre. Le titulaire et le professeur se sont
+# déjà exprimés là où c'était leur rôle — l'AVIS en délibération.
+
+def _plan_direction(action):
+    """Vérifie le rôle et renvoie (conn, None) ou (None, réponse d'erreur)."""
+    if g.ctx["role"] != "directeur":
+        return None, _denied(action)
+    return db.get_connection(), None
+
+
+def _plan_ou_404(conn, plan_id):
+    return conn.execute("SELECT * FROM promotion_plans WHERE id=? AND tenant_id=?",
+                        (plan_id, g.ctx["tenant_id"])).fetchone()
+
+
+def _annee_ou_none(conn, tenant_id, year_id):
+    return conn.execute("SELECT * FROM academic_years WHERE id=? AND tenant_id=?",
+                        (year_id, tenant_id)).fetchone()
+
+
+@bp.get("/api/promotion-plans")
+@require_auth
+def list_promotion_plans():
+    conn, erreur = _plan_direction("promotion.read")
+    if erreur:
+        return erreur
+    try:
+        rows = conn.execute(
+            """SELECT p.*, sy.label AS source_year_label, ty.label AS target_year_label,
+                      (SELECT COUNT(*) FROM promotion_assignments a
+                        WHERE a.plan_id = p.id) AS student_count
+                 FROM promotion_plans p
+                 JOIN academic_years sy ON sy.id = p.source_year_id
+                 JOIN academic_years ty ON ty.id = p.target_year_id
+                WHERE p.tenant_id=? ORDER BY p.created_at DESC""",
+            (g.ctx["tenant_id"],)).fetchall()
+        annees = conn.execute(
+            "SELECT * FROM academic_years WHERE tenant_id=? ORDER BY created_at DESC",
+            (g.ctx["tenant_id"],)).fetchall()
+        return jsonify({"plans": [dict(r) for r in rows],
+                        "academic_years": [dict(r) for r in annees],
+                        "actions": promotions.ACTIONS,
+                        "actions_ordre": list(promotions.ACTIONS.keys())})
+    finally:
+        conn.close()
+
+
+@bp.post("/api/promotion-plans")
+@require_auth
+def create_promotion_plan():
+    """Ouvre un plan entre l'année qui se termine et la suivante.
+
+    `target_year_label` crée l'année d'arrivée en PRÉPARATION — elle n'est pas
+    active, donc personne dans l'établissement ne la voit : on prépare la
+    rentrée sans perturber l'année en cours.
+    """
+    data = json_object(request.get_json(force=True))
+    conn, erreur = _plan_direction("promotion.create")
+    if erreur:
+        return erreur
+    try:
+        tenant_id = g.ctx["tenant_id"]
+        source_id = required_text(data.get("source_year_id"), "source_year_id")
+        source = _annee_ou_none(conn, tenant_id, source_id)
+        if not source:
+            return _not_found("promotion.create", "Année de départ introuvable.")
+
+        cible_id = (data.get("target_year_id") or "").strip()
+        if cible_id:
+            cible = _annee_ou_none(conn, tenant_id, cible_id)
+            if not cible:
+                return _not_found("promotion.create", "Année d'arrivée introuvable.")
+        else:
+            label = required_text(data.get("target_year_label"), "target_year_label", max_length=100)
+            if conn.execute("SELECT 1 FROM academic_years WHERE tenant_id=? AND label=?",
+                            (tenant_id, label)).fetchone():
+                return jsonify({"error": f"L'année « {label} » existe déjà."}), 409
+            cible_id = new_id()
+            conn.execute(
+                """INSERT INTO academic_years (id, tenant_id, label, is_active, status, created_at)
+                   VALUES (?,?,?,0,'PREPARATION',?)""",
+                (cible_id, tenant_id, label, str(time.time())))
+
+        if cible_id == source_id:
+            return jsonify({"error": "L'année d'arrivée doit être différente de l'année de départ."}), 400
+
+        existant = conn.execute(
+            """SELECT id, status FROM promotion_plans
+                WHERE tenant_id=? AND source_year_id=? AND target_year_id=?""",
+            (tenant_id, source_id, cible_id)).fetchone()
+        if existant:
+            conn.commit()
+            return jsonify({"id": existant["id"], "status": existant["status"],
+                            "existant": True}), 200
+
+        plan_id = new_id()
+        conn.execute(
+            """INSERT INTO promotion_plans (id, tenant_id, source_year_id, target_year_id,
+                                            status, created_by, created_at)
+               VALUES (?,?,?,?,?,?,?)""",
+            (plan_id, tenant_id, source_id, cible_id, promotions.BROUILLON,
+             g.ctx["user_id"], str(time.time())))
+        conn.commit()
+        bilan = promotions.construire(conn, tenant_id, plan_id, source_id, g.ctx["user_id"])
+        audit(tenant_id, g.ctx["user_id"], "promotion.plan.created", "promotion_plan", plan_id,
+              "success", after={"source": source_id, "target": cible_id, **bilan})
+        return jsonify({"id": plan_id, "status": promotions.BROUILLON,
+                        "target_year_id": cible_id, "eleves": bilan["ajoutes"]}), 201
+    finally:
+        conn.close()
+
+
+@bp.get("/api/promotion-plans/<plan_id>")
+@require_auth
+def get_promotion_plan(plan_id):
+    """Le plan complet : son état, ses classes de départ, celles d'arrivée,
+    et ce qui bloque encore."""
+    conn, erreur = _plan_direction("promotion.read")
+    if erreur:
+        return erreur
+    try:
+        tenant_id = g.ctx["tenant_id"]
+        plan = _plan_ou_404(conn, plan_id)
+        if not plan:
+            return _not_found("promotion.read")
+        classe = request.args.get("source_class_id")
+        lignes = promotions.lignes(conn, tenant_id, plan_id, [classe] if classe else None)
+        etat = promotions.etat(conn, tenant_id, plan)
+        liste_bloquants, total_bloquants = promotions.bloquants(conn, tenant_id, plan)
+
+        # Effectif PLANIFIÉ de chaque classe d'arrivée : c'est le chiffre qui
+        # permet d'équilibrer, et il n'existe nulle part ailleurs puisque
+        # aucun élève n'y est encore inscrit.
+        prevus = {r["target_class_id"]: r["n"] for r in conn.execute(
+            """SELECT target_class_id, COUNT(*) AS n FROM promotion_assignments
+                WHERE tenant_id=? AND plan_id=? AND target_class_id IS NOT NULL
+                GROUP BY target_class_id""", (tenant_id, plan_id))}
+        classes_cible = []
+        for c in conn.execute(
+            """SELECT id, name, level, cycle FROM classes
+                WHERE tenant_id=? AND academic_year_id=? ORDER BY name""",
+                (tenant_id, plan["target_year_id"])):
+            classes_cible.append({**dict(c), "planned": prevus.get(c["id"], 0)})
+
+        classes_source = []
+        for c in conn.execute(
+            """SELECT c.id, c.name, c.level, c.cycle,
+                      (SELECT COUNT(*) FROM promotion_assignments a
+                        WHERE a.plan_id=? AND a.source_class_id=c.id) AS total,
+                      (SELECT COUNT(*) FROM promotion_assignments a
+                        WHERE a.plan_id=? AND a.source_class_id=c.id
+                          AND a.action IN ('PASSAGE','REDOUBLEMENT')
+                          AND a.target_class_id IS NULL) AS a_placer
+                 FROM classes c
+                WHERE c.tenant_id=? AND c.academic_year_id=? ORDER BY c.name""",
+                (plan_id, plan_id, tenant_id, plan["source_year_id"])):
+            classes_source.append(dict(c))
+
+        return jsonify({
+            "plan": dict(plan),
+            "source_year": dict(_annee_ou_none(conn, tenant_id, plan["source_year_id"])),
+            "target_year": dict(_annee_ou_none(conn, tenant_id, plan["target_year_id"])),
+            "etat": etat,
+            "bloquants": liste_bloquants,
+            "bloquants_total": total_bloquants,
+            "classes_source": classes_source,
+            "classes_cible": classes_cible,
+            "assignments": lignes,
+            "actions": promotions.ACTIONS,
+            # Flask trie les clés d'un objet JSON : l'ordre voulu se perdait en
+            # route et « Départ » se retrouvait en tête de chaque liste
+            # déroulante. L'ordre voyage donc dans un TABLEAU, qui le conserve.
+            "actions_ordre": list(promotions.ACTIONS.keys()),
+            "modifiable": plan["status"] in promotions.MODIFIABLE,
+        })
+    finally:
+        conn.close()
+
+
+@bp.post("/api/promotion-plans/<plan_id>/refresh")
+@require_auth
+def refresh_promotion_plan(plan_id):
+    """Rattrape les élèves inscrits depuis l'ouverture du plan, sans défaire
+    les arbitrages déjà posés."""
+    conn, erreur = _plan_direction("promotion.refresh")
+    if erreur:
+        return erreur
+    try:
+        plan = _plan_ou_404(conn, plan_id)
+        if not plan:
+            return _not_found("promotion.refresh")
+        if plan["status"] not in promotions.MODIFIABLE:
+            return jsonify({"error": "Ce plan n'est plus modifiable."}), 409
+        bilan = promotions.construire(conn, g.ctx["tenant_id"], plan_id,
+                                       plan["source_year_id"], g.ctx["user_id"])
+        return jsonify({**bilan, "etat": promotions.etat(conn, g.ctx["tenant_id"], plan)})
+    finally:
+        conn.close()
+
+
+@bp.post("/api/promotion-plans/<plan_id>/copy-classes")
+@require_auth
+def copy_promotion_classes(plan_id):
+    """Recrée la structure de classes dans l'année d'arrivée."""
+    conn, erreur = _plan_direction("promotion.copy_classes")
+    if erreur:
+        return erreur
+    try:
+        plan = _plan_ou_404(conn, plan_id)
+        if not plan:
+            return _not_found("promotion.copy_classes")
+        if plan["status"] not in promotions.MODIFIABLE:
+            return jsonify({"error": "Ce plan n'est plus modifiable."}), 409
+        creees = promotions.copier_classes(conn, g.ctx["tenant_id"],
+                                           plan["source_year_id"], plan["target_year_id"])
+        audit(g.ctx["tenant_id"], g.ctx["user_id"], "promotion.classes.copied",
+              "promotion_plan", plan_id, "success", after={"creees": creees})
+        return jsonify({"creees": creees})
+    finally:
+        conn.close()
+
+
+@bp.patch("/api/promotion-plans/<plan_id>/assignments/<student_id>")
+@require_auth
+def update_promotion_assignment(plan_id, student_id):
+    """L'arbitrage de la Direction sur un élève : son sort, sa classe d'arrivée.
+
+    Changer l'action pour DEPART ou EN_ATTENTE efface la classe d'arrivée :
+    laisser une destination sur un élève qui ne vient pas produirait un
+    effectif prévisionnel faux, et donc une répartition faussée.
+    """
+    data = json_object(request.get_json(force=True))
+    conn, erreur = _plan_direction("promotion.assign")
+    if erreur:
+        return erreur
+    try:
+        tenant_id = g.ctx["tenant_id"]
+        plan = _plan_ou_404(conn, plan_id)
+        if not plan:
+            return _not_found("promotion.assign")
+        if plan["status"] not in promotions.MODIFIABLE:
+            return jsonify({"error": "Ce plan n'est plus modifiable."}), 409
+        ligne = conn.execute(
+            """SELECT * FROM promotion_assignments
+                WHERE tenant_id=? AND plan_id=? AND student_id=?""",
+            (tenant_id, plan_id, student_id)).fetchone()
+        if not ligne:
+            return _not_found("promotion.assign", "Cet élève n'est pas dans ce plan.")
+
+        action = ligne["action"]
+        if "action" in data:
+            action = data.get("action")
+            if action not in promotions.ACTIONS:
+                raise ValidationError("action doit être l'une des situations prévues.")
+
+        cible = ligne["target_class_id"]
+        if "target_class_id" in data:
+            cible = (data.get("target_class_id") or "").strip() or None
+            if cible:
+                # La classe d'arrivée doit appartenir à l'ANNÉE CIBLE de CE
+                # plan : sans ce contrôle, un identifiant de classe de l'année
+                # en cours — ou d'un autre établissement — y passerait.
+                ok = conn.execute(
+                    "SELECT 1 FROM classes WHERE id=? AND tenant_id=? AND academic_year_id=?",
+                    (cible, tenant_id, plan["target_year_id"])).fetchone()
+                if not ok:
+                    return _not_found("promotion.assign",
+                                      "Cette classe n'appartient pas à l'année d'arrivée.")
+        if action not in promotions.ACTIONS_AVEC_CLASSE:
+            cible = None
+
+        note = ligne["note"]
+        if "note" in data:
+            note = (data.get("note") or "").strip()[:500] or None
+
+        conn.execute(
+            """UPDATE promotion_assignments
+                  SET action=?, target_class_id=?, note=?, origin=?, updated_by=?, updated_at=?
+                WHERE id=? AND tenant_id=?""",
+            (action, cible, note, promotions.MANUEL, g.ctx["user_id"], str(time.time()),
+             ligne["id"], tenant_id))
+        conn.commit()
+        audit(tenant_id, g.ctx["user_id"], "promotion.assigned", "student", student_id,
+              "success", before={"action": ligne["action"], "classe": ligne["target_class_id"]},
+              after={"action": action, "classe": cible})
+        return jsonify({"ok": True, "etat": promotions.etat(conn, tenant_id, plan)})
+    finally:
+        conn.close()
+
+
+@bp.post("/api/promotion-plans/<plan_id>/distribute")
+@require_auth
+def distribute_promotion(plan_id):
+    """Répartit une classe de départ entre les classes d'arrivée DÉSIGNÉES.
+
+    Klassio n'invente aucune destination : `target_class_ids` vient de la
+    Direction. Le seul calcul effectué est l'équilibre des effectifs.
+    """
+    data = json_object(request.get_json(force=True))
+    conn, erreur = _plan_direction("promotion.distribute")
+    if erreur:
+        return erreur
+    try:
+        tenant_id = g.ctx["tenant_id"]
+        plan = _plan_ou_404(conn, plan_id)
+        if not plan:
+            return _not_found("promotion.distribute")
+        if plan["status"] not in promotions.MODIFIABLE:
+            return jsonify({"error": "Ce plan n'est plus modifiable."}), 409
+        source_class_id = required_text(data.get("source_class_id"), "source_class_id")
+        cibles = data.get("target_class_ids")
+        if not isinstance(cibles, list) or not cibles:
+            raise ValidationError("Choisissez au moins une classe d'arrivée.")
+        cibles = [str(c) for c in cibles]
+        valides = {r["id"] for r in conn.execute(
+            f"""SELECT id FROM classes WHERE tenant_id=? AND academic_year_id=?
+                 AND id IN ({','.join('?' for _ in cibles)})""",
+            (tenant_id, plan["target_year_id"], *cibles))}
+        inconnues = [c for c in cibles if c not in valides]
+        if inconnues:
+            return _not_found("promotion.distribute",
+                              "Une classe d'arrivée n'appartient pas à l'année d'arrivée.")
+        if not conn.execute(
+            "SELECT 1 FROM classes WHERE id=? AND tenant_id=? AND academic_year_id=?",
+                (source_class_id, tenant_id, plan["source_year_id"])).fetchone():
+            return _not_found("promotion.distribute",
+                              "Cette classe n'appartient pas à l'année de départ.")
+
+        places = promotions.repartir(conn, tenant_id, plan_id, source_class_id, cibles,
+                                     g.ctx["user_id"], remplacer=bool(data.get("replace")))
+        audit(tenant_id, g.ctx["user_id"], "promotion.distributed", "class", source_class_id,
+              "success", after={"places": places, "destinations": cibles})
+        return jsonify({"places": places, "etat": promotions.etat(conn, tenant_id, plan)})
+    finally:
+        conn.close()
+
+
+@bp.post("/api/promotion-plans/<plan_id>/status")
+@require_auth
+def set_promotion_status(plan_id):
+    """BROUILLON ⇄ EN_REVUE ⇄ VALIDE. APPLIQUE ne s'atteint que par /apply."""
+    data = json_object(request.get_json(force=True))
+    cible = data.get("status")
+    if cible not in (promotions.BROUILLON, promotions.EN_REVUE, promotions.VALIDE):
+        raise ValidationError("status doit valoir BROUILLON, EN_REVUE ou VALIDE.")
+    conn, erreur = _plan_direction("promotion.status")
+    if erreur:
+        return erreur
+    try:
+        tenant_id = g.ctx["tenant_id"]
+        plan = _plan_ou_404(conn, plan_id)
+        if not plan:
+            return _not_found("promotion.status")
+        if plan["status"] == promotions.APPLIQUE:
+            return jsonify({"error": "Ce plan a été appliqué : il n'est plus modifiable."}), 409
+        # On ne VALIDE pas un plan incomplet. Valider, c'est dire « on peut
+        # l'appliquer » ; le laisser passer ici reporterait la découverte du
+        # problème au moment le plus coûteux.
+        etat = promotions.etat(conn, tenant_id, plan)
+        if cible == promotions.VALIDE and not etat["applicable"]:
+            liste, total = promotions.bloquants(conn, tenant_id, plan)
+            return jsonify({
+                "error": "Le plan est incomplet.",
+                "detail": f"{etat['sans_decision']} élève(s) sans décision, "
+                          f"{etat['sans_classe']} sans classe d'arrivée, "
+                          f"{etat['non_couverts']} absent(s) du plan.",
+                "bloquants": liste, "bloquants_total": total}), 409
+        maintenant = str(time.time())
+        conn.execute(
+            """UPDATE promotion_plans SET status=?, validated_by=?, validated_at=?
+                WHERE id=? AND tenant_id=?""",
+            (cible, g.ctx["user_id"] if cible == promotions.VALIDE else None,
+             maintenant if cible == promotions.VALIDE else None, plan_id, tenant_id))
+        conn.commit()
+        audit(tenant_id, g.ctx["user_id"], "promotion.status", "promotion_plan", plan_id,
+              "success", before={"status": plan["status"]}, after={"status": cible})
+        return jsonify({"status": cible})
+    finally:
+        conn.close()
+
+
+@bp.post("/api/promotion-plans/<plan_id>/apply")
+@require_auth
+def apply_promotion_plan(plan_id):
+    """Ouvre la nouvelle année. Irréversible, et donc gardé de trois façons :
+
+      1. le plan doit être VALIDE ;
+      2. plus aucun élève sans décision ni sans classe — revérifié ICI, et pas
+         seulement à la validation : des élèves ont pu s'inscrire depuis ;
+      3. le client confirme explicitement (`confirm: true`), pour qu'un appel
+         de trop ne bascule pas une école entière.
+    """
+    data = json_object(request.get_json(force=True))
+    conn, erreur = _plan_direction("promotion.apply")
+    if erreur:
+        return erreur
+    try:
+        tenant_id = g.ctx["tenant_id"]
+        plan = _plan_ou_404(conn, plan_id)
+        if not plan:
+            return _not_found("promotion.apply")
+        if plan["status"] == promotions.APPLIQUE:
+            return jsonify({"error": "Ce plan a déjà été appliqué.",
+                            "applied_at": plan["applied_at"]}), 409
+        if plan["status"] != promotions.VALIDE:
+            return jsonify({"error": "Seul un plan validé peut être appliqué."}), 409
+        etat = promotions.etat(conn, tenant_id, plan)
+        if not etat["applicable"]:
+            liste, total = promotions.bloquants(conn, tenant_id, plan)
+            return jsonify({"error": "Le plan est devenu incomplet depuis sa validation.",
+                            "bloquants": liste, "bloquants_total": total}), 409
+        if not data.get("confirm"):
+            return jsonify({"error": "Confirmation requise.",
+                            "resume": etat}), 400
+
+        resultat = promotions.appliquer(conn, tenant_id, plan, g.ctx["user_id"])
+        audit(tenant_id, g.ctx["user_id"], "promotion.applied", "promotion_plan", plan_id,
+              "success", after={**resultat, "target_year": plan["target_year_id"]})
+        return jsonify({**resultat, "status": promotions.APPLIQUE,
+                        "target_year_id": plan["target_year_id"]})
+    finally:
+        conn.close()
+
+
+@bp.get("/api/students/<student_id>/enrollments")
+@require_auth
+def student_enrollments(student_id):
+    """Le parcours de l'élève, année par année."""
+    conn = db.get_connection()
+    try:
+        eleve = school.resolve_student_access(conn, g.ctx, student_id)
+        if not eleve:
+            return _not_found("enrollments.read")
+        return jsonify({"parcours": promotions.inscriptions(conn, g.ctx["tenant_id"], student_id)})
+    finally:
+        conn.close()

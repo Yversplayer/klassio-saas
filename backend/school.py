@@ -950,6 +950,9 @@ def build_dossier(conn, ctx, student, financial_module):
             "id": sid, "code": student["code"], "first_name": student["first_name"], "last_name": student["last_name"],
             "gender": student["gender"], "birth_date": student["birth_date"], "photo_data": student["photo_data"],
             "status": student["status"], "created_at": student["created_at"],
+            # L'année de rattachement : elle change au passage d'année, et le
+            # dossier doit dire LAQUELLE il montre.
+            "academic_year_id": student["academic_year_id"],
             "class": ({"id": student["class_id"], "name": student["class_name"], "level": student["class_level"], "cycle": student["class_cycle"]}
                       if student["class_id"] else None),
             "titulaire": titulaire_of_class(conn, tenant_id, student["class_id"]),

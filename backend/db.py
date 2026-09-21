@@ -500,7 +500,6 @@ def _migrate(conn):
     _add_column_if_missing(conn, "academic_years", "status", "TEXT NOT NULL DEFAULT 'ACTIVE'")
     _add_column_if_missing(conn, "academic_years", "starts_on", "TEXT")
     _add_column_if_missing(conn, "academic_years", "ends_on", "TEXT")
-    _add_column_if_missing(conn, "academic_years", "status", "TEXT NOT NULL DEFAULT 'ACTIVE'")
     _add_column_if_missing(conn, "academic_years", "updated_at", "TEXT")
 
     # Division concernée par une période. NULL = toutes les divisions, ce qui

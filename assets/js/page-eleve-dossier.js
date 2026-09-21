@@ -18,14 +18,17 @@
     load();
   });
 
+  var parcours = [];
+
   function isStaff() { return ctx.role === "directeur" || ctx.role === "discipline" || ctx.role === "professeur"; }
   function isDD() { return ctx.role === "directeur" || ctx.role === "discipline"; }
 
   function load() {
     document.getElementById("dossierHead").innerHTML = UI.skeleton("card", 1);
     document.getElementById("dossierPanels").innerHTML = UI.skeleton("card", 2);
-    var calls = [api.fetch("/students/" + studentId), api.fetch("/students/" + studentId + "/contacts"), api.fetch("/documents")];
-    if (ctx.role !== "parent") calls.push(api.fetch("/periods"));
+    var calls = [api.fetch("/students/" + studentId), api.fetch("/students/" + studentId + "/contacts"), api.fetch("/documents"),
+                 api.fetch("/students/" + studentId + "/enrollments")];
+    if (ctx.role !== "parent") calls.push(api.fetch("/periods"));   // index 4
     Promise.all(calls).then(function (r) {
       if (!r[0].ok) {
         document.getElementById("dossierHead").innerHTML = "";
@@ -35,7 +38,8 @@
       D = r[0].body;
       contacts = r[1].ok ? r[1].body : null;
       documents = r[2].ok ? r[2].body : [];
-      periods = r[3] && r[3].ok ? r[3].body.periods : [];
+      parcours = r[3] && r[3].ok ? (r[3].body.parcours || []) : [];
+      periods = r[4] && r[4].ok ? r[4].body.periods : [];
       var after = function () { renderHead(); renderTabs(); };
       if (D.student.class) api.fetch("/resources?class_id=" + D.student.class.id).then(function (rr) { resources = rr.ok ? rr.body : []; after(); });
       else after();
@@ -126,7 +130,8 @@
         "<dt>Genre</dt><dd>" + (s.gender === "F" ? "Fille" : s.gender === "M" ? "Garçon" : "—") + "</dd><dt>Date de naissance</dt><dd>" + (s.birth_date ? UI.fmtDate(s.birth_date) : "—") + "</dd>" +
         "<dt>Classe</dt><dd>" + (s.class ? UI.escapeHtml(s.class.name) : "Non affectée") + "</dd><dt>Titulaire</dt><dd>" + (s.titulaire ? UI.escapeHtml(s.titulaire.name) : "—") + "</dd>" +
         "<dt>Statut</dt><dd>" + UI.badge(s.status) + "</dd><dt>Dossier créé le</dt><dd>" + UI.fmtDate(s.created_at) + "</dd></dl>" +
-        '<p class="note-inline">' + UI.icon("lock", 15) + "<span>L'élève n'a pas de compte : son identifiant sert au pointage et aux documents, jamais à se connecter.</span></p></div>" +
+        '<p class="note-inline">' + UI.icon("lock", 15) + "<span>L'élève n'a pas de compte : son identifiant sert au pointage et aux documents, jamais à se connecter.</span></p>" +
+        parcoursBlock() + "</div>" +
         '<div class="panel"><div class="panel-head"><h2>Responsables</h2></div><div class="roll-list">' + guardians + "</div>" + contactsBlock() + "</div></div>";
     },
 
@@ -294,6 +299,21 @@
     var sch = contacts.school;
     return '<div class="panel-head" style="margin-top:18px"><h2>Contacts</h2></div><div class="roll-list">' + (t || '<p class="muted">Aucun enseignant rattaché à cette classe.</p>') + dd +
       '<div class="roll-row"><span class="avatar-init soft" style="width:32px;height:32px;font-size:11px">' + UI.icon("building", 14) + '</span><div class="roll-name">Secrétariat<span>' + UI.escapeHtml([sch.phone, sch.email, sch.address].filter(Boolean).join(" · ") || "Coordonnées non renseignées") + "</span></div></div></div>";
+  }
+
+  // LE PARCOURS. Un élève n'est pas né dans sa classe de cette année : quand
+  // il en a quitté une, le dossier doit le dire. Une seule ligne — l'année en
+  // cours — signifie simplement qu'aucun passage n'a encore eu lieu, et le
+  // bloc s'efface alors plutôt que d'afficher une « histoire » d'une ligne.
+  function parcoursBlock() {
+    if (parcours.length < 2) return "";
+    var lignes = parcours.map(function (p) {
+      return "<dt>" + UI.escapeHtml(p.year_label) + "</dt><dd>"
+        + UI.escapeHtml(p.class_name || "Non affecté")
+        + (p.courante ? " " + UI.badge("ok", "Année en cours") : "") + "</dd>";
+    }).join("");
+    return '<div class="panel-head" style="margin-top:18px"><h2>Parcours</h2></div>'
+      + '<dl class="dl">' + lignes + "</dl>";
   }
 
   function justifBlock() {

@@ -68,6 +68,10 @@
         // La délibération examine les résultats de l'année : elle appartient
         // au domaine Résultats, pas à une entrée de menu à elle.
         deliberations: ["resultats"],
+        // Le passage d'année place des élèves dans des classes : c'est le
+        // domaine Élèves & classes. On y arrive par la délibération, d'où le
+        // repli sur Résultats pour un menu qui n'aurait pas la première.
+        passage: ["eleves", "resultats"],
       };
       var pagesDuMenu = menus.map(function (item) { return item[2].replace(".html", ""); });
       var porte = null;

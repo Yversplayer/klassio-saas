@@ -60,6 +60,9 @@ TABLE_PAR_PARAMETRE = {
     "tenant_id": "tenants",
     "payment_id": "payments",
     "receipt_id": "receipts",
+    "delib_id": "deliberations",
+    "plan_id": "promotion_plans",
+    "export_id": "exports",
 }
 
 
@@ -188,6 +191,15 @@ class IsolationInterEtablissementsTests(unittest.TestCase):
                data={"file": (_io.BytesIO(csv_resultats.encode()), "resultats.csv"),
                      "period_id": periodes[0]["id"]},
                content_type="multipart/form-data", headers=cls.a_dir)
+
+        # Une délibération et un plan de passage, pour que le balayage vise
+        # aussi ces routes. Sans un identifiant réel côté A, elles restaient
+        # hors du filet automatique — et c'est justement là que se décide
+        # l'année scolaire de chaque élève.
+        creer("deliberation", "POST", "/api/deliberations",
+              {"class_id": klass["id"], "kind": "ANNUAL"}, cls.a_dir)
+        creer("plan de passage", "POST", "/api/promotion-plans",
+              {"source_year_id": an, "target_year_label": "Année suivante"}, cls.a_dir)
 
         produits = c.get("/api/store/products", headers=cls.a_parent).get_json()
         creer("commande", "POST", "/api/store/orders",

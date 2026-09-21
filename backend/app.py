@@ -97,7 +97,11 @@ def add_security_headers(resp):
     if origin in ALLOWED_ORIGINS:
         resp.headers["Access-Control-Allow-Origin"] = origin
     resp.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
-    resp.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+    # PATCH manquait. Le préflight répondait 200 sans l'autoriser, donc le
+    # navigateur bloquait la requête réelle : côté écran, un formulaire qui ne
+    # fait rien, sans erreur, sans message. Trouvé en pilotant l'écran de
+    # passage d'année — la première route PATCH du produit.
+    resp.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, PATCH, DELETE, OPTIONS"
     # Défense en profondeur (docs/SECURITE.md §14.4) — utile même pour une API JSON :
     # empêche un navigateur de "deviner" un type de contenu exécutable, et bloque
     # tout embarquement dans une frame tierce.
@@ -418,11 +422,24 @@ def create_academic_year():
     label = required_text(data.get("label"), "label")
     conn = db.get_connection()
     yid = new_id()
-    conn.execute("INSERT INTO academic_years (id, tenant_id, label, created_at) VALUES (?,?,?,?)",
-                 (yid, g.ctx["tenant_id"], label, str(time.time())))
+    # Une SECONDE année ne prend pas la main sur celle qui tourne.
+    #
+    # `academic_years.is_active` vaut 1 par défaut, et `_active_year()` retient
+    # la plus récente parmi les actives : créer 2027-2028 pour la préparer
+    # faisait donc immédiatement basculer tout l'établissement dessus — classes
+    # vides, élèves invisibles, en pleine année scolaire. La première année d'un
+    # établissement reste ACTIVE ; les suivantes naissent en PRÉPARATION et
+    # n'apparaissent qu'au passage d'année.
+    premiere = not conn.execute("SELECT 1 FROM academic_years WHERE tenant_id=?",
+                                (g.ctx["tenant_id"],)).fetchone()
+    statut = "ACTIVE" if premiere else "PREPARATION"
+    conn.execute(
+        """INSERT INTO academic_years (id, tenant_id, label, is_active, status, created_at)
+           VALUES (?,?,?,?,?,?)""",
+        (yid, g.ctx["tenant_id"], label, 1 if premiere else 0, statut, str(time.time())))
     conn.commit()
     conn.close()
-    return jsonify({"id": yid, "label": label}), 201
+    return jsonify({"id": yid, "label": label, "status": statut}), 201
 
 
 @app.get("/api/academic-years")
@@ -471,6 +488,29 @@ def list_classes():
     tenant_id = g.ctx["tenant_id"]
     allowed = school.visible_class_ids(conn, g.ctx)
     where, params = "c.tenant_id = ?", [tenant_id]
+    # LES CLASSES DE L'ANNÉE EN COURS, pas de toutes les années.
+    #
+    # Tant qu'aucun établissement n'avait franchi une année, la distinction
+    # n'existait pas. Au premier passage d'année, la liste montrait côte à côte
+    # la « 5e Scientifique A » de l'année écoulée — vidée de ses élèves — et
+    # celle de la nouvelle : deux classes de même nom, dont une fantôme. Une
+    # année précise reste consultable en la demandant explicitement.
+    demandee = request.args.get("academic_year_id")
+    if demandee:
+        annee = conn.execute("SELECT id FROM academic_years WHERE id=? AND tenant_id=?",
+                             (demandee, tenant_id)).fetchone()
+        if not annee:
+            conn.close()
+            return jsonify({"error": "Année scolaire introuvable pour cet établissement"}), 404
+        where += " AND c.academic_year_id = ?"
+        params.append(demandee)
+    else:
+        courante = conn.execute(
+            """SELECT id FROM academic_years WHERE tenant_id=?
+                ORDER BY is_active DESC, created_at DESC LIMIT 1""", (tenant_id,)).fetchone()
+        if courante:
+            where += " AND c.academic_year_id = ?"
+            params.append(courante["id"])
     if allowed is not None:
         if not allowed:
             conn.close()

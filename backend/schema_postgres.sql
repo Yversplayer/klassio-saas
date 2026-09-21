@@ -1034,3 +1034,94 @@ CREATE TABLE IF NOT EXISTS publication_students (
   PRIMARY KEY (publication_id, student_id)
 );
 CREATE INDEX IF NOT EXISTS idx_publication_students ON publication_students(tenant_id, student_id);
+
+-- ===========================================================================
+-- PASSAGE D'ANNÉE
+-- ===========================================================================
+
+-- Où un élève était, année par année.
+--
+-- POURQUOI CETTE TABLE EXISTE. `students` porte l'année et la classe COURANTES
+-- de l'élève, et c'est très bien : l'identité de l'élève ne change pas quand
+-- il monte de classe, donc ses notes, ses incidents, ses frais et ses
+-- responsables restent attachés au même `student_id`. Mais au moment où le
+-- passage avance `students.class_id`, la réponse à « dans quelle classe était
+-- cet élève l'an dernier ? » disparaît — sauf pour ceux qui ont des notes,
+-- qui la portent indirectement. Un élève sans note s'effacerait de la liste
+-- de sa classe passée.
+--
+-- Cette table capture donc EXACTEMENT ce qui allait être perdu, à l'instant
+-- où il allait l'être. Elle n'est écrite qu'au passage d'année : aucun chemin
+-- d'écriture existant n'est modifié.
+CREATE TABLE IF NOT EXISTS student_enrollments (
+  id TEXT PRIMARY KEY,
+  tenant_id TEXT NOT NULL REFERENCES tenants(id),
+  student_id TEXT NOT NULL REFERENCES students(id),
+  academic_year_id TEXT NOT NULL REFERENCES academic_years(id),
+  class_id TEXT REFERENCES classes(id),
+  source TEXT NOT NULL DEFAULT 'PROMOTION',  -- PROMOTION | MANUELLE
+  created_at TEXT NOT NULL,
+  UNIQUE(tenant_id, student_id, academic_year_id)
+);
+CREATE INDEX IF NOT EXISTS idx_enrollments_year ON student_enrollments(tenant_id, academic_year_id);
+CREATE INDEX IF NOT EXISTS idx_enrollments_student ON student_enrollments(tenant_id, student_id);
+
+-- Le plan de passage : un BROUILLON de la prochaine rentrée.
+--
+-- Rien dans ce plan n'a d'effet tant qu'il n'est pas appliqué. C'est sa raison
+-- d'être : la Direction doit pouvoir construire la rentrée, la relire, la
+-- corriger et la faire relire, sans que rien ne bouge dans le logiciel. Un
+-- passage d'année qui s'exécuterait au fil des clics serait irrattrapable.
+--
+--   BROUILLON  en construction, librement modifiable
+--   EN_REVUE   soumis à relecture — toujours modifiable, mais signalé
+--   VALIDE     la Direction l'a arrêté. Seul cet état autorise l'application.
+--   APPLIQUE   exécuté. Un plan appliqué n'est plus jamais modifiable.
+CREATE TABLE IF NOT EXISTS promotion_plans (
+  id TEXT PRIMARY KEY,
+  tenant_id TEXT NOT NULL REFERENCES tenants(id),
+  source_year_id TEXT NOT NULL REFERENCES academic_years(id),
+  target_year_id TEXT NOT NULL REFERENCES academic_years(id),
+  status TEXT NOT NULL DEFAULT 'BROUILLON',
+  created_by TEXT REFERENCES users(id),
+  created_at TEXT NOT NULL,
+  validated_by TEXT REFERENCES users(id),
+  validated_at TEXT,
+  applied_by TEXT REFERENCES users(id),
+  applied_at TEXT,
+  UNIQUE(tenant_id, source_year_id, target_year_id)
+);
+CREATE INDEX IF NOT EXISTS idx_promotion_plans ON promotion_plans(tenant_id, source_year_id);
+
+-- Le sort de CHAQUE élève dans le plan. Une ligne par élève, sans exception :
+-- un élève absent du plan serait un élève oublié à la rentrée.
+--
+-- `action` n'est JAMAIS déduite par Klassio. Elle est reprise d'une décision
+-- déjà prise — la délibération, ou `bulletin_decisions` — et vaut EN_ATTENTE
+-- quand aucune décision n'existe. Un élève non délibéré ne « passe » pas par
+-- défaut : c'est la faute que ce module doit rendre impossible.
+--
+-- `target_class_id` n'est jamais deviné non plus. Klassio ne sait pas quelle
+-- classe vient après la 5e — cela dépend de l'établissement, de la section et
+-- de l'option. La Direction désigne les destinations ; Klassio ne fait que
+-- répartir les effectifs entre celles qu'elle a désignées.
+CREATE TABLE IF NOT EXISTS promotion_assignments (
+  id TEXT PRIMARY KEY,
+  tenant_id TEXT NOT NULL REFERENCES tenants(id),
+  plan_id TEXT NOT NULL REFERENCES promotion_plans(id),
+  student_id TEXT NOT NULL REFERENCES students(id),
+  source_class_id TEXT REFERENCES classes(id),
+  action TEXT NOT NULL DEFAULT 'EN_ATTENTE',  -- PASSAGE | REDOUBLEMENT | DEPART | EN_ATTENTE
+  target_class_id TEXT REFERENCES classes(id),
+  -- D'où vient cette ligne : DELIBERATION (décision officielle reprise),
+  -- BULLETIN (décision de fin d'année sans délibération), PROPOSITION
+  -- (placement suggéré par la répartition), MANUEL (la Direction a tranché).
+  origin TEXT,
+  note TEXT,
+  updated_by TEXT REFERENCES users(id),
+  updated_at TEXT,
+  created_at TEXT NOT NULL,
+  UNIQUE(tenant_id, plan_id, student_id)
+);
+CREATE INDEX IF NOT EXISTS idx_promotion_assignments ON promotion_assignments(tenant_id, plan_id);
+CREATE INDEX IF NOT EXISTS idx_promotion_assignments_cls ON promotion_assignments(tenant_id, plan_id, source_class_id);
