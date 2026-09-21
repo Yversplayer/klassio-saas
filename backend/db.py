@@ -488,6 +488,16 @@ def _migrate(conn):
     # ---------------------------------------------------------------------
 
     # L'année scolaire devient une vraie période de temps, avec un état.
+    # Statut d'une année. `is_active` disait seulement « c'est celle-ci » ;
+    # il ne permettait pas de distinguer une année qu'on PRÉPARE d'une année
+    # CLOSE. Sans cette nuance, ouvrir la préparation de 2027-2028 pendant que
+    # 2026-2027 tourne encore mélangerait les deux — ce que le passage d'année
+    # interdit formellement.
+    #   ACTIVE      l'année en cours, celle que tout le monde voit
+    #   PREPARATION en cours de construction, pas encore ouverte aux usagers
+    #   ARCHIVED    close. Consultable, jamais modifiable, JAMAIS supprimée.
+    _add_column_if_missing(conn, "tenant_settings", "delib_max_absences", "INTEGER")
+    _add_column_if_missing(conn, "academic_years", "status", "TEXT NOT NULL DEFAULT 'ACTIVE'")
     _add_column_if_missing(conn, "academic_years", "starts_on", "TEXT")
     _add_column_if_missing(conn, "academic_years", "ends_on", "TEXT")
     _add_column_if_missing(conn, "academic_years", "status", "TEXT NOT NULL DEFAULT 'ACTIVE'")

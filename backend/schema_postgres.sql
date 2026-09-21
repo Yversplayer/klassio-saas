@@ -47,6 +47,10 @@ CREATE TABLE IF NOT EXISTS academic_years (
   tenant_id TEXT NOT NULL REFERENCES tenants(id),
   label TEXT NOT NULL,
   is_active INTEGER NOT NULL DEFAULT 1,
+  -- ACTIVE | PREPARATION | ARCHIVED. `is_active` disait « c'est celle-ci » ;
+  -- il ne distinguait pas une année qu'on PRÉPARE d'une année CLOSE.
+  -- ARCHIVED ne veut jamais dire supprimée : l'historique reste consultable.
+  status TEXT NOT NULL DEFAULT 'ACTIVE',
   created_at TEXT NOT NULL
 );
 
@@ -550,6 +554,8 @@ CREATE TABLE IF NOT EXISTS exports (
   expires_at TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_exports_tenant ON exports(tenant_id, created_at);
+
+
 CREATE INDEX IF NOT EXISTS idx_deliveries_status ON deliveries(tenant_id, status);
 CREATE INDEX IF NOT EXISTS idx_deliveries_notification ON deliveries(notification_id);
 
@@ -776,6 +782,68 @@ CREATE TABLE IF NOT EXISTS conduct_overrides (
 );
 
 -- Décision de fin d'année (proclamation) — toujours une décision humaine.
+-- Délibérations — le MOMENT où le conseil examine une classe.
+--
+-- Beaucoup de la délibération existait déjà sans porter ce nom : l'onglet
+-- « Conseil de classe » montre rang, moyenne, conduite et décision ;
+-- `bulletin_decisions` garde la décision de fin d'année ; `academic_periods`
+-- rend les périodes configurables. Ce qui manquait, c'est la SESSION : un
+-- objet qui a un début, un état, et une clôture — sans quoi personne ne peut
+-- dire si la classe a été délibérée ou non.
+--
+-- La session porte (année, période, classe). `period_id` est NULL pour une
+-- délibération ANNUELLE : c'est l'année entière qui est examinée, pas une
+-- période. L'unicité empêche d'ouvrir deux fois la même séance.
+CREATE TABLE IF NOT EXISTS deliberations (
+  id TEXT PRIMARY KEY,
+  tenant_id TEXT NOT NULL REFERENCES tenants(id),
+  academic_year_id TEXT NOT NULL REFERENCES academic_years(id),
+  period_id TEXT REFERENCES academic_periods(id),
+  class_id TEXT NOT NULL REFERENCES classes(id),
+  kind TEXT NOT NULL DEFAULT 'PERIOD',   -- PERIOD | ANNUAL
+  status TEXT NOT NULL DEFAULT 'DRAFT',  -- DRAFT | IN_PROGRESS | CLOSED
+  opened_by TEXT REFERENCES users(id),
+  opened_at TEXT,
+  closed_by TEXT REFERENCES users(id),
+  closed_at TEXT,
+  created_at TEXT NOT NULL,
+  UNIQUE(tenant_id, academic_year_id, period_id, class_id, kind)
+);
+CREATE INDEX IF NOT EXISTS idx_deliberations_tenant ON deliberations(tenant_id, academic_year_id);
+CREATE INDEX IF NOT EXISTS idx_deliberations_class ON deliberations(tenant_id, class_id);
+
+-- Ce que chacun DÉPOSE au cours de la délibération.
+--
+-- Trois natures, une seule table, parce qu'elles partagent tout : un auteur,
+-- un rôle, une date, un élève, une délibération.
+--
+--   OBSERVATION  le conseil note quelque chose. Personne ne décide.
+--   AVIS         un titulaire, un professeur ou le DD se prononce. Ce n'est
+--                PAS la décision : c'est une contribution au débat.
+--   DECISION     la Direction tranche. Seul ce type fait foi.
+--
+-- APPEND-ONLY. Rien n'est jamais écrasé : corriger crée une nouvelle ligne et
+-- date l'ancienne dans `superseded_at`. C'est exactement le motif déjà employé
+-- pour les notes (`grades.is_current` / `superseded_at`), et pour la même
+-- raison : une délibération est un acte institutionnel, on doit pouvoir dire
+-- plus tard qui a proposé quoi et quand la position a changé.
+CREATE TABLE IF NOT EXISTS deliberation_entries (
+  id TEXT PRIMARY KEY,
+  tenant_id TEXT NOT NULL REFERENCES tenants(id),
+  deliberation_id TEXT NOT NULL REFERENCES deliberations(id),
+  student_id TEXT NOT NULL REFERENCES students(id),
+  kind TEXT NOT NULL,                    -- OBSERVATION | AVIS | DECISION
+  value TEXT,                            -- PASSAGE | REDOUBLEMENT | DEPART | AUTRE | A_EXAMINER
+  comment TEXT,
+  author_id TEXT NOT NULL REFERENCES users(id),
+  author_role TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  superseded_at TEXT,                    -- non NULL = remplacée par une plus récente
+  superseded_by TEXT REFERENCES deliberation_entries(id)
+);
+CREATE INDEX IF NOT EXISTS idx_delib_entries ON deliberation_entries(tenant_id, deliberation_id, student_id);
+CREATE INDEX IF NOT EXISTS idx_delib_entries_student ON deliberation_entries(tenant_id, student_id);
+
 CREATE TABLE IF NOT EXISTS bulletin_decisions (
   id TEXT PRIMARY KEY,
   tenant_id TEXT NOT NULL REFERENCES tenants(id),

@@ -18,6 +18,7 @@ import notifications as notif_module
 import ingestion
 import results_import
 import school
+import deliberations as delib
 from security import require_auth, new_id, audit
 from validation import json_object, ValidationError, required_text
 
@@ -714,6 +715,372 @@ def set_conduct(student_id):
     conn.close()
     audit(g.ctx["tenant_id"], g.ctx["user_id"], "conduct.set", "student", student_id, "success", after={"period": period, "label": data.get("label")})
     return jsonify({"ok": True})
+
+
+# ===========================================================================
+# DÉLIBÉRATIONS
+# ===========================================================================
+
+def _delib_accessible(conn, ctx, deliberation):
+    """Peut-on voir cette délibération ? Et à quel titre ?
+
+    Retourne (autorise, peut_deposer_avis, peut_decider). Trois réponses
+    distinctes parce que les rôles ne font pas la même chose :
+
+      - la Direction pilote et DÉCIDE ;
+      - le titulaire et le professeur affecté donnent un AVIS sur leur classe ;
+      - le DD dépose des éléments disciplinaires, sans décider ;
+      - le parent n'entre pas. La délibération est une discussion interne ;
+        ce qui en sort et le concerne, c'est la décision, par le bulletin.
+    """
+    role = ctx["role"]
+    if role == "parent":
+        return (False, False, False)
+    if role == "directeur":
+        return (True, True, True)
+    # Professeur, titulaire, DD : uniquement les classes de leur périmètre.
+    autorisees = school.visible_class_ids(conn, ctx)
+    if autorisees is not None and deliberation["class_id"] not in autorisees:
+        return (False, False, False)
+    # Le DD contribue (observations, éléments disciplinaires) mais ne se
+    # prononce pas sur le passage : ce n'est pas son rôle institutionnel.
+    return (True, role == "professeur", False)
+
+
+@bp.get("/api/deliberations")
+@require_auth
+def list_deliberations():
+    """Les séances visibles, par année. Le périmètre s'applique ici aussi :
+    un professeur ne voit pas les délibérations des classes d'un collègue."""
+    if g.ctx["role"] == "parent":
+        return _denied("deliberations.read")
+    conn = db.get_connection()
+    try:
+        tenant_id = g.ctx["tenant_id"]
+        annee = request.args.get("academic_year_id")
+        where, params = ["d.tenant_id=?"], [tenant_id]
+        if annee:
+            where.append("d.academic_year_id=?"); params.append(annee)
+        autorisees = school.visible_class_ids(conn, g.ctx)
+        if autorisees is not None:
+            if not autorisees:
+                return jsonify([])
+            where.append(f"d.class_id IN ({','.join('?' for _ in autorisees)})")
+            params.extend(autorisees)
+        rows = conn.execute(
+            f"""SELECT d.*, c.name AS class_name, a.label AS year_label,
+                       p.label AS period_label,
+                       (SELECT COUNT(*) FROM students s
+                         WHERE s.class_id=d.class_id AND s.status='active') AS student_count,
+                       (SELECT COUNT(*) FROM deliberation_entries e
+                         WHERE e.deliberation_id=d.id AND e.kind='DECISION'
+                           AND e.superseded_at IS NULL) AS decided_count
+                FROM deliberations d
+                JOIN classes c ON c.id = d.class_id
+                JOIN academic_years a ON a.id = d.academic_year_id
+                LEFT JOIN academic_periods p ON p.id = d.period_id
+                WHERE {' AND '.join(where)}
+                ORDER BY a.label DESC, p.sort, c.name""", tuple(params)).fetchall()
+        return jsonify([dict(r) for r in rows])
+    finally:
+        conn.close()
+
+
+@bp.post("/api/deliberations")
+@require_auth
+def create_deliberation():
+    """Ouvre une séance. La Direction seule — c'est un acte d'organisation.
+
+    Rien n'est calculé ni décidé à la création : on ouvre un cadre. Les
+    éléments seront lus au moment où le conseil les regardera, donc toujours à
+    jour, plutôt que figés dans une photographie prise trop tôt.
+    """
+    if g.ctx["role"] != "directeur":
+        return _denied("deliberations.create")
+    data = json_object(request.get_json(force=True))
+    class_id = required_text(data.get("class_id"), "class_id")
+    period_id = (data.get("period_id") or "").strip() or None
+    kind = data.get("kind") or delib.PERIOD
+    if kind not in (delib.PERIOD, delib.ANNUAL):
+        raise ValidationError("kind doit être PERIOD ou ANNUAL.")
+    if kind == delib.PERIOD and not period_id:
+        raise ValidationError("Une délibération de période doit désigner une période.")
+    if kind == delib.ANNUAL:
+        period_id = None
+
+    conn = db.get_connection()
+    try:
+        tenant_id = g.ctx["tenant_id"]
+        classe = conn.execute("SELECT * FROM classes WHERE id=? AND tenant_id=?",
+                              (class_id, tenant_id)).fetchone()
+        if not classe:
+            return _not_found("deliberations.create", "Classe introuvable.")
+        if period_id:
+            per = conn.execute(
+                "SELECT id FROM academic_periods WHERE id=? AND tenant_id=? AND academic_year_id=?",
+                (period_id, tenant_id, classe["academic_year_id"])).fetchone()
+            if not per:
+                return _not_found("deliberations.create", "Période introuvable pour cette année.")
+
+        # `period_id IS ?` n'est pas du SQL valide en PostgreSQL : `IS` attend
+        # NULL, pas un paramètre. On construit donc la clause — même précaution
+        # que pour le filtre d'année des exports, et pour la même raison : ce
+        # genre d'écart ne se voit qu'en production.
+        clause = "period_id IS NULL" if period_id is None else "period_id=?"
+        params = [tenant_id, classe["academic_year_id"], class_id, kind]
+        if period_id is not None:
+            params.append(period_id)
+        existante = conn.execute(
+            f"""SELECT id FROM deliberations WHERE tenant_id=? AND academic_year_id=?
+                AND class_id=? AND kind=? AND {clause}""", tuple(params)).fetchone()
+        if existante:
+            return jsonify({"id": existante["id"], "already_exists": True}), 200
+
+        did = new_id()
+        conn.execute(
+            """INSERT INTO deliberations (id, tenant_id, academic_year_id, period_id, class_id,
+                                          kind, status, opened_by, opened_at, created_at)
+               VALUES (?,?,?,?,?,?,?,?,?,?)""",
+            (did, tenant_id, classe["academic_year_id"], period_id, class_id, kind,
+             delib.IN_PROGRESS, g.ctx["user_id"], str(time.time()), str(time.time())))
+        conn.commit()
+        audit(tenant_id, g.ctx["user_id"], "deliberation.created", "deliberation", did, "success",
+              after={"class_id": class_id, "kind": kind, "period_id": period_id})
+        return jsonify({"id": did, "status": delib.IN_PROGRESS}), 201
+    finally:
+        conn.close()
+
+
+@bp.get("/api/deliberations/<delib_id>")
+@require_auth
+def get_deliberation(delib_id):
+    """Le tableau du conseil : une ligne par élève, tous les éléments réunis.
+
+    Chaque chiffre vient d'une source existante — `school.bulletin()` pour les
+    résultats et la conduite, `attendance_summary()` pour la présence,
+    `incidents` pour la discipline. Rien n'est recalculé ici, rien n'est
+    inventé : si une donnée n'existe pas, la case reste vide.
+    """
+    conn = db.get_connection()
+    try:
+        tenant_id = g.ctx["tenant_id"]
+        d = conn.execute("SELECT * FROM deliberations WHERE id=? AND tenant_id=?",
+                         (delib_id, tenant_id)).fetchone()
+        if not d:
+            return _not_found("deliberations.read")
+        autorise, peut_avis, peut_decider = _delib_accessible(conn, g.ctx, d)
+        if not autorise:
+            return _denied("deliberations.read")
+
+        classe = conn.execute("SELECT * FROM classes WHERE id=?", (d["class_id"],)).fetchone()
+        periode = conn.execute("SELECT label FROM academic_periods WHERE id=?",
+                               (d["period_id"],)).fetchone() if d["period_id"] else None
+        libelle_periode = periode["label"] if periode else None
+        reglages = school.get_settings(conn, tenant_id)
+
+        eleves = conn.execute(
+            """SELECT * FROM students WHERE tenant_id=? AND class_id=? AND status='active'
+               ORDER BY last_name, first_name""", (tenant_id, d["class_id"])).fetchall()
+
+        # Tous les dépôts de la séance, lus d'un coup : une requête par élève
+        # ferait N+1 appels sur une classe de 60.
+        tous = delib.entrees(conn, tenant_id, delib_id)
+        par_eleve = {}
+        for e in tous:
+            par_eleve.setdefault(e["student_id"], []).append(e)
+
+        lignes = []
+        for row in eleves:
+            eleve = dict(row)
+            eleve["class_name"] = classe["name"]
+            b = school.bulletin(conn, tenant_id, eleve, period=libelle_periode)
+            presence = school.attendance_summary(conn, tenant_id, eleve["id"])
+            incidents = conn.execute(
+                "SELECT COUNT(*) n FROM incidents WHERE tenant_id=? AND student_id=?",
+                (tenant_id, eleve["id"])).fetchone()["n"]
+            discipline = {"incidents": incidents, "remaining": b["conduct"]["remaining"],
+                          "capital": b["conduct"]["capital"]}
+            depots = par_eleve.get(eleve["id"], [])
+            decision = next((x for x in depots if x["kind"] == delib.DECISION), None)
+            lignes.append({
+                "student": {"id": eleve["id"], "code": eleve["code"],
+                            "first_name": eleve["first_name"], "last_name": eleve["last_name"]},
+                "results": {"average_20": b["general_average_20"], "percent": b["percent"],
+                            "rank": b["rank"], "class_size": b["class_size"]},
+                "attendance": presence,
+                "conduct": b["conduct"],
+                "signals": delib.indicateurs(b, presence, discipline, reglages),
+                "avis_count": sum(1 for x in depots if x["kind"] == delib.AVIS),
+                "observation_count": sum(1 for x in depots if x["kind"] == delib.OBSERVATION),
+                # La décision OFFICIELLE, distincte des avis. `None` veut dire
+                # que le conseil ne s'est pas prononcé — jamais que Klassio
+                # aurait une préférence.
+                "decision": {"value": decision["value"], "comment": decision["comment"],
+                             "author": decision["author_name"], "at": decision["created_at"]}
+                            if decision else None,
+            })
+
+        return jsonify({
+            "id": d["id"], "kind": d["kind"], "status": d["status"],
+            "class": {"id": classe["id"], "name": classe["name"]},
+            "period": libelle_periode, "academic_year_id": d["academic_year_id"],
+            "count": len(lignes),
+            "can_give_opinion": peut_avis, "can_decide": peut_decider,
+            "decisions_available": delib.DECISIONS,
+            "rows": lignes,
+        })
+    finally:
+        conn.close()
+
+
+@bp.post("/api/deliberations/<delib_id>/entries")
+@require_auth
+def add_deliberation_entry(delib_id):
+    """Déposer une observation, un avis, ou LA décision.
+
+    LE POINT CENTRAL DE TOUT CE MODULE : un avis n'est pas une décision, et
+    aucun mécanisme ne transforme l'un en l'autre. Un titulaire peut écrire
+    « Avis : passage » dix fois ; tant que la Direction n'a pas déposé une
+    entrée de type DECISION, l'élève n'a pas de décision. C'est vérifié ici, au
+    serveur, et pas seulement en masquant un bouton.
+    """
+    data = json_object(request.get_json(force=True))
+    kind = data.get("kind")
+    if kind not in (delib.OBSERVATION, delib.AVIS, delib.DECISION):
+        raise ValidationError("kind doit être OBSERVATION, AVIS ou DECISION.")
+    student_id = required_text(data.get("student_id"), "student_id")
+    value = (data.get("value") or "").strip() or None
+    comment = (data.get("comment") or "").strip()[:2000] or None
+
+    conn = db.get_connection()
+    try:
+        tenant_id = g.ctx["tenant_id"]
+        d = conn.execute("SELECT * FROM deliberations WHERE id=? AND tenant_id=?",
+                         (delib_id, tenant_id)).fetchone()
+        if not d:
+            return _not_found("deliberations.entry")
+        autorise, peut_avis, peut_decider = _delib_accessible(conn, g.ctx, d)
+        if not autorise:
+            return _denied("deliberations.entry")
+        if d["status"] == delib.CLOSED:
+            return jsonify({"error": "Cette délibération est close. Rouvrez-la pour la modifier."}), 409
+
+        if kind == delib.DECISION and not peut_decider:
+            return _denied("deliberations.decide",
+                           "La décision officielle appartient à la Direction. "
+                           "Vous pouvez déposer un avis.")
+        if kind == delib.AVIS and not peut_avis:
+            return _denied("deliberations.opinion",
+                           "Votre rôle ne dépose pas d'avis sur le passage. "
+                           "Vous pouvez ajouter une observation.")
+
+        # L'élève doit appartenir à la classe de CETTE délibération : sans ce
+        # contrôle, un identifiant d'élève d'une autre classe — ou d'une autre
+        # école — s'y glisserait.
+        eleve = conn.execute(
+            "SELECT * FROM students WHERE id=? AND tenant_id=? AND class_id=?",
+            (student_id, tenant_id, d["class_id"])).fetchone()
+        if not eleve:
+            return _not_found("deliberations.entry",
+                              "Cet élève n'appartient pas à la classe délibérée.")
+
+        if kind in (delib.AVIS, delib.DECISION):
+            if value not in delib.DECISIONS:
+                raise ValidationError("value doit être l'une des décisions prévues.")
+            if value in delib.DECISIONS_EXIGEANT_MOTIF and not comment:
+                raise ValidationError(
+                    f"« {delib.DECISIONS[value]} » demande un motif : sans lui, la trace "
+                    "ne dira rien à qui la relira.")
+        elif not comment:
+            raise ValidationError("Une observation sans texte n'apporte rien.")
+
+        entry_id = delib.deposer(conn, tenant_id, delib_id, student_id, kind, value,
+                                 comment, g.ctx["user_id"], g.ctx["role"])
+
+        # La décision officielle met à jour `bulletin_decisions`, que le
+        # bulletin lit déjà. L'historique, lui, reste dans les entrées : on ne
+        # crée pas une seconde vérité, on projette la plus récente.
+        if kind == delib.DECISION:
+            correspondance = delib.VERS_BULLETIN.get(value)
+            if correspondance:
+                conn.execute(
+                    """INSERT INTO bulletin_decisions (id, tenant_id, student_id, academic_year_id,
+                                                       decision, mention, note, set_by, created_at)
+                       VALUES (?,?,?,?,?,?,?,?,?)
+                       ON CONFLICT(tenant_id, student_id, academic_year_id) DO UPDATE SET
+                         decision=excluded.decision, note=excluded.note,
+                         set_by=excluded.set_by, created_at=excluded.created_at""",
+                    (new_id(), tenant_id, student_id, d["academic_year_id"], correspondance,
+                     None, comment, g.ctx["user_id"], str(time.time())))
+                conn.commit()
+            audit(tenant_id, g.ctx["user_id"], "deliberation.decision", "student", student_id,
+                  "success", after={"decision": value, "deliberation_id": delib_id})
+        else:
+            audit(tenant_id, g.ctx["user_id"], f"deliberation.{kind.lower()}", "student",
+                  student_id, "success", after={"deliberation_id": delib_id, "value": value})
+
+        return jsonify({"id": entry_id, "kind": kind}), 201
+    finally:
+        conn.close()
+
+
+@bp.get("/api/deliberations/<delib_id>/students/<student_id>")
+@require_auth
+def deliberation_student(delib_id, student_id):
+    """Le dossier individuel : tout au même endroit, sans naviguer ailleurs.
+
+    Résultats, présence, discipline, appréciations, et l'HISTORIQUE COMPLET des
+    dépôts — y compris ceux qui ont été remplacés. Un conseil doit pouvoir voir
+    qu'un avis a changé, et quand.
+    """
+    conn = db.get_connection()
+    try:
+        tenant_id = g.ctx["tenant_id"]
+        d = conn.execute("SELECT * FROM deliberations WHERE id=? AND tenant_id=?",
+                         (delib_id, tenant_id)).fetchone()
+        if not d:
+            return _not_found("deliberations.student")
+        autorise, peut_avis, peut_decider = _delib_accessible(conn, g.ctx, d)
+        if not autorise:
+            return _denied("deliberations.student")
+
+        eleve = conn.execute(
+            "SELECT * FROM students WHERE id=? AND tenant_id=? AND class_id=?",
+            (student_id, tenant_id, d["class_id"])).fetchone()
+        if not eleve:
+            return _not_found("deliberations.student")
+
+        classe = conn.execute("SELECT * FROM classes WHERE id=?", (d["class_id"],)).fetchone()
+        periode = conn.execute("SELECT label FROM academic_periods WHERE id=?",
+                               (d["period_id"],)).fetchone() if d["period_id"] else None
+        e = dict(eleve); e["class_name"] = classe["name"]
+        b = school.bulletin(conn, tenant_id, e, period=periode["label"] if periode else None)
+        presence = school.attendance_summary(conn, tenant_id, student_id)
+        incidents = [dict(r) for r in conn.execute(
+            """SELECT occurred_at, title, category, severity, points, action_taken
+               FROM incidents WHERE tenant_id=? AND student_id=?
+               ORDER BY occurred_at DESC LIMIT 50""", (tenant_id, student_id))]
+        apprec = [dict(r) for r in conn.execute(
+            """SELECT period, domain, level, comment, created_at FROM appreciations
+               WHERE tenant_id=? AND student_id=? ORDER BY created_at DESC LIMIT 50""",
+            (tenant_id, student_id))]
+
+        return jsonify({
+            "student": {"id": e["id"], "code": e["code"], "first_name": e["first_name"],
+                        "last_name": e["last_name"], "class_name": classe["name"]},
+            "bulletin": b,
+            "attendance": presence,
+            "incidents": incidents,
+            "appreciations": apprec,
+            # L'historique COMPLET, remplacés compris : c'est ce qui permet de
+            # dire plus tard qui avait proposé quoi.
+            "entries": delib.entrees(conn, tenant_id, delib_id, student_id=student_id,
+                                     courantes=False),
+            "can_give_opinion": peut_avis, "can_decide": peut_decider,
+            "decisions_available": delib.DECISIONS,
+        })
+    finally:
+        conn.close()
 
 
 @bp.put("/api/students/<student_id>/decision")

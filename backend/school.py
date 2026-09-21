@@ -171,6 +171,10 @@ SETTINGS_DEFAULTS = {
     # Cette politique gouverne la DIFFUSION, jamais le dossier : un résultat non
     # diffusé existe, reste au dossier de l'élève, et reste visible du personnel.
     "results_policy": None,
+    # Délibérations — nombre d'absences au-delà duquel la situation d'un élève
+    # est SIGNALÉE au conseil. `None` = aucune règle : Klassio ne signale rien
+    # que l'établissement n'ait demandé. Signaler n'est jamais décider.
+    "delib_max_absences": None,
 }
 DEFAULT_CONDUCT_SCALE = [[90, "Très bien"], [75, "Bien"], [60, "Assez bien"], [40, "Passable"], [0, "Insuffisant"]]
 BOOL_SETTINGS = {"teacher_sees_finance", "parent_notify_attendance", "parent_notify_incidents", "parent_notify_grades",
