@@ -744,7 +744,7 @@ button { font-family: inherit; cursor: pointer; }
   max-height: min(54vh, 440px);
 }
 
-/* ---- Appui : sous-titre, boutons, invitation à défiler ------------------ */
+/* ---- Appui : sous-titre et boutons -------------------------------------- */
 
 .hero-support {
   display: flex;
@@ -774,42 +774,6 @@ button { font-family: inherit; cursor: pointer; }
   margin: 0;
 }
 
-.scroll-hint {
-  display: inline-flex;
-  align-items: center;
-  gap: 9px;
-  margin: 0;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--ink-soft);
-}
-.scroll-hint .sh-rail {
-  position: relative;
-  width: 18px;
-  height: 28px;
-  border: 1.5px solid var(--line);
-  border-radius: 100px;
-  flex-shrink: 0;
-}
-.scroll-hint .sh-rail::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 6px;
-  width: 3px;
-  height: 6px;
-  margin-left: -1.5px;
-  border-radius: 2px;
-  background: var(--lime-deep);
-  animation: scrollHintDrop 1.9s var(--ease-in-out) infinite;
-}
-@keyframes scrollHintDrop {
-  0%, 100% { transform: translateY(0); opacity: 1; }
-  55% { transform: translateY(9px); opacity: 0.15; }
-}
-
 /* ---- Replis : mouvement réduit, et page sans JavaScript ----------------- */
 
 @media (prefers-reduced-motion: reduce) {
@@ -827,8 +791,6 @@ button { font-family: inherit; cursor: pointer; }
   .glyph-wordmark-wrap { transform: none !important; }
   .portal-reveal { display: none !important; }
   .glyph-o-interior { background: var(--surface-soft) !important; }
-  /* Il n'y a plus rien où entrer : l'invitation n'a plus de sens. */
-  .scroll-hint { display: none !important; }
 }
 
 /* Product preview mock */
