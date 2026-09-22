@@ -1,8 +1,8 @@
-# AGENTS.md — à lire avant de toucher à Classio
+# AGENTS.md — à lire avant de toucher à Klassio
 
 Ce fichier s'adresse à tout agent IA qui intervient sur ce dépôt.
 
-Classio est un SaaS de gestion scolaire multi-établissement pour la RDC,
+Klassio est un SaaS de gestion scolaire multi-établissement pour la RDC,
 destiné à un pilote dans une vraie école. Il manipule des dossiers d'élèves,
 des résultats officiels et de l'argent. Une partie du code a été auditée,
 exploitée puis corrigée : ce qui ressemble à une lourdeur y est souvent une
@@ -237,7 +237,13 @@ fichier créé uniquement dans le miroir sera perdu** — c'est déjà arrivé.
 - **Cache navigateur** : les pages référencent `style.css?v=…` et
   `page-*.js?v=…`. Si tu modifies un de ces fichiers, **incrémente la version
   dans les pages concernées**, sinon tes changements ne s'afficheront pas.
-- **Aucun dépôt git.** Pas de `git revert` pour te rattraper.
+- **Le dépôt git existe** — `origin git@github.com:Yversplayer/klassio-saas.git`,
+  branche `main`. Travaille par commits successifs plutôt que par un gros
+  changement d'un bloc ; `git diff` et `git revert` sont tes filets. **Ne pousse
+  pas sans qu'on te le demande** : le dépôt est public.
+  Corollaire pour le miroir du §7 : il ne contient PAS `.git` (rsync l'exclut).
+  Une modification faite uniquement dans le miroir n'est ni versionnée ni
+  sauvegardée — elle sera écrasée au prochain rsync.
 
 ---
 
@@ -249,8 +255,19 @@ fichier créé uniquement dans le miroir sera perdu** — c'est déjà arrivé.
   `FAILED`, `CANCELLED`, `EXPIRED`, `UNKNOWN`, `REFUNDED`, `REVERSED`). Le
   schéma les déclare, le code ne les produit pas. Ni remboursement, ni annulation.
 - **Pas d'OTP** : aucun canal SMS n'existe.
-- **Pas de bulletins PDF.**
+- **L'email ne part pas.** `backend/mailer.py` est écrit et testé, mais
+  `EMAIL_MODE=capture` par défaut : le message est rendu et enregistré, rien
+  n'est envoyé. Invitations, réinitialisation de mot de passe et avis de
+  résultats attendent un compte fournisseur et la vérification du domaine
+  (SPF/DKIM). Ne présente pas un envoi capturé comme un envoi.
+- **Pas de bulletins PDF.** L'API compose un bulletin complet en JSON
+  (`school.bulletin()`, `GET /api/classes/<id>/bulletins`) ; l'artefact
+  imprimable n'existe pas.
+- **Pas de notifications de calendrier.**
 - **Sauvegardes jamais restaurées** : RPO et RTO non établis.
 - **Jamais déployé.**
+- **Tarifs non tranchés.** `plans` et `api_billing` facturent 49 $ / 60 $+0,30 $
+  par élève / 120 $+0,20 $ ; d'autres prix ont été évoqués sans décision. Le
+  propriétaire n'a pas arbitré : **ne modifie aucun prix**.
 
 Ne transforme pas une simulation en fonctionnalité dans un rapport.
