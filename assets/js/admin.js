@@ -14,18 +14,57 @@
     var sidebar = document.getElementById("sidebar");
     var toggle = document.getElementById("sidebarToggle");
     var scrim = document.getElementById("sidebarScrim");
-    var collapsedKey = "klassio_sidebar_collapsed";
     var isMobile = function () { return window.matchMedia("(max-width: 860px)").matches; };
-    try { if (localStorage.getItem(collapsedKey) === "1" && !isMobile()) sidebar.classList.add("collapsed"); } catch (e) {}
-    if (isMobile()) sidebar.classList.add("collapsed");
+
+    // Sur grand écran, la barre latérale s'auto-masque par défaut pour laisser place nette
+    // et apparaît fluidement au survol du bord gauche.
+    var isPinned = false;
+    try { isPinned = localStorage.getItem("klassio_sidebar_pinned") === "1"; } catch (e) {}
+    if (isMobile() || !isPinned) sidebar.classList.add("collapsed");
+
     toggle.innerHTML = UI.icon("menu", 18);
     function setCollapsed(v) {
       sidebar.classList.toggle("collapsed", v);
       if (scrim) scrim.hidden = v || !isMobile();
-      try { if (!isMobile()) localStorage.setItem(collapsedKey, v ? "1" : "0"); } catch (e) {}
     }
-    toggle.addEventListener("click", function () { setCollapsed(!sidebar.classList.contains("collapsed")); });
+    toggle.addEventListener("click", function () {
+      if (isMobile()) {
+        setCollapsed(!sidebar.classList.contains("collapsed"));
+      } else {
+        isPinned = !isPinned;
+        try { localStorage.setItem("klassio_sidebar_pinned", isPinned ? "1" : "0"); } catch (e) {}
+        setCollapsed(!isPinned);
+      }
+    });
     if (scrim) scrim.addEventListener("click", function () { setCollapsed(true); });
+
+    // Détection de survol du côté gauche de l'écran pour révéler / masquer la sidebar
+    var leaveTimer = null;
+    function showOnHover() {
+      if (isMobile() || isPinned) return;
+      if (leaveTimer) { clearTimeout(leaveTimer); leaveTimer = null; }
+      sidebar.classList.remove("collapsed");
+    }
+    function hideOnLeave() {
+      if (isMobile() || isPinned) return;
+      if (leaveTimer) clearTimeout(leaveTimer);
+      leaveTimer = setTimeout(function () {
+        if (!isPinned && !isMobile()) sidebar.classList.add("collapsed");
+      }, 240);
+    }
+
+    sidebar.addEventListener("mouseenter", showOnHover);
+    sidebar.addEventListener("mouseleave", hideOnLeave);
+    toggle.addEventListener("mouseenter", showOnHover);
+
+    document.addEventListener("mousemove", function (e) {
+      if (isMobile() || isPinned) return;
+      if (e.clientX <= 22) {
+        showOnHover();
+      } else if (e.clientX > 256 && !sidebar.classList.contains("collapsed")) {
+        hideOnLeave();
+      }
+    });
 
     var current = activePage || document.body.dataset.page;
 

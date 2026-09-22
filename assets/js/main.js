@@ -38,6 +38,31 @@
     };
     window.addEventListener("scroll", onScroll, { passive: true });
     onScroll();
+
+    // Tubelight navigation lamp
+    var tubelightNav = document.getElementById("tubelightNav");
+    var tubelightLamp = document.getElementById("tubelightLamp");
+    if (tubelightNav && tubelightLamp) {
+      var links = tubelightNav.querySelectorAll("a");
+      var activeLink = tubelightNav.querySelector("a.active") || links[0];
+
+      var moveLamp = function (el) {
+        if (!el) { tubelightLamp.classList.remove("active"); return; }
+        var targetLeft = el.offsetLeft + (el.offsetWidth - 32) / 2;
+        tubelightLamp.style.transform = "translateX(" + targetLeft + "px)";
+        tubelightLamp.classList.add("active");
+      };
+
+      links.forEach(function (l) {
+        l.addEventListener("mouseenter", function () { moveLamp(l); });
+      });
+
+      tubelightNav.addEventListener("mouseleave", function () {
+        moveLamp(activeLink);
+      });
+
+      setTimeout(function () { moveLamp(activeLink); }, 100);
+    }
   }
 
   // ------------------------------------------------------ Révélation au scroll

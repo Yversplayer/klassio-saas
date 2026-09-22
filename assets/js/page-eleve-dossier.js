@@ -156,8 +156,8 @@
         councilRow = '<div class="row mt-16 no-print">' + (canCouncil ? '<button type="button" class="btn btn-ghost btn-sm" id="conductBtn">' + UI.icon("edit", 15) + "Cote de conduite" + (b.conduct.overridden ? " (fixée)" : "") + "</button>" : "") +
           (ctx.role === "directeur" ? '<button type="button" class="btn btn-ghost btn-sm" id="decisionBtn">' + UI.icon("check", 15) + "Décision de fin d'année</button>" : "") + "</div>";
       }
-      var bulletinHtml = D.grades.length ? '<div class="panel"><div class="panel-head"><h2>Bulletin — ' + UI.escapeHtml(b.period || "") + '</h2><div class="row no-print"><select id="bulletinPeriod" class="btn-xs" style="height:34px;border-radius:100px;border:1px solid var(--line);padding:0 12px;background:var(--surface);font:inherit;font-size:12.5px;">' +
-        b.periods.map(function (p) { return '<option value="' + UI.escapeHtml(p) + '"' + (p === b.period ? " selected" : "") + ">" + UI.escapeHtml(p) + "</option>"; }).join("") + '</select><button type="button" class="btn btn-ghost btn-xs" id="printBulletin">' + UI.icon("print", 14) + "Imprimer</button></div></div>" +
+      var bulletinHtml = D.grades.length ? '<div class="panel"><div class="panel-head"><h2>Bulletin — ' + UI.escapeHtml(b.period || "") + '</h2><div class="row no-print" style="gap:8px"><select id="bulletinPeriod" class="btn-xs" style="height:34px;border-radius:100px;border:1px solid var(--line);padding:0 12px;background:var(--surface);font:inherit;font-size:12.5px;">' +
+        b.periods.map(function (p) { return '<option value="' + UI.escapeHtml(p) + '"' + (p === b.period ? " selected" : "") + ">" + UI.escapeHtml(p) + "</option>"; }).join("") + '</select><button type="button" class="btn btn-ghost btn-xs" id="printBulletin">' + UI.icon("print", 14) + 'Imprimer</button><button type="button" class="btn btn-primary btn-xs" id="downloadPdfBulletin">' + UI.icon("download", 14) + "Télécharger PDF</button></div></div>" +
         pubNote + '<div class="bulletin" id="bulletinSheet">' + bulletinTable(b) + "</div>" + councilRow + "</div>" : '<div class="panel">' + pubNote + "</div>";
       var detail = periodNames.map(function (p) {
         return '<div class="panel"><div class="panel-head"><h2>Notes — ' + UI.escapeHtml(p) + '</h2></div><div class="table-wrap"><table class="data-table responsive"><thead><tr><th>Matière</th><th class="num">Note</th><th>Commentaire</th><th>Saisie par</th><th>Date</th></tr></thead><tbody>' +
@@ -374,6 +374,32 @@
     });
     var pb = document.getElementById("printBulletin");
     if (pb) pb.addEventListener("click", function () { UI.printSheet(document.getElementById("bulletinSheet"), "Bulletin — " + D.student.first_name + " " + D.student.last_name); });
+    var pPdf = document.getElementById("downloadPdfBulletin");
+    if (pPdf) pPdf.addEventListener("click", function () {
+      var period = pp ? pp.value : (D.bulletin && D.bulletin.period);
+      var url = api.base + "/students/" + studentId + "/bulletin/pdf" + (period ? "?period=" + encodeURIComponent(period) : "");
+      var nom = "Bulletin_" + (D.student.code || studentId) + "_" + (period || "officiel") + ".pdf";
+      UI.btnState(pPdf, "loading", "Téléchargement...");
+      fetch(url, { headers: { "Authorization": "Bearer " + api.getToken() } })
+        .then(function (res) {
+          if (!res.ok) throw new Error("Échec du téléchargement");
+          return res.blob();
+        })
+        .then(function (blob) {
+          var a = document.createElement("a");
+          var objUrl = URL.createObjectURL(blob);
+          a.href = objUrl;
+          a.download = nom;
+          document.body.appendChild(a);
+          a.click();
+          setTimeout(function () { a.remove(); URL.revokeObjectURL(objUrl); }, 1000);
+          UI.btnState(pPdf, "success", "Téléchargé");
+        })
+        .catch(function () {
+          UI.toast("Impossible de télécharger le bulletin PDF", "error");
+          UI.btnState(pPdf, "default");
+        });
+    });
     var gb = document.getElementById("goBulletin"); if (gb) gb.addEventListener("click", function () { tabsCtl.activate("scolarite"); });
     var ab = document.getElementById("attestBtn"); if (ab) ab.addEventListener("click", printAttestation);
 

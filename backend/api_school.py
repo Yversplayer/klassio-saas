@@ -9,6 +9,7 @@ Chaque route :
   4. journalise les refus (audit).
 Aucune de ces trois étapes ne dépend d'un champ envoyé par le client.
 """
+import io
 import json
 import os
 import re
@@ -28,6 +29,7 @@ import deliveries as deliveries_module
 import mailer
 import exports as exports_module
 import promotions
+import pdf_bulletin
 from security import require_auth, new_id, audit, has_permission
 from validation import (json_object, ValidationError, required_text, positive_amount, valid_phone, valid_hex_color,
                         valid_password, valid_email, image_data_uri, DATA_URI_IMAGE)
@@ -192,8 +194,73 @@ def student_bulletin(student_id):
                          "last_name": student["last_name"], "class_name": student["class_name"]}
     tenant = conn.execute("SELECT name FROM tenants WHERE id=?", (g.ctx["tenant_id"],)).fetchone()
     result["school_name"] = tenant["name"] if tenant else ""
+
+    if request.args.get("format") == "pdf":
+        conn.close()
+        return _stream_student_bulletin_pdf(student, result)
+
     conn.close()
     return jsonify(result)
+
+
+def _stream_student_bulletin_pdf(student, bulletin_data):
+    """Génère et renvoie le flux PDF d'un bulletin individuel."""
+    conn = db.get_connection()
+    try:
+        s = dict(student)
+        tenant_id = g.ctx["tenant_id"]
+        tenant = conn.execute("SELECT name FROM tenants WHERE id=?", (tenant_id,)).fetchone()
+        school_name = tenant["name"] if tenant else ""
+
+        tit = conn.execute(
+            """SELECT u.name FROM class_teachers ct JOIN users u ON u.id = ct.user_id
+               WHERE ct.tenant_id=? AND ct.class_id=? AND ct.is_titulaire=1 LIMIT 1""",
+            (tenant_id, s.get("class_id")),
+        ).fetchone()
+        titulaire_name = tit["name"] if tit else None
+
+        year_row = conn.execute(
+            "SELECT label FROM academic_years WHERE tenant_id=? AND id=?",
+            (tenant_id, s.get("academic_year_id")),
+        ).fetchone() if s.get("academic_year_id") else None
+        school_year = year_row["label"] if year_row else None
+
+        pdf_bytes = pdf_bulletin.generate_student_bulletin_pdf(
+            school_name, school_year, s.get("class_name"), titulaire_name, bulletin_data
+        )
+        audit(tenant_id, g.ctx["user_id"], "student.bulletin_pdf", "student", s["id"], "success",
+              after={"period": bulletin_data.get("period")})
+
+        code = s.get("code") or s["id"]
+        per = bulletin_data.get("period") or "officiel"
+        filename = f"Bulletin_{code}_{per}.pdf".replace(" ", "_")
+        return send_file(
+            io.BytesIO(pdf_bytes),
+            mimetype="application/pdf",
+            as_attachment=True,
+            download_name=filename,
+        )
+    finally:
+        conn.close()
+
+
+@bp.get("/api/students/<student_id>/bulletin/pdf")
+@bp.get("/api/students/<student_id>/bulletin.pdf")
+@require_auth
+def student_bulletin_pdf(student_id):
+    """Artefact PDF officiel du bulletin d'un élève."""
+    conn = db.get_connection()
+    student = school.resolve_student_access(conn, g.ctx, student_id)
+    if not student:
+        conn.close()
+        return _not_found("student.bulletin_pdf", "student", student_id)
+    result = school.bulletin(conn, g.ctx["tenant_id"], student,
+                             period=request.args.get("period"),
+                             only_published=(g.ctx["role"] == "parent"))
+    result["student"] = {"id": student["id"], "code": student["code"], "first_name": student["first_name"],
+                         "last_name": student["last_name"], "class_name": student["class_name"]}
+    conn.close()
+    return _stream_student_bulletin_pdf(student, result)
 
 
 @bp.get("/api/classes/<class_id>/bulletins")
@@ -253,6 +320,9 @@ def class_bulletins(class_id):
                             "class_name": classe["name"]}
             sortie.append(b)
 
+        if request.args.get("format") == "pdf":
+            return _stream_class_bulletins_pdf(conn, tenant_id, classe, periode, sortie)
+
         audit(tenant_id, g.ctx["user_id"], "class.bulletins", "class", class_id, "success",
               after={"count": len(sortie), "period": periode})
         return jsonify({
@@ -262,6 +332,82 @@ def class_bulletins(class_id):
             "count": len(sortie),
             "bulletins": sortie,
         })
+    finally:
+        conn.close()
+
+
+def _stream_class_bulletins_pdf(conn, tenant_id, classe, periode, sortie):
+    """Génère et renvoie le flux PDF multipages pour toute la classe."""
+    c = dict(classe)
+    tenant = conn.execute("SELECT name FROM tenants WHERE id=?", (tenant_id,)).fetchone()
+    school_name = tenant["name"] if tenant else ""
+
+    tit = conn.execute(
+        """SELECT u.name FROM class_teachers ct JOIN users u ON u.id = ct.user_id
+           WHERE ct.tenant_id=? AND ct.class_id=? AND ct.is_titulaire=1 LIMIT 1""",
+        (tenant_id, c["id"]),
+    ).fetchone()
+    titulaire_name = tit["name"] if tit else None
+
+    year_row = conn.execute(
+        "SELECT label FROM academic_years WHERE tenant_id=? AND id=?",
+        (tenant_id, c.get("academic_year_id")),
+    ).fetchone() if c.get("academic_year_id") else None
+    school_year = year_row["label"] if year_row else None
+
+    pdf_bytes = pdf_bulletin.generate_class_bulletins_pdf(
+        school_name, school_year, c["name"], titulaire_name, sortie
+    )
+    audit(tenant_id, g.ctx["user_id"], "class.bulletins_pdf", "class", c["id"], "success",
+          after={"count": len(sortie), "period": periode})
+
+    nom_classe = c["name"]
+    per = periode or "classe"
+    filename = f"Bulletins_{nom_classe}_{per}.pdf".replace(" ", "_")
+    return send_file(
+        io.BytesIO(pdf_bytes),
+        mimetype="application/pdf",
+        as_attachment=True,
+        download_name=filename,
+    )
+
+
+@bp.get("/api/classes/<class_id>/bulletins/pdf")
+@bp.get("/api/classes/<class_id>/bulletins.pdf")
+@require_auth
+def class_bulletins_pdf(class_id):
+    """Export officiel PDF de tous les bulletins de la classe en un document multipages."""
+    conn = db.get_connection()
+    try:
+        tenant_id = g.ctx["tenant_id"]
+        classe = conn.execute("SELECT * FROM classes WHERE id=? AND tenant_id=?",
+                              (class_id, tenant_id)).fetchone()
+        if not classe:
+            return _not_found("class.bulletins_pdf", "class", class_id, "Classe introuvable.")
+
+        autorisees = school.visible_class_ids(conn, g.ctx)
+        if autorisees is not None and class_id not in autorisees:
+            return _denied("class.bulletins_pdf", "class", class_id)
+        if g.ctx["role"] == "parent":
+            return _denied("class.bulletins_pdf", "class", class_id)
+
+        periode = request.args.get("period") or None
+        eleves = conn.execute(
+            """SELECT * FROM students WHERE tenant_id=? AND class_id=? AND status='active'
+               ORDER BY last_name, first_name""", (tenant_id, class_id)).fetchall()
+
+        sortie = []
+        for e in eleves:
+            eleve = dict(e)
+            eleve["class_name"] = classe["name"]
+            b = school.bulletin(conn, tenant_id, eleve, period=periode,
+                                only_published=False)
+            b["student"] = {"id": eleve["id"], "code": eleve["code"],
+                            "first_name": eleve["first_name"], "last_name": eleve["last_name"],
+                            "class_name": classe["name"]}
+            sortie.append(b)
+
+        return _stream_class_bulletins_pdf(conn, tenant_id, classe, periode, sortie)
     finally:
         conn.close()
 

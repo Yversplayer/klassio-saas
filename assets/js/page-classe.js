@@ -156,8 +156,7 @@
       var avg = withAvg.length ? Math.round(withAvg.reduce(function (a, s) { return a + s.percent; }, 0) / withAvg.length * 10) / 10 : null;
       var sel = '<select id="resPeriod" style="height:34px;border-radius:100px;border:1px solid var(--line);padding:0 12px;background:var(--surface);font:inherit;font-size:12.5px;color:var(--ink)">' + r.periods.map(function (p) { return '<option value="' + UI.escapeHtml(p) + '"' + (p === r.period ? " selected" : "") + ">" + UI.escapeHtml(p) + "</option>"; }).join("") + "</select>";
       return '<div class="kpi-grid cols-4">' + UI.kpi("Moyenne de classe", avg != null ? avg + " %" : "—", { icon: "reports" }) + UI.kpi("Au-dessus du seuil", passed + " / " + withAvg.length, { icon: "check", tone: passed === withAvg.length ? "ok" : "warn", sub: "seuil de réussite : " + threshold + " %" }) +
-        UI.kpi("Élèves classés", String(withAvg.length), { icon: "students" }) + UI.kpi("Période", UI.escapeHtml(r.period || "—"), { icon: "calendar" }) + "</div>" +
-        '<div class="panel"><div class="panel-head"><h2>Conseil de classe</h2><div class="row no-print">' + sel + '<button type="button" class="btn btn-ghost btn-sm" id="printCouncil">' + UI.icon("print", 15) + "Imprimer</button><button type=\"button\" class=\"btn btn-ghost btn-sm\" id=\"printBulletins\">" + UI.icon("book", 15) + "Bulletins de la classe</button></div></div>" +
+        '<div class="panel"><div class="panel-head"><h2>Conseil de classe</h2><div class="row no-print" style="gap:8px">' + sel + '<button type="button" class="btn btn-ghost btn-sm" id="printCouncil">' + UI.icon("print", 15) + "Imprimer</button><button type=\"button\" class=\"btn btn-ghost btn-sm\" id=\"printBulletins\">" + UI.icon("book", 15) + 'Bulletins de la classe</button><button type="button" class="btn btn-primary btn-sm" id="downloadClassPdfBulletins">' + UI.icon("download", 15) + "Exporter bulletins PDF</button></div></div>" +
         '<div id="councilSheet" class="print-sheet"><div class="ps-head"><div class="ps-school"><strong>' + UI.escapeHtml(ctx.tenant_name || "") + "</strong><span>Conseil de classe — " + UI.escapeHtml(r.class.name) + '</span></div><div style="text-align:right"><h2>RÉSULTATS</h2><span class="muted">' + UI.escapeHtml(r.period || "") + '</span></div></div><div class="table-wrap"><table class="data-table responsive"><thead><tr><th>Rang</th><th>Élève</th><th class="num">Moyenne /20</th><th class="num">%</th><th>Conduite</th><th>Décision</th>' + (canCouncil() ? '<th class="actions no-print"></th>' : "") + "</tr></thead><tbody>" +
         r.students.slice().sort(function (a, b) { return (a.rank || 999) - (b.rank || 999); }).map(function (s) {
           var actions = canCouncil() ? '<button type="button" class="btn btn-ghost btn-xs cond-btn" data-id="' + s.id + '" data-name="' + UI.escapeHtml(s.first_name + " " + s.last_name) + '" data-label="' + UI.escapeHtml(s.conduct.label || "") + '">Conduite</button>' + (ctx.role === "directeur" ? ' <button type="button" class="btn btn-ghost btn-xs dec-btn" data-id="' + s.id + '" data-name="' + UI.escapeHtml(s.first_name + " " + s.last_name) + '">Décision</button>' : "") : "";
@@ -407,6 +406,35 @@
 
   var pc = document.getElementById("printCouncil"); if (pc) pc.addEventListener("click", function () { UI.printSheet(document.getElementById("councilSheet"), "Conseil de classe — " + C.name); });
     var pb = document.getElementById("printBulletins"); if (pb) pb.addEventListener("click", imprimerBulletins);
+    var pPdf = document.getElementById("downloadClassPdfBulletins");
+    if (pPdf) {
+      pPdf.addEventListener("click", function () {
+        var rp = document.getElementById("resPeriod");
+        var periode = rp ? rp.value : "";
+        var url = api.base + "/classes/" + classId + "/bulletins/pdf" + (periode ? "?period=" + encodeURIComponent(periode) : "");
+        var nom = "Bulletins_" + (C ? C.name : "classe") + (periode ? "_" + periode : "") + ".pdf";
+        UI.btnState(pPdf, "loading", "Génération...");
+        fetch(url, { headers: { "Authorization": "Bearer " + api.getToken() } })
+          .then(function (res) {
+            if (!res.ok) throw new Error("Échec du téléchargement");
+            return res.blob();
+          })
+          .then(function (blob) {
+            var a = document.createElement("a");
+            var objUrl = URL.createObjectURL(blob);
+            a.href = objUrl;
+            a.download = nom;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(function () { a.remove(); URL.revokeObjectURL(objUrl); }, 1000);
+            UI.btnState(pPdf, "success", "Lot téléchargé");
+          })
+          .catch(function () {
+            UI.toast("Impossible de télécharger les bulletins de la classe en PDF", "error");
+            UI.btnState(pPdf, "default");
+          });
+      });
+    }
     document.querySelectorAll(".cond-btn").forEach(function (b) { b.addEventListener("click", function () { openConductModal(b.dataset.id, b.dataset.name, b.dataset.label); }); });
     document.querySelectorAll(".dec-btn").forEach(function (b) { b.addEventListener("click", function () { openDecisionModal(b.dataset.id, b.dataset.name); }); });
 

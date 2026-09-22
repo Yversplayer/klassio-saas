@@ -336,7 +336,7 @@ button { font-family: inherit; cursor: pointer; }
   box-shadow: 0 6px 20px rgba(22,36,28,0.16);
   opacity: 0;
   transform: translateY(10px) scale(0.94);
-  animation: splashIn 0.9s var(--ease-out) 0s forwards;
+  animation: splashTextCinematic 0.9s var(--ease-out) 0s forwards;
 }
 .splash-greeting {
   display: block;
@@ -347,8 +347,9 @@ button { font-family: inherit; cursor: pointer; }
   color: var(--forest);
   opacity: 0;
   transform: translateY(16px);
-  animation: splashIn 1s var(--ease-out) 0.15s forwards;
+  animation: splashTextCinematic 1s var(--ease-out) 0.15s forwards;
 }
+:root[data-theme="dark"] .splash-greeting { color: var(--lime); }
 .splash-sub {
   display: block;
   margin-top: 10px;
@@ -356,8 +357,9 @@ button { font-family: inherit; cursor: pointer; }
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--ink-faint);
+  font-weight: 600;
   opacity: 0;
-  animation: splashIn 0.8s var(--ease-out) 0.55s forwards;
+  animation: splashTextCinematic 0.8s var(--ease-out) 0.45s forwards;
 }
 /* Le splash est court et on peut l'écourter (clic, touche, molette) : encore
    faut-il que le visiteur le sache. */
@@ -369,12 +371,21 @@ button { font-family: inherit; cursor: pointer; }
   text-transform: uppercase;
   color: var(--ink-faint);
   opacity: 0;
-  animation: splashIn 0.8s var(--ease-out) 0.9s forwards;
+  animation: splashTextCinematic 0.8s var(--ease-out) 0.75s forwards;
 }
 #splash { cursor: pointer; }
 
-@keyframes splashIn {
-  to { opacity: 1; transform: translateY(0); }
+@keyframes splashTextCinematic {
+  0% {
+    opacity: 0;
+    transform: translateY(18px) scale(0.96);
+    filter: blur(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0px);
+  }
 }
 .splash-wave {
   display: inline-block;
@@ -423,18 +434,71 @@ button { font-family: inherit; cursor: pointer; }
   flex-shrink: 0;
   box-shadow: 0 1px 3px rgba(22,36,28,0.14), inset 0 0 0 1px rgba(255,255,255,0.25);
 }
+/* Tubelight floating navigation pill */
 .nav-links {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 34px;
+  gap: 2px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid var(--line);
+  padding: 4px;
+  border-radius: 9999px;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05), inset 0 1px 1px rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+}
+:root[data-theme="dark"] .nav-links {
+  background: rgba(28, 30, 26, 0.72);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
 }
 .nav-links a {
-  font-size: 14.5px;
-  font-weight: 500;
+  position: relative;
+  padding: 6px 16px;
+  font-size: 13.5px;
+  font-weight: 600;
+  border-radius: 9999px;
   color: var(--ink-soft);
-  transition: color 0.2s ease;
+  text-decoration: none;
+  transition: color 0.22s ease;
+  z-index: 2;
 }
-.nav-links a:hover { color: var(--ink); }
+.nav-links a:hover,
+.nav-links a.active {
+  color: var(--forest);
+}
+:root[data-theme="dark"] .nav-links a:hover,
+:root[data-theme="dark"] .nav-links a.active {
+  color: #ffffff;
+}
+
+/* Lueur et curseur Tubelight */
+.tubelight-lamp {
+  position: absolute;
+  top: -1px;
+  left: 0;
+  height: 2.5px;
+  width: 32px;
+  background: var(--lime);
+  border-radius: 9999px;
+  box-shadow: 0 0 12px 2px var(--lime), 0 0 4px var(--lime);
+  transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1), width 0.32s ease, opacity 0.25s ease;
+  pointer-events: none;
+  z-index: 10;
+  opacity: 0;
+}
+.tubelight-lamp.active { opacity: 1; }
+.tubelight-glow {
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 44px;
+  height: 18px;
+  background: radial-gradient(circle, rgba(159, 227, 0, 0.45) 0%, transparent 70%);
+  filter: blur(4px);
+  pointer-events: none;
+}
 .nav-actions { display: flex; align-items: center; gap: 10px; }
 .nav-toggle { display: none; }
 
@@ -1512,10 +1576,12 @@ footer { border-top: 1px solid var(--line-soft); padding: 56px 0 40px; }
   background: var(--forest); color: rgba(231,239,227,0.85);
   padding: 20px 14px; position: sticky; top: 0; height: 100vh;
   display: flex; flex-direction: column;
-  transition: margin-left 0.4s var(--ease-out), opacity 0.3s ease, width 0.4s var(--ease-out);
+  transition: margin-left 0.32s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease, box-shadow 0.3s ease;
   overflow: hidden;
+  z-index: 50;
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
 }
-.sidebar.collapsed { margin-left: -248px; opacity: 0; }
+.sidebar.collapsed { margin-left: -248px; opacity: 0; box-shadow: none; }
 .sidebar .s-brand { display: flex; align-items: center; gap: 9px; color: #fff; font-weight: 800; font-size: 15px; padding: 4px 8px 22px; }
 .sidebar .s-brand .brand-mark { width: 26px; height: 26px; }
 /* Le menu DÉFILE quand il est plus haut que l'écran.
@@ -3586,3 +3652,36 @@ footer { border-top: 1px solid var(--line-soft); padding: 56px 0 40px; }
    déclenche pas en cherchant autre chose. */
 .danger-zone { border-color: color-mix(in srgb, var(--bad) 35%, var(--line)); }
 .danger-zone .panel-head h2 { color: var(--bad); }
+
+/* Bandeau de consentement aux témoins (Cookies) */
+.cookie-banner {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  max-width: 440px;
+  width: calc(100vw - 48px);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 18px 20px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.16);
+  z-index: 998;
+  backdrop-filter: blur(14px);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+  animation: cookieSlideUp 0.4s var(--ease-out);
+}
+.cookie-banner-hide {
+  opacity: 0;
+  transform: translateY(16px);
+  pointer-events: none;
+}
+.cookie-content { display: flex; flex-direction: column; gap: 14px; }
+.cookie-text strong { display: block; font-size: 14px; margin-bottom: 4px; color: var(--ink); }
+.cookie-text p { margin: 0; font-size: 12.5px; line-height: 1.55; color: var(--ink-soft); }
+.cookie-text a { color: var(--lime-deep); text-decoration: underline; }
+:root[data-theme="dark"] .cookie-text a { color: var(--lime); }
+.cookie-actions { display: flex; gap: 8px; justify-content: flex-end; }
+@keyframes cookieSlideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}

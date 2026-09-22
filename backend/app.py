@@ -108,6 +108,9 @@ def add_security_headers(resp):
     resp.headers["X-Content-Type-Options"] = "nosniff"
     resp.headers["X-Frame-Options"] = "DENY"
     resp.headers["Referrer-Policy"] = "no-referrer"
+    resp.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+    if request.is_secure or request.headers.get("X-Forwarded-Proto") == "https":
+        resp.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
     return resp
 
 
