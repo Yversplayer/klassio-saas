@@ -58,7 +58,18 @@
       UI.kpi("Enseignants", String(dash.teacher_count), { icon: "users", href: "etablissement.html?tab=equipe", sub: dash.pending_invitations + " invitation(s) en attente" }) + UI.kpi("Responsables", dash.guardian_count.toLocaleString("fr-FR"), { icon: "user", sub: dash.parent_count + " avec un compte" });
 
     var html = '<div class="two-col"><div class="panel"><div class="panel-head"><h2>Informations générales</h2><a class="link-btn" href="parametres.html">Modifier</a></div><dl class="dl"><dt>Nom</dt><dd>' + UI.escapeHtml(ctx.tenant_name || "") + "</dd><dt>Téléphone</dt><dd>" + UI.escapeHtml(settings.school_phone || "—") + "</dd><dt>Email</dt><dd>" + UI.escapeHtml(settings.school_email || "—") + "</dd><dt>Adresse</dt><dd>" + UI.escapeHtml(settings.school_address || "—") + "</dd><dt>Devise</dt><dd>" + UI.escapeHtml(settings.currency) + "</dd><dt>Année scolaire</dt><dd>" + UI.escapeHtml(activeYear ? activeYear.label : "—") + "</dd></dl>" +
-      (years.length > 1 ? '<div class="field" style="margin-top:10px"><label for="yearSel">Année active</label><select id="yearSel">' + years.map(function (y) { return '<option value="' + y.id + '"' + (y.is_active ? " selected" : "") + ">" + UI.escapeHtml(y.label) + "</option>"; }).join("") + '</select><span class="hint">L\'année active porte les inscriptions et les décisions de fin d\'année.</span></div>' : "") + "</div>" +
+      (years.length > 1 ? '<div class="field" style="margin-top:10px"><label for="yearSel">Année active</label><select id="yearSel">' + years.map(function (y) { return '<option value="' + y.id + '"' + (y.is_active ? " selected" : "") + ">" + UI.escapeHtml(y.label) + "</option>"; }).join("") + '</select><span class="hint">L\'année active porte les inscriptions et les décisions de fin d\'année.</span></div>' : "") +
+      // OUVRIR UNE NOUVELLE ANNÉE SE CHERCHE ICI.
+      //
+      // Le passage d'année n'a pas d'entrée de menu — on l'ouvre trois fois
+      // par an. Il n'était joignable que depuis l'écran Élèves, où personne
+      // ne pense à le chercher : « Année scolaire » est le mot sous lequel on
+      // le cherche, et c'est ici qu'il est écrit.
+      '<div class="row" style="margin-top:14px;gap:10px;flex-wrap:wrap;align-items:center">'
+      + '<a href="passage.html" class="btn btn-lime btn-sm">' + UI.icon("calendar", 15)
+      + "Préparer la prochaine année</a>"
+      + '<span class="muted" style="font-size:13px">Passage d\'année, répartition des classes et ouverture de la rentrée.</span></div>'
+      + "</div>" +
       '<div class="panel"><div class="panel-head"><h2>Répartition par cycle</h2></div>' + UI.barRows(cycleRows, { empty: "Aucun élève actif." }) + '<div class="panel-head" style="margin-top:18px"><h2>Personnel & accès</h2></div>' + UI.barRows(staffRows) + "</div></div>" +
       '<div class="panel"><div class="panel-head"><h2>Répartition par classe</h2><div class="row"><a class="link-btn" href="classes.html">Toutes les classes</a><a class="link-btn" href="documents.html">Documents de l\'établissement</a></div></div>' + UI.barRows(classRows, { empty: "Aucune classe." }) + "</div>";
 

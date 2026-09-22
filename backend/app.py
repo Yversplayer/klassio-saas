@@ -1182,17 +1182,35 @@ def dashboard():
     settings = school.get_settings(conn, tenant_id)
     week_ago = (datetime.date.today() - datetime.timedelta(days=7)).isoformat()
 
+    # L'ANNÉE EN COURS, pas toutes les années confondues.
+    #
+    # Le tableau de bord comptait les classes de tout l'établissement. Après un
+    # passage d'année, il annonçait « 4 classes » là où l'écran Classes en
+    # montrait 3 — la quatrième étant celle de l'année archivée, vidée de ses
+    # élèves. Deux écrans qui se contredisent font douter des deux.
+    annee_courante = conn.execute(
+        """SELECT id FROM academic_years WHERE tenant_id=?
+            ORDER BY is_active DESC, created_at DESC LIMIT 1""", (tenant_id,)).fetchone()
+    annee_id = annee_courante["id"] if annee_courante else None
+
+    # `? IS NULL` n'est pas du SQL portable : PostgreSQL refuse un marqueur dont
+    # il ne peut pas déduire le type. La clause se construit, elle ne se
+    # paramètre pas.
+    filtre_annee = " AND academic_year_id=?" if annee_id else ""
+    filtre_annee_c = " AND c.academic_year_id=?" if annee_id else ""
+    p_annee = [annee_id] if annee_id else []
+
     if role == "directeur":
         counts = conn.execute(
-            """SELECT (SELECT COUNT(*) FROM students WHERE tenant_id=? AND status='active') AS students,
-                      (SELECT COUNT(*) FROM classes WHERE tenant_id=?) AS classes,
+            f"""SELECT (SELECT COUNT(*) FROM students WHERE tenant_id=? AND status='active') AS students,
+                      (SELECT COUNT(*) FROM classes WHERE tenant_id=?{filtre_annee}) AS classes,
                       (SELECT COUNT(*) FROM memberships WHERE tenant_id=? AND role='professeur' AND status='active') AS teachers,
                       (SELECT COUNT(*) FROM memberships WHERE tenant_id=? AND role='parent' AND status='active') AS parents,
                       (SELECT COUNT(*) FROM guardians WHERE tenant_id=?) AS guardians,
                       (SELECT COUNT(*) FROM invitations WHERE tenant_id=? AND status='pending') AS pending_invitations,
                       (SELECT COUNT(*) FROM orders WHERE tenant_id=? AND status='pending') AS pending_orders,
                       (SELECT COUNT(*) FROM payments WHERE tenant_id=? AND status IN ('CREATED','PENDING')) AS pending_payments""",
-            (tenant_id,) * 8,
+            tuple([tenant_id, tenant_id] + p_annee + [tenant_id] * 6),
         ).fetchone()
         fin = ai_assistant.get_tenant_financial_summary(conn, g.ctx)
         rate = round(fin["total_paid"] / fin["total_due"] * 100) if fin["total_due"] else 0
@@ -1208,14 +1226,15 @@ def dashboard():
                LEFT JOIN receipts r ON r.payment_id = p.id
                WHERE p.tenant_id=? AND p.status='CONFIRMED' ORDER BY p.confirmed_at DESC LIMIT 6""", (tenant_id,)).fetchall()
         by_class = conn.execute(
-            """SELECT c.id, c.name, COUNT(s.id) AS student_count,
+            f"""SELECT c.id, c.name, COUNT(s.id) AS student_count,
                       COALESCE(SUM(ob.total_due),0) AS total_due, COALESCE(SUM(pay.total_paid),0) AS total_paid
                FROM classes c LEFT JOIN students s ON s.class_id=c.id AND s.status='active'
                LEFT JOIN (SELECT student_id, SUM(amount) total_due FROM obligations WHERE tenant_id=? GROUP BY student_id) ob ON ob.student_id=s.id
                LEFT JOIN (SELECT o.student_id, SUM(p.amount) total_paid FROM payments p JOIN obligations o ON o.id=p.obligation_id
                           WHERE p.tenant_id=? AND p.status='CONFIRMED' GROUP BY o.student_id) pay ON pay.student_id=s.id
-               WHERE c.tenant_id=? GROUP BY c.id ORDER BY (COALESCE(SUM(ob.total_due),0) - COALESCE(SUM(pay.total_paid),0)) DESC LIMIT 8""",
-            (tenant_id, tenant_id, tenant_id)).fetchall()
+               WHERE c.tenant_id=?{filtre_annee_c} GROUP BY c.id
+               ORDER BY (COALESCE(SUM(ob.total_due),0) - COALESCE(SUM(pay.total_paid),0)) DESC LIMIT 8""",
+            tuple([tenant_id, tenant_id, tenant_id] + p_annee)).fetchall()
         result = {
             "role": "directeur", "currency": settings["currency"],
             "student_count": counts["students"], "class_count": counts["classes"], "teacher_count": counts["teachers"],

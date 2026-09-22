@@ -594,6 +594,33 @@ if __name__ == "__main__":
 class ApresLaRentree(Base):
     """Ce qui doit continuer de marcher une fois les élèves passés."""
 
+    def test_le_tableau_de_bord_ne_compte_pas_lannee_archivee(self):
+        """Deux écrans qui se contredisent font douter des deux.
+
+        Le tableau de bord comptait les classes de toutes les années : après
+        une rentrée, il annonçait une classe de plus que l'écran Classes — la
+        classe archivée, vidée de ses élèves.
+        """
+        ctx = self.ecole("bord", eleves=("Alpha",))
+        eleve = ctx["students"][0]["id"]
+        self.decider(ctx, eleve, "PASSAGE")
+        plan = self.plan(ctx)
+        cible = self.classe_cible(ctx, plan["id"], "6e A")
+        self.c.patch(f"/api/promotion-plans/{plan['id']}/assignments/{eleve}",
+                     json={"target_class_id": cible}, headers=ctx["h"])
+        self.c.post(f"/api/promotion-plans/{plan['id']}/status",
+                    json={"status": "VALIDE"}, headers=ctx["h"])
+        self.c.post(f"/api/promotion-plans/{plan['id']}/apply",
+                    json={"confirm": True}, headers=ctx["h"])
+
+        bord = self.c.get("/api/dashboard", headers=ctx["h"]).get_json()
+        listees = self.c.get("/api/classes", headers=ctx["h"]).get_json()
+        self.assertEqual(bord["class_count"], len(listees),
+                         "le tableau de bord et l'écran Classes ne disent pas la même chose")
+        self.assertEqual(bord["attendance_today"]["class_count"], len(listees))
+        self.assertNotIn(ctx["class"]["id"], [c["id"] for c in bord["classes_outstanding"]],
+                         "la classe archivée figure encore dans le suivi financier")
+
     def test_proclamer_lannee_terminee_atteint_encore_les_parents(self):
         """Les élèves ont avancé ; les résultats de l'année close restent les
         leurs.
