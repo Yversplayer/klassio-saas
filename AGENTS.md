@@ -12,17 +12,24 @@ protection payée par un bug réel.
 détail des défauts déjà trouvés et corrigés. Ne redécouvre pas ce qui y est
 écrit ; ne rouvre pas ce qui y est marqué comme décidé.
 
-> ### 🔒 La page d'accueil est FIGÉE
+> ### 🎨 REFONTE VISUELLE EN COURS — la landing est DÉGELÉE
 >
-> `index.html`, `assets/js/main.js` et les blocs « landing » de
-> `assets/css/style.css` sont **terminés et validés**. Ils ne sont plus
-> ouverts aux améliorations spontanées : pas de refonte, pas de « nettoyage »,
-> pas de retouche du hero ni des effets de défilement.
-> **Lis `LANDING_FIGEE.md` avant d'y écrire une seule ligne** — il dit ce qui
-> reste permis (corriger un vrai défaut, une régression) et les sept décisions
-> à ne pas défaire.
-> La suite du travail, c'est **la démo** (`demo.html`), pas la landing — et
-> elle, elle est ouverte : voir §3.
+> **Depuis le 22/09, le propriétaire a commandé une refonte visuelle de la
+> landing et de la démo.** `index.html`, `assets/js/main.js`, `demo.html` et
+> les blocs « landing » de `assets/css/style.css` sont donc **ouverts**.
+> `LANDING_FIGEE.md` n'est plus une interdiction : c'est la **liste de ce que
+> la refonte doit continuer d'honorer** — lis ses sept décisions du §3 et
+> vérifie-les après ta refonte, une par une.
+>
+> **Deux choses ne se négocient pas :**
+> 1. **L'entrée dans le « O » de KLASSIO est conservée.** C'est la signature
+>    du produit, explicitement maintenue par le propriétaire.
+> 2. **La refonte est VISUELLE.** Elle ne touche ni le backend, ni les routes,
+>    ni les permissions, ni le schéma, ni les tests. Si tu crois devoir
+>    modifier `backend/`, arrête-toi et dis-le.
+>
+> Le périmètre exact, les contraintes de pile et les pièges de cette refonte
+> sont au **§10**. Lis-le avant d'écrire une ligne.
 
 ---
 
@@ -113,16 +120,17 @@ puis restaure.
 
 ---
 
-## 3. La landing est figée ; la démo est le chantier en cours
+## 3. Landing et démo : le chantier visuel
 
-`index.html`, `assets/js/main.js` et les blocs « landing » de `style.css` sont
-figés : voir **`LANDING_FIGEE.md`**. On n'y corrige qu'un défaut constaté, avec
-la correction la plus étroite possible, et on le dit.
+`index.html`, `assets/js/main.js`, `demo.html`, `assets/js/page-demo.js`,
+`assets/js/demo-data.js` et les blocs « landing » de `style.css` sont **le
+chantier en cours**, retravaillés avec le propriétaire du produit. Voir §10
+pour le périmètre et les contraintes.
 
-**La démo, elle, est ouverte.** `demo.html`, `assets/js/page-demo.js` et
-`assets/js/demo-data.js` sont le chantier en cours : parcours, animations,
-données fictives et rendu sont retravaillés **avec le propriétaire du produit**.
-L'ancienne consigne « ne change rien à la démo » est levée depuis le 16/09.
+`LANDING_FIGEE.md` reste à lire — non plus comme une interdiction, mais comme
+la liste des sept décisions que la refonte doit continuer d'honorer. Vérifie-les
+après coup, une par une, et dis dans ton rapport laquelle tu as dû faire évoluer
+et pourquoi.
 
 Deux garde-fous qui demeurent, parce qu'ils ne sont pas des questions de goût :
 
@@ -271,3 +279,86 @@ fichier créé uniquement dans le miroir sera perdu** — c'est déjà arrivé.
   propriétaire n'a pas arbitré : **ne modifie aucun prix**.
 
 Ne transforme pas une simulation en fonctionnalité dans un rapport.
+
+---
+
+## 10. Le chantier visuel — périmètre et pièges
+
+Le propriétaire a commandé, le 22/09, une refonte **visuelle** de la landing et
+de la démo, inspirée de sites de studio créatif (MATTER, CAUSTIC), plus un
+comportement de barre latérale révélée au survol dans l'application.
+
+**Ce qui est demandé est l'IMAGE, pas le fond.** Le SaaS ne change pas :
+mêmes routes, mêmes permissions, même schéma, mêmes tests.
+
+### Ce qui est ouvert
+
+`index.html` · `demo.html` · `assets/js/main.js` · `assets/js/page-demo.js` ·
+`assets/js/demo-data.js` · les blocs landing/démo de `assets/css/style.css` ·
+la barre latérale de l'application (`assets/js/admin.js`, `assets/css/style.css`).
+
+### Ce qui reste interdit
+
+Tout `backend/`. Toute route. Toute permission. Tout schéma. Tout test.
+Si une idée visuelle exige un changement serveur, **arrête-toi et demande**.
+
+### Cinq pièges qui feront échouer la refonte si on les ignore
+
+**1. LA PILE EST VANILLA. Il n'y a ni React, ni npm, ni bundler.**
+Pas de `package.json`, pas de `node_modules`, pas de TypeScript, pas de
+Tailwind, pas de shadcn, pas de Next.js, pas de framer-motion. Le frontend
+est du JavaScript de navigateur servi en fichiers statiques.
+Les composants de référence fournis par le propriétaire sont écrits en
+React/Tailwind : ils sont une **référence d'intention visuelle**, pas du code
+à copier. **Porte l'effet en vanilla. N'introduis pas de chaîne de build.**
+Transformer ce projet en application React est hors de question : le backend
+Flask sert ces fichiers tels quels, et 29 pages en dépendent.
+
+**2. LA CSP BLOQUE LES CDN.** Chaque page porte
+`script-src 'self'` : un `<script src="https://cdn...">` (Three.js, GSAP,
+Tailwind CDN) **ne se charge pas**, silencieusement, et la page paraît
+simplement cassée. Deux issues, dans cet ordre de préférence :
+obtenir l'effet sans la bibliothèque (CSS, Canvas 2D, WebGL natif), ou
+**héberger le fichier dans `assets/vendor/`** et l'appeler en `'self'`.
+Ne relâche pas la CSP pour faire entrer un CDN.
+
+**3. LA FEUILLE DE STYLE EST PARTAGÉE.** `assets/css/style.css` (3 588 lignes)
+sert la landing, la démo **et l'application**. Une classe renommée ou un
+sélecteur trop large casse un écran métier à l'autre bout du produit — `.chip`
+a déjà été défini deux fois pour deux composants différents. Préfixe tes
+nouvelles classes, et vérifie les écrans de l'application après coup.
+
+**4. LA BARRE LATÉRALE RÉVÉLÉE AU SURVOL DOIT RESTER ATTEIGNABLE.**
+« Apparaît quand la souris va à gauche, disparaît quand elle en sort » n'existe
+pas sur un écran tactile et pas au clavier. Le bouton menu doit continuer de
+l'ouvrir, la navigation au clavier doit continuer d'y entrer et d'en sortir,
+`aria-expanded` doit dire la vérité, et `prefers-reduced-motion` doit désactiver
+l'animation. Une barre de navigation qu'un utilisateur au clavier ne peut plus
+atteindre n'est pas un raffinement, c'est une régression d'accessibilité.
+
+**5. KINSHASA, PAS UN MACBOOK.** Les latences réelles ont été mesurées et sont
+documentées dans `RAPPORT_PERFORMANCE.md`. Une scène WebGL avec post-traitement
+et bloom sur un téléphone d'entrée de gamme ou une connexion lente n'est pas un
+détail de confort : c'est une landing qui ne s'affiche pas. Prévois un repli
+réel — pas un écran noir — et respecte `prefers-reduced-motion`, le mobile à
+375 px et le contraste AA (4,5:1) dans les deux thèmes.
+
+### Ce qui existe déjà — ne le recrée pas
+
+`cgu.html`, `confidentialite.html`, `mentions.html`, `securite.html`,
+`aide.html`, `faq.html`, `contact.html`, `a-propos.html`, `robots.txt` et
+`sitemap.xml` **existent**. Une demande de « créer une page CGU » est déjà
+satisfaite : relis-la, améliore-la, ne la duplique pas.
+
+Manquent réellement : **favicon** (aucun fichier, aucune déclaration `rel="icon"`
+dans les pages), **Open Graph et Twitter Card** (zéro balise), **page 404
+personnalisée**.
+
+### Analytics et cookies — ne décide pas seul
+
+Klassio manipule des dossiers d'enfants scolarisés. Brancher un outil
+d'analytics tiers, même « respectueux de la vie privée », envoie du trafic vers
+un tiers et oblige à relâcher la CSP. **C'est une décision du propriétaire, pas
+un défaut à corriger.** Propose, chiffre le coût en CSP et en confidentialité,
+et attends la réponse. Même chose pour le bandeau de consentement : sans outil
+de tracking, un bandeau de consentement n'a rien à consentir.
