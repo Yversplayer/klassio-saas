@@ -3742,3 +3742,118 @@ footer { border-top: 1px solid var(--line-soft); padding: 56px 0 40px; }
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* =========================================================================
+   MOTEUR DE MOUVEMENT — révélations, curseur, typographie cinétique
+   =========================================================================
+
+   Le JS ne fait que poser un index (`--mo-i`) et basculer une classe. Tout ce
+   qui bouge est décrit ici, donc composé par le GPU. Une animation pilotée
+   image par image en JavaScript tombe dès que le fil principal travaille —
+   et sur cette page il travaille : portail, nappe, observateurs.
+
+   `--mo-i` est l'index de l'unité dans son bloc. Le décalage se calcule en
+   CSS : c'est ce qui fait arriver les mots UN À UN plutôt qu'ensemble. */
+
+@property --mo-stretch { syntax: "<number>"; inherits: true; initial-value: 100; }
+@property --mo-blur { syntax: "<length>"; inherits: true; initial-value: 0px; }
+
+:root { --mo-stretch: 100; --mo-blur: 0px; --mo-delay: 0ms; --mo-pas: 34ms; }
+
+/* Le masque : chaque unité monte depuis SOUS sa propre ligne, elle ne
+   surgit pas depuis le néant. C'est ce qui distingue une révélation
+   éditoriale d'un simple fondu. */
+.mo-w { display: inline-block; overflow: hidden; vertical-align: bottom; }
+.mo-w-i,
+.mo-c {
+  display: inline-block;
+  will-change: transform, opacity;
+}
+
+[data-mo].mo-prep .mo-w-i,
+[data-mo].mo-prep .mo-c {
+  opacity: 0;
+  transform: translateY(110%) rotate(1.2deg);
+}
+[data-mo].mo-prep .mo-c { transform: translateY(80%); }
+
+[data-mo].mo-in .mo-w-i,
+[data-mo].mo-in .mo-c {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 0.62s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.86s cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: calc(var(--mo-delay, 0ms) + var(--mo-i, 0) * var(--mo-pas));
+}
+/* Les caractères se succèdent plus vite que les mots : à 34 ms par lettre,
+   un titre de trente signes mettrait une seconde à finir de s'écrire. */
+[data-mo="chars"].mo-in .mo-c { --mo-pas: 17ms; }
+
+/* Mouvement réduit, ou repli sans JavaScript : l'état d'arrivée, tout de
+   suite. Le trajet disparaît, le contenu jamais. */
+[data-mo].mo-instant .mo-w-i,
+[data-mo].mo-instant .mo-c { transition: none !important; }
+.no-js [data-mo] .mo-w-i,
+.no-js [data-mo] .mo-c { opacity: 1; transform: none; }
+
+/* ---- Typographie cinétique ---------------------------------------------
+   La largeur de l'axe variable suit la vitesse de défilement. Le texte n'est
+   plus posé sur la page : il subit le mouvement. Réservé aux titres — sur un
+   paragraphe, la compression gênerait la lecture. */
+.mo-kinetic {
+  /* L'AXE `wdth` N'EXISTE QUE SUR UNE POLICE VARIABLE.
+     Plus Jakarta Sans, la police de titre du produit, n'en a pas : la règle
+     s'appliquait sans rien produire. Archivo porte l'axe 62..125, et ne sert
+     QU'ICI — l'identité typographique du reste de la page ne change pas, et
+     la serif italique (Fraunces) garde son rôle de contraste. */
+  font-family: "Archivo", "Plus Jakarta Sans", system-ui, sans-serif;
+  font-variation-settings: "wdth" var(--mo-stretch, 100);
+  letter-spacing: -0.022em;
+  filter: blur(var(--mo-blur, 0px));
+  will-change: filter, font-variation-settings;
+}
+
+/* ---- Curseur ------------------------------------------------------------
+   `difference` inverse ce qu'il recouvre : un seul curseur reste lisible sur
+   le clair comme sur le sombre, sans qu'on ait à le redéclarer par thème. */
+.mo-cursor,
+.mo-ring {
+  position: fixed;
+  top: 0; left: 0;
+  pointer-events: none;
+  z-index: 9999;
+  mix-blend-mode: difference;
+  will-change: transform;
+  transition: opacity 0.2s ease;
+}
+.mo-cursor {
+  width: 7px; height: 7px;
+  margin: -3.5px 0 0 -3.5px;
+  border-radius: 50%;
+  background: #fff;
+}
+.mo-ring {
+  width: 34px; height: 34px;
+  margin: -17px 0 0 -17px;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 50%;
+}
+.mo-ring-on { border-color: rgba(255, 255, 255, 0.9); }
+/* On ne masque le curseur système QUE là où le nôtre existe réellement :
+   la classe n'est posée que sur un pointeur fin, hors mouvement réduit. */
+.mo-cursor-on,
+.mo-cursor-on a,
+.mo-cursor-on button,
+.mo-cursor-on [role="button"] { cursor: none; }
+/* …sauf dans un champ de saisie, où la barre d'insertion est une
+   information : la masquer ferait perdre le point de frappe. */
+.mo-cursor-on input,
+.mo-cursor-on textarea,
+.mo-cursor-on select { cursor: auto; }
+
+@media (prefers-reduced-motion: reduce) {
+  .mo-cursor, .mo-ring { display: none !important; }
+  .mo-kinetic { filter: none !important; font-variation-settings: "wdth" 100 !important; }
+  [data-mo] .mo-w-i, [data-mo] .mo-c { opacity: 1 !important; transform: none !important; }
+}

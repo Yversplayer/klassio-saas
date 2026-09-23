@@ -7,8 +7,8 @@
 <meta name="description" content="Klassio centralise élèves, finances, paiements et trésorerie de votre établissement scolaire dans un seul espace simple et intelligent." />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;1,500;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/style.css?v=1790800003" />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;1,500;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Archivo:wdth,wght@62..125,400..800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css?v=1790900002" />
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' http://localhost:5001; base-uri 'self'; form-action 'self'">
 <script src="assets/js/theme.js?v=1790200001"></script>
 <noscript>
@@ -46,9 +46,9 @@
   <div id="splash">
     <div class="splash-inner">
       <img src="assets/logo.png?v=1789000492" class="splash-logo" alt="Klassio" />
-      <span class="splash-greeting">Bonjour</span>
-      <span class="splash-sub">Bienvenue sur Klassio</span>
-      <span class="splash-skip">Appuyez pour continuer</span>
+      <span class="splash-greeting" data-mo="chars" id="splashA">Bonjour</span>
+      <span class="splash-sub" data-mo="words" id="splashB">Bienvenue sur Klassio</span>
+      <span class="splash-skip" data-mo="words" id="splashC">Appuyez pour continuer</span>
     </div>
   </div>
 
@@ -117,14 +117,14 @@
 
           <!-- L'APPUI -->
           <div class="hero-support" id="heroSupport">
-            <p class="hero-sub">Élèves, finances, paiements et trésorerie — centralisés, automatisés et sécurisés.</p>
+            <p class="hero-sub" data-mo="words" data-mo-delay="260">Élèves, finances, paiements et trésorerie — centralisés, automatisés et sécurisés.</p>
             <div class="hero-ctas">
-              <a href="app/inscription.html" class="btn btn-lime">
+              <a href="app/inscription.html" class="btn btn-lime mo-magnet">
                 <svg class="btn-arr btn-arr-left" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                 <span class="btn-label">Créer mon espace</span>
                 <svg class="btn-arr btn-arr-right" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
               </a>
-              <a href="demo.html" class="btn btn-ghost">
+              <a href="demo.html" class="btn btn-ghost mo-magnet">
                 <svg class="btn-arr btn-arr-left" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                 <span class="btn-label">Voir la démonstration</span>
                 <svg class="btn-arr btn-arr-right" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
@@ -144,7 +144,7 @@
         <div class="portal-core-glow"></div>
         <div class="telemetry-hud" id="telemetryHud">
           <div class="hud-pill"><span class="hud-dot"></span> L'espace Klassio</div>
-          <h2 class="hud-headline">Une fois dedans, <span class="em">tout est au même endroit</span></h2>
+          <h2 class="hud-headline" data-mo="words">Une fois dedans, <span class="em">tout est au même endroit</span></h2>
           <div class="preview-frame portal-preview">
             <div class="preview-topbar"><span></span><span></span><span></span></div>
             <div class="preview-body">
@@ -192,7 +192,7 @@
     <section class="story-section">
       <div class="story-copy reveal">
         <span class="story-index">01 — Le problème</span>
-        <h2>Trop d'outils, trop de fichiers, trop de temps perdu</h2>
+        <h2 data-mo="words" class="mo-kinetic">Trop d'outils, trop de fichiers, trop de temps perdu</h2>
         <p>Excel dispersé, cahiers, WhatsApp, relevés bancaires, cash à compter à la main. Chaque établissement jongle avec des processus séparés qui ne se parlent pas entre eux.</p>
       </div>
       <div class="story-visual reveal">
@@ -210,7 +210,7 @@
     <section class="story-section reverse">
       <div class="story-copy reveal">
         <span class="story-index">02 — La vision</span>
-        <h2>Un seul système. Un seul accès. Un contrôle total.</h2>
+        <h2 data-mo="words" class="mo-kinetic">Un seul système. Un seul accès. Un contrôle total.</h2>
         <p>Établissement, classes, élèves, finances, paiements — une seule source de vérité, reliée et toujours à jour, plutôt qu'une collection d'outils qui ne se parlent pas.</p>
       </div>
       <div class="story-visual reveal">
@@ -246,7 +246,7 @@
     <section class="story-section">
       <div class="story-copy reveal">
         <span class="story-index">03 — Pensé pour Kinshasa</span>
-        <h2>Conçu pour les établissements scolaires d'ici</h2>
+        <h2 data-mo="words" class="mo-kinetic">Conçu pour les établissements scolaires d'ici</h2>
         <p>Mobile Money, WhatsApp, espèces au comptoir : Klassio est pensé pour la réalité quotidienne des écoles et universités de Kinshasa, pas pour un marché générique.</p>
       </div>
       <div class="story-visual reveal">
@@ -265,7 +265,7 @@
     <section class="story-section reverse">
       <div class="story-copy reveal">
         <span class="story-index">04 — L'intelligence</span>
-        <h2>Une recherche qui comprend ce que vous voulez</h2>
+        <h2 data-mo="words" class="mo-kinetic">Une recherche qui comprend ce que vous voulez</h2>
         <p>Pas de chatbot à ouvrir : une seule barre pour chercher, naviguer ou demander, avec une réponse immédiate. Klassio comprend le rôle, l'établissement et le contexte de chaque utilisateur.</p>
       </div>
       <div class="story-visual reveal">
@@ -285,7 +285,7 @@
     <section class="story-section trust-section" id="confiance">
       <div class="story-copy reveal">
         <span class="story-index">05 — La confiance</span>
-        <h2>Sécurisé, traçable, sous contrôle</h2>
+        <h2 data-mo="words" class="mo-kinetic">Sécurisé, traçable, sous contrôle</h2>
         <p>Permissions granulaires, historique complet, isolation totale entre établissements. La confiance se construit sur des faits, pas des promesses.</p>
         <p class="trust-progress" aria-hidden="true"><span class="tp-current" id="trustCurrent">1</span><span class="tp-sep">/</span><span class="tp-total">4</span></p>
       </div>
@@ -306,7 +306,7 @@
     <div class="container">
       <div class="nappe-heading reveal">
         <span class="story-index">06 — Le produit</span>
-        <h2>Un seul système, plusieurs moteurs</h2>
+        <h2 data-mo="words" class="mo-kinetic">Un seul système, plusieurs moteurs</h2>
         <p>Derrière l'interface simple de Klassio, chaque module travaille ensemble.</p>
       </div>
       <div class="nappe-wrap">
@@ -333,7 +333,7 @@
   <!-- FINAL CTA -->
   <section class="final-cta" id="commencer">
     <div class="cta-box reveal">
-      <h2>Prêt à simplifier votre établissement ?</h2>
+      <h2 data-mo="words" class="mo-kinetic">Prêt à simplifier votre établissement ?</h2>
       <p>Créez votre espace en quelques minutes, ou demandez une démonstration personnalisée.</p>
       <div class="cta-actions">
         <a href="app/inscription.html" class="btn btn-lime">
@@ -392,7 +392,8 @@
     </div>
   </footer>
 
-  <script src="assets/js/main.js?v=1790800001"></script>
+  <script src="assets/js/motion.js?v=1790900003"></script>
+  <script src="assets/js/main.js?v=1790900001"></script>
   <script src="assets/js/cookie-consent.js?v=1790800001"></script>
 </body>
 </html>

@@ -20,7 +20,30 @@
       window.removeEventListener("touchstart", hideSplash);
       setTimeout(function () { if (splash.parentNode) splash.remove(); }, 950);
     };
-    splashTimer = setTimeout(hideSplash, reduced ? 200 : 1400);
+    // LES TROIS LIGNES ARRIVENT L'UNE APRÈS L'AUTRE.
+    //
+    // « Bonjour », puis « Bienvenue sur Klassio », puis l'invitation à
+    // continuer. Affichées ensemble, elles ne disent rien de plus qu'un logo ;
+    // échelonnées, elles font de l'attente un accueil. C'est le seul écran
+    // fantôme du produit qui porte cette séquence — les autres doivent
+    // s'effacer vite, pas se raconter.
+    //
+    // Le retrait n'est PAS calé sur une durée fixe : il attend la fin de la
+    // séquence. Sans cela, un splash de 1,4 s couperait la dernière ligne au
+    // milieu de son apparition.
+    var M = window.KlassioMotion;
+    if (M && !reduced) {
+      var lignes = ["splashA", "splashB", "splashC"].map(function (id) {
+        var el = document.getElementById(id);
+        if (el) M.preparer(el);
+        return el;
+      });
+      M.sequence(lignes, 480).then(function () {
+        splashTimer = setTimeout(hideSplash, 900);
+      });
+    } else {
+      splashTimer = setTimeout(hideSplash, reduced ? 200 : 1400);
+    }
     splash.addEventListener("click", hideSplash);
     document.addEventListener("keydown", hideSplash);
     window.addEventListener("wheel", hideSplash, { passive: true });
@@ -38,6 +61,17 @@
     };
     window.addEventListener("scroll", onScroll, { passive: true });
     onScroll();
+
+    // MOTEUR DE MOUVEMENT — révélations, curseur, typographie cinétique.
+    // Posé ici plutôt qu'au chargement du script : les sections doivent
+    // exister avant qu'on les observe.
+    var Mo = window.KlassioMotion;
+    if (Mo) {
+      Mo.observer(document);
+      Mo.typographieCinetique();
+      Mo.curseur();
+      Mo.aimants(document);
+    }
 
     // Tubelight navigation lamp
     var tubelightNav = document.getElementById("tubelightNav");
