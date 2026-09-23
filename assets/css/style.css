@@ -680,12 +680,18 @@ button { font-family: inherit; cursor: pointer; }
 /* La chambre intérieure. Opaque, sans exception : c'est cette opacité qui
    empêche de lire la page à travers le trou du O. Ne pas y remettre de
    couleur semi-transparente. */
+/* LE « O » EST BLANC, ET C'EST LUI QUI FAIT BASCULER LA COULEUR.
+   L'intérieur reprenait le fond de la page : on entrait dans du noir depuis
+   du noir, donc on n'entrait nulle part. En le faisant blanc, la plongée
+   devient un passage — et comme l'ouverture s'élargit jusqu'à remplir
+   l'écran, le changement de couleur EST le défilement. Aucune bascule de
+   thème n'est nécessaire : c'est la géométrie qui l'opère. */
 .glyph-o-interior {
   position: absolute;
   inset: 0;
   border-radius: 50%;
   overflow: hidden;
-  background: var(--bg);
+  background: var(--portail-clair, #f6f7f4);
 }
 
 /* Ce qu'on découvre en entrant. Couche plein écran, opaque, à l'échelle 1 :
@@ -699,7 +705,11 @@ button { font-family: inherit; cursor: pointer; }
   align-items: center;
   justify-content: center;
   padding: clamp(18px, 4vw, 48px);
-  background: var(--bg);
+  background: var(--portail-clair, #f6f7f4);
+  /* Ce qu'on découvre est posé sur du clair : les couleurs de texte de cette
+     couche sont donc fixées ici, indépendamment du thème de la page. Sans
+     cela, un texte pensé pour du sombre devenait illisible dès l'ouverture. */
+  color: #14180f;
   clip-path: circle(var(--portal-r, 0px) at var(--portal-cx, 50%) var(--portal-cy, 50%));
   pointer-events: none;
   contain: paint;
@@ -858,7 +868,7 @@ button { font-family: inherit; cursor: pointer; }
   }
   .glyph-wordmark-wrap { transform: none !important; }
   .portal-reveal { display: none !important; }
-  .glyph-o-interior { background: var(--surface-soft) !important; }
+  .glyph-o-interior { background: var(--portail-clair, #f6f7f4) !important; }
 }
 
 /* Product preview mock */

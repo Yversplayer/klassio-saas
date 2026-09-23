@@ -460,9 +460,25 @@
       var pZoom = clamp((progress - 0.10) / 0.72, 0, 1);
       var scale = 1 + (geo.maxScale - 1) * Math.pow(pZoom, 2.6);
 
+      // LES LETTRES SE PENCHENT PENDANT LA PLONGÉE.
+      //
+      // Une inclinaison qui monte puis revient : le mot-marque s'incline en
+      // entrant dans le mouvement, et se redresse quand on arrive. Un angle
+      // qui resterait acquis donnerait l'impression d'une page de travers ;
+      // c'est le TRAJET qui doit se sentir, pas la destination.
+      //
+      // 3,4° : assez pour qu'on le perçoive, trop peu pour qu'on le nomme.
+      var pPenche = Math.sin(clamp(pZoom / 0.86, 0, 1) * Math.PI);
+      var roulis = -3.4 * pPenche;
+
       wordmark.style.transform =
         "translate(" + (geo.dx * pMove).toFixed(1) + "px," + (geo.dy * pMove).toFixed(1) +
-        "px) scale(" + scale.toFixed(4) + ")";
+        "px) rotate(" + roulis.toFixed(2) + "deg) scale(" + scale.toFixed(4) + ")";
+
+      // La question et son appui s'inclinent avec, à moitié : ils
+      // appartiennent à la même scène et doivent partir dans le même sens.
+      heroQuestion.style.transform =
+        "translateY(" + (-42 * pQuestion).toFixed(1) + "px) rotate(" + (roulis * 0.5).toFixed(2) + "deg)";
 
       // 4. L'ouverture. Elle suit le trou du « O » à l'écran : même centre,
       //    même rayon. Le contenu dessous ne bouge ni ne grandit.
