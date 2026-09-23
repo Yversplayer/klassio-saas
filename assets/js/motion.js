@@ -373,6 +373,105 @@
     });
   }
 
+  var LARGEUR_LAMPE = 32;   // doit suivre .tubelight-lamp { width } dans style.css
+
+  // ---------------------------------------------------------------------
+  // LA LAMPE DE NAVIGATION
+  // ---------------------------------------------------------------------
+  //
+  // Une barre de lumière posée au-dessus de l'onglet où l'on se trouve.
+  //
+  // POURQUOI ELLE EST ICI, ET PLUS DANS main.js
+  //
+  // Elle n'existait que sur la landing. Les autres pages publiques font
+  // rebâtir leur barre par public.js, qui ne connaissait pas la lampe : en
+  // ouvrant « À propos », « Centre d'aide » ou « Produit » depuis une de ces
+  // pages, la lumière DISPARAISSAIT — l'exact inverse de ce qu'une lampe de
+  // position doit faire. Elle vit donc dans la couche partagée, et chaque
+  // page l'allume sur son propre onglet.
+  //
+  // POURQUOI ELLE SE REPLACE PLUSIEURS FOIS
+  //
+  // On la posait une fois, 100 ms après le chargement. Mesurer une pilule
+  // avant que la police d'affichage ne soit arrivée donne une largeur qui
+  // n'est plus la bonne un instant plus tard ; et en arrivant sur
+  // `index.html#produit`, la mesure tombait pendant le splash, donc à zéro :
+  // la lampe partait à gauche de la barre, hors de tout onglet. Elle se
+  // replace maintenant tant qu'elle n'a pas pu mesurer, puis au chargement
+  // complet, au retour des polices, et à chaque redimensionnement.
+  function lampeNav(nav) {
+    nav = nav || document.getElementById("tubelightNav")
+               || document.querySelector(".navbar .nav-links");
+    if (!nav) return null;
+
+    var liens = Array.prototype.slice.call(nav.querySelectorAll("a"));
+    if (!liens.length) return null;
+
+    var lampe = nav.querySelector(".tubelight-lamp");
+    if (!lampe) {
+      lampe = document.createElement("div");
+      lampe.className = "tubelight-lamp";
+      lampe.setAttribute("aria-hidden", "true");
+      var lueur = document.createElement("div");
+      lueur.className = "tubelight-glow";
+      lampe.appendChild(lueur);
+      nav.insertBefore(lampe, nav.firstChild);
+    }
+
+    // L'onglet courant, dans l'ordre de confiance : une marque explicite, la
+    // page réellement ouverte, puis le premier onglet. Le dernier recours
+    // compte : sans lui, une page sans onglet correspondant éteindrait la
+    // lampe, et c'est précisément ce qu'on corrige.
+    function courant() {
+      return nav.querySelector("a.active")
+          || nav.querySelector('a[aria-current="page"]')
+          || liens[0];
+    }
+
+    // Sous 1060 px la barre devient un menu déroulant : les onglets s'empilent
+    // en colonne. Une barre horizontale de 32 px posée « au-dessus de l'onglet »
+    // n'y veut plus rien dire — elle se retrouverait au-dessus de la pile
+    // entière. On la laisse donc éteinte tant que les onglets ne sont pas sur
+    // une même ligne, et le test le dit sans dépendre d'un point de rupture
+    // écrit deux fois : deux onglets alignés ont le même `offsetTop`.
+    function enLigne() {
+      return liens.length < 2 || liens[0].offsetTop === liens[1].offsetTop;
+    }
+
+    function placer() {
+      var el = courant();
+      if (!el || !el.offsetWidth || !enLigne()) return false;   // pas mesurable
+      var x = el.offsetLeft + (el.offsetWidth - LARGEUR_LAMPE) / 2;
+      lampe.style.transform = "translateX(" + Math.round(x) + "px)";
+      lampe.classList.add("active");              // ajoutée, jamais retirée
+      return true;
+    }
+
+    function replacer() {
+      if (!placer()) requestAnimationFrame(placer);
+    }
+
+    // ELLE NE SUIT PAS LA SOURIS. Elle se déplace quand on CHANGE de page :
+    // survoler une barre ne veut rien dire, et une lampe qui court d'un
+    // onglet à l'autre sans que rien n'ait changé ne renseigne sur rien.
+    liens.forEach(function (a) {
+      a.addEventListener("click", function () {
+        liens.forEach(function (x) { x.classList.remove("active"); });
+        a.classList.add("active");
+        placer();
+      });
+    });
+
+    replacer();
+    requestAnimationFrame(replacer);
+    window.addEventListener("load", replacer);
+    window.addEventListener("resize", replacer, { passive: true });
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(replacer).catch(function () {});
+    }
+    return lampe;
+  }
+
   window.KlassioMotion = {
     observer: observer,
     preparer: preparer,
@@ -384,6 +483,7 @@
     typographieCinetique: typographieCinetique,
     curseur: curseur,
     aimants: aimants,
+    lampeNav: lampeNav,
     reduit: reduit,
   };
 })();

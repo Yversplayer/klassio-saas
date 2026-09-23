@@ -73,40 +73,14 @@
       Mo.aimants(document);
     }
 
-    // Tubelight navigation lamp
-    var tubelightNav = document.getElementById("tubelightNav");
-    var tubelightLamp = document.getElementById("tubelightLamp");
-    if (tubelightNav && tubelightLamp) {
-      var links = tubelightNav.querySelectorAll("a");
-      var activeLink = tubelightNav.querySelector("a.active") || links[0];
-
-      var moveLamp = function (el) {
-        if (!el) { tubelightLamp.classList.remove("active"); return; }
-        var targetLeft = el.offsetLeft + (el.offsetWidth - 32) / 2;
-        tubelightLamp.style.transform = "translateX(" + targetLeft + "px)";
-        tubelightLamp.classList.add("active");
-      };
-
-      // LA LUMIÈRE NE SUIT PAS LA SOURIS.
-      //
-      // Elle suivait le survol : passer le curseur au-dessus de la barre la
-      // faisait courir d'un onglet à l'autre sans que rien n'ait changé. Une
-      // lampe qui bouge doit signifier quelque chose — ici, qu'on a changé de
-      // page. Elle se déplace donc au CLIC, et reste sur l'onglet actif.
-      //
-      // Le survol garde un retour, mais sur le LIEN lui-même (couleur), pas
-      // en déplaçant un élément à l'autre bout de la barre.
-      links.forEach(function (l) {
-        l.addEventListener("click", function () {
-          links.forEach(function (x) { x.classList.remove("active"); });
-          l.classList.add("active");
-          activeLink = l;
-          moveLamp(l);
-        });
-      });
-
-      setTimeout(function () { moveLamp(activeLink); }, 100);
-    }
+    // LA LAMPE DE NAVIGATION — désormais dans motion.js.
+    //
+    // Elle était écrite ici, donc elle n'existait que sur la landing : en
+    // ouvrant « À propos » ou « Centre d'aide », la barre rebâtie par
+    // public.js n'en avait pas, et la lumière disparaissait. Une seule
+    // implémentation, partagée par toutes les pages, corrige ça — et corrige
+    // aussi le placement au chargement, qui tombait pendant le splash.
+    if (Mo) Mo.lampeNav(document.getElementById("tubelightNav"));
   }
 
   // ------------------------------------------------------ Révélation au scroll
@@ -460,25 +434,13 @@
       var pZoom = clamp((progress - 0.10) / 0.72, 0, 1);
       var scale = 1 + (geo.maxScale - 1) * Math.pow(pZoom, 2.6);
 
-      // LES LETTRES SE PENCHENT PENDANT LA PLONGÉE.
-      //
-      // Une inclinaison qui monte puis revient : le mot-marque s'incline en
-      // entrant dans le mouvement, et se redresse quand on arrive. Un angle
-      // qui resterait acquis donnerait l'impression d'une page de travers ;
-      // c'est le TRAJET qui doit se sentir, pas la destination.
-      //
-      // 3,4° : assez pour qu'on le perçoive, trop peu pour qu'on le nomme.
-      var pPenche = Math.sin(clamp(pZoom / 0.86, 0, 1) * Math.PI);
-      var roulis = -3.4 * pPenche;
-
+      // Aucune inclinaison ici. On avait fait pencher le mot-marque de 3,4°
+      // pendant la plongée ; l'effet demandé était bien celui d'AVANT, et
+      // l'inclinaison s'ajoutait à un « O » déjà dénaturé. La plongée ne fait
+      // donc qu'une chose, et c'est sa force : recentrer, puis entrer.
       wordmark.style.transform =
         "translate(" + (geo.dx * pMove).toFixed(1) + "px," + (geo.dy * pMove).toFixed(1) +
-        "px) rotate(" + roulis.toFixed(2) + "deg) scale(" + scale.toFixed(4) + ")";
-
-      // La question et son appui s'inclinent avec, à moitié : ils
-      // appartiennent à la même scène et doivent partir dans le même sens.
-      heroQuestion.style.transform =
-        "translateY(" + (-42 * pQuestion).toFixed(1) + "px) rotate(" + (roulis * 0.5).toFixed(2) + "deg)";
+        "px) scale(" + scale.toFixed(4) + ")";
 
       // 4. L'ouverture. Elle suit le trou du « O » à l'écran : même centre,
       //    même rayon. Le contenu dessous ne bouge ni ne grandit.

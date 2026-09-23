@@ -680,18 +680,19 @@ button { font-family: inherit; cursor: pointer; }
 /* La chambre intérieure. Opaque, sans exception : c'est cette opacité qui
    empêche de lire la page à travers le trou du O. Ne pas y remettre de
    couleur semi-transparente. */
-/* LE « O » EST BLANC, ET C'EST LUI QUI FAIT BASCULER LA COULEUR.
-   L'intérieur reprenait le fond de la page : on entrait dans du noir depuis
-   du noir, donc on n'entrait nulle part. En le faisant blanc, la plongée
-   devient un passage — et comme l'ouverture s'élargit jusqu'à remplir
-   l'écran, le changement de couleur EST le défilement. Aucune bascule de
-   thème n'est nécessaire : c'est la géométrie qui l'opère. */
+/* LE « O » RESTE UNE LETTRE TANT QU'ON N'Y EST PAS ENTRÉ.
+   On a essayé de le remplir de blanc pour que la plongée soit aussi un
+   changement de couleur. Résultat : dès le premier écran, AVANT tout
+   défilement, le mot-marque se lisait « KLASSI » suivi d'un disque blanc —
+   le cerclage clair et l'intérieur clair se rejoignaient et la lettre
+   disparaissait. Une ouverture ne doit se voir qu'en s'ouvrant.
+   L'intérieur reprend donc le fond de la page : le « O » est un « O ». */
 .glyph-o-interior {
   position: absolute;
   inset: 0;
   border-radius: 50%;
   overflow: hidden;
-  background: var(--portail-clair, #f6f7f4);
+  background: var(--bg);
 }
 
 /* Ce qu'on découvre en entrant. Couche plein écran, opaque, à l'échelle 1 :
@@ -705,11 +706,12 @@ button { font-family: inherit; cursor: pointer; }
   align-items: center;
   justify-content: center;
   padding: clamp(18px, 4vw, 48px);
-  background: var(--portail-clair, #f6f7f4);
-  /* Ce qu'on découvre est posé sur du clair : les couleurs de texte de cette
-     couche sont donc fixées ici, indépendamment du thème de la page. Sans
-     cela, un texte pensé pour du sombre devenait illisible dès l'ouverture. */
-  color: #14180f;
+  /* AU REPOS, CETTE COUCHE EST LE TROU DU « O » : main.js pose
+     --portal-r = rayon du trou dès la première image, donc ce fond-ci est
+     exactement ce qu'on voit dans la lettre avant tout défilement. La
+     peindre en clair peignait le « O » en blanc. Elle suit le fond de la
+     page, et c'est l'OUVERTURE — pas la couleur — qui raconte l'entrée. */
+  background: var(--bg);
   clip-path: circle(var(--portal-r, 0px) at var(--portal-cx, 50%) var(--portal-cy, 50%));
   pointer-events: none;
   contain: paint;
@@ -868,7 +870,7 @@ button { font-family: inherit; cursor: pointer; }
   }
   .glyph-wordmark-wrap { transform: none !important; }
   .portal-reveal { display: none !important; }
-  .glyph-o-interior { background: var(--portail-clair, #f6f7f4) !important; }
+  .glyph-o-interior { background: var(--surface-soft) !important; }
 }
 
 /* Product preview mock */

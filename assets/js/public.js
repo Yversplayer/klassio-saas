@@ -4,9 +4,10 @@
 // porteraient huit copies du même en-tête, et la neuvième aurait un lien mort
 // que personne ne verrait avant un client.
 //
-// `index.html` est FIGÉE (voir LANDING_FIGEE.md) : elle garde sa propre barre,
-// on s'est contenté d'y AJOUTER les liens vers ces pages. Ce fichier ne
-// s'exécute donc pas sur la landing.
+// `index.html` garde sa propre barre, écrite à la main : elle porte le splash
+// et le portail, que ce socle n'a pas à connaître. Ce fichier ne s'exécute
+// donc pas sur la landing — mais la LAMPE, elle, est commune aux deux (elle
+// vit dans motion.js), sans quoi elle s'éteindrait en changeant de page.
 (function () {
   "use strict";
 
@@ -19,13 +20,39 @@
 
   var courante = (window.location.pathname.split("/").pop() || "index.html");
 
+  // QUEL ONGLET ALLUMER QUAND LA PAGE N'EN A PAS.
+  //
+  // Sécurité, CGU, confidentialité et mentions n'ont pas d'onglet à elles —
+  // et n'en méritent pas un. Sans rattachement, la lampe serait retombée sur
+  // le premier onglet venu, donc sur « Produit », qui est faux. On les
+  // rattache au Centre d'aide, qui est bien l'endroit d'où on y arrive.
+  // Le rattachement allume la lampe mais ne pose PAS aria-current : on n'est
+  // pas sur cette page-là, et l'annoncer serait mentir au lecteur d'écran.
+  var RATTACHEMENT = {
+    "securite.html": "aide.html",
+    "cgu.html": "aide.html",
+    "confidentialite.html": "aide.html",
+    "mentions.html": "aide.html",
+  };
+  var allume = RATTACHEMENT[courante] || courante;
+
   function nav() {
     return '<nav class="navbar pub-nav" id="navbar">' +
       '<a href="index.html" class="brand"><img src="assets/logo.png" class="brand-mark" alt="Klassio">Klassio</a>' +
-      '<div class="nav-links">' +
+      '<div class="nav-links" id="tubelightNav">' +
+        // LA LAMPE. Elle était absente de cette barre : c'est pour ça qu'elle
+        // « disparaissait » dès qu'on quittait la landing. motion.js la place
+        // ensuite au-dessus de l'onglet marqué `active`.
+        '<div class="tubelight-lamp" id="tubelightLamp" aria-hidden="true"><div class="tubelight-glow"></div></div>' +
         '<a href="index.html#produit">Produit</a>' +
         PAGES.map(function (p) {
-          return '<a href="' + p.href + '"' + (p.href === courante ? ' aria-current="page" class="actif"' : "") + ">" + p.label + "</a>";
+          var cls = [];
+          if (p.href === courante) cls.push("actif");
+          if (p.href === allume) cls.push("active");
+          return '<a href="' + p.href + '"' +
+            (p.href === courante ? ' aria-current="page"' : "") +
+            (cls.length ? ' class="' + cls.join(" ") + '"' : "") +
+            ">" + p.label + "</a>";
         }).join("") +
       "</div>" +
       '<div class="nav-actions">' +
@@ -62,6 +89,12 @@
     if (hoteNav) hoteNav.outerHTML = nav();
     var hotePied = document.getElementById("pubFooter");
     if (hotePied) hotePied.outerHTML = footer();
+
+    // La lampe est placée APRÈS l'injection : avant, il n'y a pas d'onglet
+    // à mesurer.
+    if (window.KlassioMotion && window.KlassioMotion.lampeNav) {
+      window.KlassioMotion.lampeNav(document.getElementById("tubelightNav"));
+    }
 
     var burger = document.getElementById("pubBurger");
     if (burger) {
