@@ -4035,3 +4035,148 @@ body[data-page="demo"] .demo-shell { grid-template-columns: 1fr !important; }
   .rc-grain { display: none; }
   .rc-p-point { transition: none; }
 }
+
+/* =========================================================================
+   ORBITE — le moyeu en volume
+   =========================================================================
+   Le schéma précédent était plat : six étiquettes posées autour d'un carré,
+   reliées par des traits. Il DISAIT la convergence sans la faire sentir.
+   Ici les modules tournent réellement autour du logo sur une orbite inclinée,
+   avec perspective : ceux qui passent derrière rapetissent, pâlissent et
+   passent sous le noyau. La profondeur n'est pas dessinée, elle est calculée.
+
+   Tout est en transformations CSS 3D : composées par le GPU, elles tiennent
+   60 images/seconde sur un téléphone d'entrée de gamme — ce qu'une scène
+   WebGL avec post-traitement ne ferait pas sur une connexion kinoise. */
+
+.orbite {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 360px;
+  perspective: 1100px;
+}
+.orb-scene {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  aspect-ratio: 1 / 0.86;
+  transform-style: preserve-3d;
+  /* L'orbite est vue de trois quarts : une orbite vue de face redevient un
+     cercle plat, et tout l'effet de volume disparaît. */
+  transform: rotateX(58deg);
+}
+
+.orb-anneau {
+  position: absolute;
+  inset: 8%;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--ink-soft) 22%, transparent);
+  transform-style: preserve-3d;
+}
+.orb-anneau-2 {
+  inset: 24%;
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--ink-soft) 14%, transparent);
+}
+
+/* Le noyau se redresse pour faire face au lecteur : sans ce contre-pivot, le
+   logo serait couché avec le plan de l'orbite et deviendrait illisible. */
+.orb-noyau {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 116px; height: 116px;
+  margin: -58px 0 0 -58px;
+  border-radius: 30px;
+  background: linear-gradient(145deg, var(--lime) 0%, var(--lime-strong) 100%);
+  display: grid;
+  place-items: center;
+  box-shadow: var(--shadow-glow);
+  transform: rotateX(-58deg) translateZ(36px);
+  z-index: 50;
+}
+.orb-logo {
+  width: 68px; height: 68px;
+  object-fit: contain;
+  filter: brightness(0) saturate(100%) invert(9%) sepia(28%) saturate(1200%) hue-rotate(96deg) brightness(95%);
+}
+.orb-halo {
+  position: absolute;
+  inset: -18px;
+  border-radius: 40px;
+  background: radial-gradient(circle, color-mix(in srgb, var(--lime) 34%, transparent) 0%, transparent 68%);
+  opacity: 0;
+  transition: opacity 0.5s var(--ease-out);
+}
+.orbite[data-actif] .orb-halo { opacity: 1; }
+
+/* Chaque module. `--a` est l'angle posé par le JS ; tout le reste — position,
+   profondeur, échelle, opacité — se déduit de lui en CSS. */
+.orb-node {
+  position: absolute;
+  top: 50%; left: 50%;
+  margin: -21px 0 0 -58px;
+  width: 116px; height: 42px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 9999px;
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  color: var(--ink);
+  font: 600 12.5px/1 inherit;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  transform:
+    rotate(calc(var(--a, 0) * 1deg))
+    translateX(var(--r, 168px))
+    rotate(calc(var(--a, 0) * -1deg))
+    rotateX(-58deg);
+  transition: border-color 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
+  z-index: calc(20 + var(--z, 0));
+}
+.orb-node > span {
+  display: block;
+  /* L'étiquette se redresse en sens inverse de l'inclinaison de l'orbite. */
+  transform: scale(var(--s, 1));
+  opacity: var(--o, 1);
+  transition: transform 0.25s var(--ease-out), opacity 0.25s ease;
+}
+.orb-node:hover,
+.orb-node:focus-visible {
+  border-color: var(--lime-deep);
+  box-shadow: 0 6px 22px -6px color-mix(in srgb, var(--lime) 55%, transparent);
+  outline: none;
+}
+.orb-node[aria-pressed="true"] {
+  border-color: var(--lime-deep);
+  background: var(--lime);
+  color: var(--forest);
+}
+
+.orb-legende {
+  position: absolute;
+  bottom: 2%;
+  margin: 0;
+  text-align: center;
+  font-size: 13.5px;
+  color: var(--ink-soft);
+  max-width: 34ch;
+  min-height: 2.6em;
+}
+
+@media (max-width: 720px) {
+  .orbite { min-height: 300px; perspective: 800px; }
+  .orb-scene { transform: rotateX(52deg); }
+  .orb-noyau { width: 92px; height: 92px; margin: -46px 0 0 -46px; transform: rotateX(-52deg) translateZ(28px); }
+  .orb-logo { width: 54px; height: 54px; }
+  .orb-node { width: 96px; font-size: 11.5px; transform:
+    rotate(calc(var(--a, 0) * 1deg)) translateX(var(--r, 124px))
+    rotate(calc(var(--a, 0) * -1deg)) rotateX(-52deg); margin-left: -48px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  /* Une orbite qui tourne sans arrêt est exactement ce que ce réglage
+     demande d'éteindre. On la fige à plat, lisible, sans rotation. */
+  .orb-scene { transform: none; }
+  .orb-noyau, .orb-node { transform: none; position: relative; margin: 6px; top: auto; left: auto; }
+  .orb-scene { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; aspect-ratio: auto; }
+  .orb-anneau { display: none; }
+}

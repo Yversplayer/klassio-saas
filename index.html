@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;1,500;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Archivo:wdth,wght@62..125,400..800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/style.css?v=1791000001" />
+<link rel="stylesheet" href="assets/css/style.css?v=1791000002" />
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' http://localhost:5001; base-uri 'self'; form-action 'self'">
 <script src="assets/js/theme.js?v=1790200001"></script>
 <noscript>
@@ -232,28 +232,26 @@
         <!-- Les six satellites SORTENT du noyau au défilement, un par un, et
              rejoignent leur place en étoile. Géométrie mesurée par main.js :
              ici on ne décrit que l'état d'arrivée, jamais l'état de départ. -->
-        <div class="hub" id="hub">
-          <svg class="lines" viewBox="0 0 400 300" aria-hidden="true">
-            <!-- pathLength="1" : la longueur devient une unité, le tracé se
-                 pilote alors par un simple stroke-dashoffset de 1 vers 0,
-                 sans avoir à mesurer chaque segment. -->
-            <line class="hub-line" pathLength="1" x1="200" y1="150" x2="70" y2="55"/>
-            <line class="hub-line" pathLength="1" x1="200" y1="150" x2="330" y2="55"/>
-            <line class="hub-line" pathLength="1" x1="200" y1="150" x2="55" y2="180"/>
-            <line class="hub-line" pathLength="1" x1="200" y1="150" x2="345" y2="185"/>
-            <line class="hub-line" pathLength="1" x1="200" y1="150" x2="120" y2="255"/>
-            <line class="hub-line" pathLength="1" x1="200" y1="150" x2="280" y2="255"/>
-          </svg>
-          <div class="hub-node" style="top:10%; left:6%;">Élèves</div>
-          <div class="hub-node" style="top:10%; right:4%;">Classes</div>
-          <div class="hub-node" style="top:52%; left:0%;">Paiements</div>
-          <div class="hub-node" style="top:56%; right:-2%;">Trésorerie</div>
-          <div class="hub-node" style="bottom:2%; left:16%;">Dépenses</div>
-          <div class="hub-node" style="bottom:2%; right:12%;">Rapports</div>
-          <div class="hub-core" id="hubCore">
-            <span class="hub-pulse" aria-hidden="true"></span>
-            <img src="assets/logo.png?v=1789000492" class="hub-core-logo" alt="Klassio" width="108" height="108" />
+        <div class="orbite" id="orbite" data-orbite>
+          <!-- Un vrai volume : perspective, profondeur, tri par Z.
+               Chaque module tourne autour du logo sur une orbite inclinée ;
+               ceux qui passent derrière rapetissent et s'estompent. Le JS ne
+               pose qu'un angle — la profondeur est calculée en CSS. -->
+          <div class="orb-scene" id="orbScene">
+            <div class="orb-anneau" aria-hidden="true"></div>
+            <div class="orb-anneau orb-anneau-2" aria-hidden="true"></div>
+            <div class="orb-noyau" id="orbNoyau">
+              <span class="orb-halo" aria-hidden="true"></span>
+              <img src="assets/logo.png?v=1789000492" class="orb-logo" alt="Klassio" width="96" height="96" />
+            </div>
+            <button type="button" class="orb-node" data-i="0"><span>Élèves</span></button>
+            <button type="button" class="orb-node" data-i="1"><span>Classes</span></button>
+            <button type="button" class="orb-node" data-i="2"><span>Paiements</span></button>
+            <button type="button" class="orb-node" data-i="3"><span>Trésorerie</span></button>
+            <button type="button" class="orb-node" data-i="4"><span>Dépenses</span></button>
+            <button type="button" class="orb-node" data-i="5"><span>Rapports</span></button>
           </div>
+          <p class="orb-legende" id="orbLegende" role="status" aria-live="polite">Tout converge vers une source unique.</p>
         </div>
       </div>
     </section>
@@ -407,8 +405,9 @@
     </div>
   </footer>
 
-  <script src="assets/js/motion.js?v=1791000001"></script>
-  <script src="assets/js/main.js?v=1791000001"></script>
+  <script src="assets/js/motion.js?v=1791000002"></script>
+  <script src="assets/js/orbite.js?v=1791000003"></script>
+  <script src="assets/js/main.js?v=1791000002"></script>
   <script src="assets/js/cookie-consent.js?v=1790800001"></script>
 </body>
 </html>
