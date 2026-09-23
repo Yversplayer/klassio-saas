@@ -964,6 +964,18 @@ button { font-family: inherit; cursor: pointer; }
 }
 .reveal.in-view { opacity: 1; transform: none; }
 
+/* UN BLOC QUI CONTIENT DES MOTS ÉCHELONNÉS NE FAIT PAS DE FONDU.
+   `.reveal` fait apparaître tout le bloc en 0,8 s. Quand ce bloc porte aussi
+   un `[data-mo]`, les deux animations se superposent : le fondu global
+   l'emporte visuellement et on ne voit plus les mots arriver un à un — juste
+   un bloc qui apparaît. Ce sont les mots qui portent la révélation ; le
+   conteneur, lui, est là dès le départ. */
+.reveal:has([data-mo]) {
+  opacity: 1;
+  transform: none;
+  transition: none;
+}
+
 /* visual: scattered tools (problem) */
 .tools-chaos {
   display: grid;
@@ -1023,6 +1035,21 @@ button { font-family: inherit; cursor: pointer; }
   text-align: center; line-height: 1.3;
 }
 .hub-core-label { position: relative; z-index: 2; }
+/* LE LOGO REMPLACE LE MOT.
+   « Source unique » nommait ce que le schéma montre déjà : tout converge vers
+   le centre. Le logo dit la même chose sans le dire, et rattache la
+   démonstration au produit. Mêmes dimensions que le carré qu'il remplace —
+   le reste de la composition ne bouge pas d'un pixel. */
+.hub-core-logo {
+  position: relative;
+  z-index: 2;
+  width: 76px;
+  height: 76px;
+  object-fit: contain;
+  /* Le noyau est vert vif : le logo y serait noyé. On l'assombrit pour qu'il
+     se lise comme une marque posée dessus, pas comme une image collée. */
+  filter: brightness(0) saturate(100%) invert(9%) sepia(28%) saturate(1200%) hue-rotate(96deg) brightness(95%);
+}
 
 /* L'onde qui part du noyau chaque fois qu'un satellite en sort. Elle est
    pilotée par --hub-pulse (0 → 1) plutôt que par une animation en boucle :
@@ -3974,6 +4001,17 @@ footer { border-top: 1px solid var(--line-soft); padding: 56px 0 40px; }
 .rc-pastille:hover .rc-p-nom,
 .rc-pastille:focus-visible .rc-p-nom { opacity: 1; transform: none; }
 .rc-pastille:focus-visible { outline: 2px solid var(--lime-deep); outline-offset: 3px; border-radius: 50%; }
+
+/* ---- La barre latérale quitte la démonstration --------------------------
+   Elle dupliquait ce que le rail de droite dit déjà — où l'on en est — et
+   surtout : dans une DÉMONSTRATION, une navigation latérale invite à cliquer
+   ailleurs, alors que tout l'intérêt est de suivre le récit jusqu'au bout.
+   Elle reste entière dans l'application réelle ; seule la visite s'en passe. */
+body[data-page="demo"] .demo-shell .sidebar,
+body[data-page="demo"] .demo-shell .sidebar-scrim,
+body[data-page="demo"] .demo-shell #sidebarToggle { display: none !important; }
+body[data-page="demo"] .demo-shell .main-col { margin-left: 0 !important; width: 100% !important; }
+body[data-page="demo"] .demo-shell { grid-template-columns: 1fr !important; }
 
 /* ---- Grain -------------------------------------------------------------- */
 .rc-grain {

@@ -87,12 +87,22 @@
         tubelightLamp.classList.add("active");
       };
 
+      // LA LUMIÈRE NE SUIT PAS LA SOURIS.
+      //
+      // Elle suivait le survol : passer le curseur au-dessus de la barre la
+      // faisait courir d'un onglet à l'autre sans que rien n'ait changé. Une
+      // lampe qui bouge doit signifier quelque chose — ici, qu'on a changé de
+      // page. Elle se déplace donc au CLIC, et reste sur l'onglet actif.
+      //
+      // Le survol garde un retour, mais sur le LIEN lui-même (couleur), pas
+      // en déplaçant un élément à l'autre bout de la barre.
       links.forEach(function (l) {
-        l.addEventListener("mouseenter", function () { moveLamp(l); });
-      });
-
-      tubelightNav.addEventListener("mouseleave", function () {
-        moveLamp(activeLink);
+        l.addEventListener("click", function () {
+          links.forEach(function (x) { x.classList.remove("active"); });
+          l.classList.add("active");
+          activeLink = l;
+          moveLamp(l);
+        });
       });
 
       setTimeout(function () { moveLamp(activeLink); }, 100);
