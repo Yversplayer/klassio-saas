@@ -182,6 +182,64 @@ class BulletinPDFTests(unittest.TestCase):
         self.assertEqual(r.status_code, 200)
         self.assertEqual(r.content_type, "application/pdf")
 
+    def test_04b_le_parent_ne_recoit_pas_une_periode_non_proclamee(self):
+        """LE TEST QUE test_04 CROYAIT FAIRE.
+
+        `test_04` ne vérifiait que le code HTTP : le PDF arrivait, son CONTENU
+        n'était jamais lu. Neutraliser `only_published` dans la route ne le
+        faisait pas tomber — il ne testait donc rien de la proclamation.
+
+        Il tombait aussi dans le seul cas où la règle est inerte : sans
+        calendrier déclaré, `visible_results_for_student` laisse tout passer,
+        volontairement (une école sans périodes n'a rien à proclamer). Le test
+        doit donc DÉCLARER une période pour que la règle existe.
+
+        Garantie vérifiée ici : tant que la période n'est pas proclamée, le
+        bulletin du parent ne porte aucune note — alors que celui du personnel
+        les porte toutes. Import ≠ publication, jusque dans le PDF.
+        """
+        # Une école qui a un calendrier : c'est la condition d'existence de la
+        # règle de proclamation.
+        r = self.c.post("/api/periods", json={"label": "Trimestre 1", "sort": 0},
+                        headers=self.a_dir)
+        self.assertIn(r.status_code, (200, 201), r.get_data(as_text=True))
+        periodes = self.c.get("/api/periods", headers=self.a_dir).get_json()["periods"]
+        p1 = [p for p in periodes if p["label"] == "Trimestre 1"][0]
+
+        # Des notes saisies par la voie normale : elles portent leur period_id.
+        r = self.c.post(f"/api/classes/{self.classe['id']}/grades", json={
+            "period": "Trimestre 1", "subject": "Histoire",
+            "entries": [{"student_id": self.eleve1["id"], "score": 17, "max_score": 20}],
+        }, headers=self.a_dir)
+        self.assertEqual(r.status_code, 200, r.get_data(as_text=True))
+
+        def texte(entetes):
+            rep = self.c.get(
+                f"/api/students/{self.eleve1['id']}/bulletin/pdf?period=Trimestre 1",
+                headers=entetes)
+            # Le corps d'une réponse PDF n'est pas de l'UTF-8 : on ne le décode
+            # que si la requête a échoué, pour lire le message d'erreur.
+            detail = "" if rep.status_code == 200 else rep.get_data(as_text=True)
+            self.assertEqual(rep.status_code, 200, detail)
+            return PdfReader(io.BytesIO(rep.data)).pages[0].extract_text()
+
+        # Le personnel voit la note dès la saisie.
+        self.assertIn("Histoire", texte(self.a_dir),
+                      "le bulletin du personnel devrait porter la note saisie")
+
+        # Le parent, lui, ne la voit pas : rien n'a été proclamé.
+        avant = texte(self.a_parent)
+        self.assertNotIn("Histoire", avant,
+                         "une période NON PROCLAMÉE est arrivée dans le PDF du parent")
+        self.assertNotIn("17", avant,
+                         "la note d'une période non proclamée est arrivée chez le parent")
+
+        # Après proclamation, et seulement après, elle lui parvient.
+        pub = self.c.post(f"/api/periods/{p1['id']}/publish", json={}, headers=self.a_dir)
+        self.assertEqual(pub.status_code, 200, pub.get_data(as_text=True))
+        self.assertIn("Histoire", texte(self.a_parent),
+                      "après proclamation, le parent devrait recevoir la note")
+
     def test_05_cross_tenant_isolation_bulletin_pdf(self):
         """Une autre école (Beta) ne peut pas accéder aux bulletins PDF de l'école Alpha."""
         # Tentative d'accès à l'élève de Alpha

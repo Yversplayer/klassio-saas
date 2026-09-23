@@ -21,12 +21,19 @@
     var isPinned = false;
     try { isPinned = localStorage.getItem("klassio_sidebar_pinned") === "1"; } catch (e) {}
     if (isMobile() || !isPinned) sidebar.classList.add("collapsed");
+    toggle.setAttribute("aria-expanded", sidebar.classList.contains("collapsed") ? "false" : "true");
 
     toggle.innerHTML = UI.icon("menu", 18);
     function setCollapsed(v) {
       sidebar.classList.toggle("collapsed", v);
       if (scrim) scrim.hidden = v || !isMobile();
+      // Le bouton dit ce qu'il fait ET dans quel état il est. Sans
+      // `aria-expanded`, un lecteur d'écran annonce « Afficher ou masquer le
+      // menu » sans jamais dire si le menu est ouvert : l'utilisateur ne peut
+      // pas savoir ce que son clic va produire.
+      toggle.setAttribute("aria-expanded", v ? "false" : "true");
     }
+    toggle.setAttribute("aria-controls", "sidebar");
     toggle.addEventListener("click", function () {
       if (isMobile()) {
         setCollapsed(!sidebar.classList.contains("collapsed"));

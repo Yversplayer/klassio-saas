@@ -454,6 +454,10 @@ button { font-family: inherit; cursor: pointer; }
 }
 .nav-links a {
   position: relative;
+  /* Un libellé qui se replie sur deux lignes déforme la pilule et fait
+     chevaucher l'îlot avec la marque : entre 920 et 1060 px, « Démo
+     interactive » et « Centre d'aide » passaient à la ligne. */
+  white-space: nowrap;
   padding: 6px 16px;
   font-size: 13.5px;
   font-weight: 600;
@@ -1388,6 +1392,13 @@ footer { border-top: 1px solid var(--line-soft); padding: 56px 0 40px; }
   .trust-grid { grid-template-columns: 1fr; }
   .nav-links { display: none; }
 }
+/* L'îlot de navigation mesure ~508 px ; avec la marque (104 px) et les actions
+   de droite (~300 px), il lui faut au moins 1060 px pour respirer. Il se
+   masquait à 920 px : entre les deux, il touchait la marque. On le retire au
+   moment où il cesse de tenir, pas 140 px trop tard. */
+@media (max-width: 1060px) {
+  .nav-links { display: none; }
+}
 /* À 375 px, la barre de navigation mesurait 452 px de contenu pour 383 px de
    large : le bouton « Commencer » — l'action principale de la page — sortait
    de l'écran et devenait invisible. On resserre, et le nom de la marque cède
@@ -1581,7 +1592,33 @@ footer { border-top: 1px solid var(--line-soft); padding: 56px 0 40px; }
   z-index: 50;
   box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
 }
-.sidebar.collapsed { margin-left: -248px; opacity: 0; box-shadow: none; }
+/* REPLIÉE VEUT DIRE ABSENTE, PAS SEULEMENT INVISIBLE.
+   `opacity: 0` seul laissait la barre dans le flux du clavier et sous le
+   curseur : on tabulait dans un menu qu'on ne voyait pas, et un clic au bord
+   gauche atteignait des liens invisibles. `visibility: hidden` la retire de
+   l'ordre de tabulation ; la transition la conserve jusqu'à la fin du
+   glissement pour que le repli reste animé. */
+.sidebar.collapsed {
+  margin-left: -248px;
+  opacity: 0;
+  box-shadow: none;
+  visibility: hidden;
+  pointer-events: none;
+  transition: margin-left 0.26s var(--ease-out), opacity 0.26s var(--ease-out),
+              visibility 0s linear 0.26s;
+}
+.sidebar {
+  transition: margin-left 0.26s var(--ease-out), opacity 0.26s var(--ease-out),
+              visibility 0s;
+}
+/* Le clavier n'a pas de survol : si le focus entre dans la barre par le
+   bouton de menu, elle doit se montrer d'elle-même. */
+.sidebar:focus-within {
+  margin-left: 0;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
 .sidebar .s-brand { display: flex; align-items: center; gap: 9px; color: #fff; font-weight: 800; font-size: 15px; padding: 4px 8px 22px; }
 .sidebar .s-brand .brand-mark { width: 26px; height: 26px; }
 /* Le menu DÉFILE quand il est plus haut que l'écran.
@@ -3676,6 +3713,26 @@ footer { border-top: 1px solid var(--line-soft); padding: 56px 0 40px; }
   pointer-events: none;
 }
 .cookie-content { display: flex; flex-direction: column; gap: 14px; }
+/* UNE BANDE, PAS UNE CARTE — et surtout pas par-dessus un bouton.
+   Le bandeau mesurait 182 px de haut en bas à droite ; les appels à l'action
+   du hero, centrés, tombent exactement à cette hauteur. « Voir la
+   démonstration » était recouvert sur 180 px, donc incliquable. En passant le
+   contenu sur une ligne, la bande fait ~90 px et dégage les boutons. */
+@media (min-width: 720px) {
+  .cookie-banner {
+    right: 16px;
+    bottom: 16px;
+    max-width: min(780px, calc(100vw - 32px));
+    padding: 14px 18px;
+  }
+  .cookie-content {
+    flex-direction: row;
+    align-items: center;
+    gap: 20px;
+  }
+  .cookie-text strong { margin-bottom: 2px; }
+  .cookie-actions { flex-shrink: 0; }
+}
 .cookie-text strong { display: block; font-size: 14px; margin-bottom: 4px; color: var(--ink); }
 .cookie-text p { margin: 0; font-size: 12.5px; line-height: 1.55; color: var(--ink-soft); }
 .cookie-text a { color: var(--lime-deep); text-decoration: underline; }
