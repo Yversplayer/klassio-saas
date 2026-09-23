@@ -29,6 +29,7 @@ elle-même une raison de tester les deux :
 Ajouter une requête ici quand elle agrège une table qui grossit avec l'usage
 (attendance, incidents, grades, payments, notifications, events).
 """
+import glob
 import os
 import re
 import sys
@@ -217,6 +218,112 @@ class PlansDExecutionTests(unittest.TestCase):
             self._balayages(lignes, {"x"}, {"attendance"}),
             f"la requête fautive d'origine devrait produire un balayage détectable ; plan obtenu : {lignes}",
         )
+
+
+# ===========================================================================
+# LE BALAYAGE DU CODE SOURCE
+# ===========================================================================
+#
+# Pourquoi ce second garde-fou, alors que le premier existe déjà.
+#
+# Le test ci-dessus interroge le planificateur — c'est la preuve la plus
+# solide qu'on puisse produire. Mais il ne voit que les requêtes qu'on a
+# PENSÉ à lui donner : trois, recopiées à la main. Le 24/09, une campagne K6
+# sur 5 écoles × 2 000 élèves a trouvé SIX autres sous-requêtes portant
+# exactement le même défaut, dont une à 12 264 ms qui rendait la page du
+# Directeur des disciplines inutilisable. Aucune n'était dans la liste, et
+# personne ne l'aurait ajoutée : on n'ajoute pas ce qu'on ne soupçonne pas.
+#
+# Celui-ci ne se repose donc sur aucune liste. Il relit TOUT le backend et
+# refuse qu'une sous-requête agrège une table qui grossit avec l'usage sans
+# nommer `tenant_id`. C'est plus grossier — il lit du texte, pas un plan —
+# mais c'est exhaustif par construction, et c'est cette propriété-là qui
+# manquait.
+
+TABLES_QUI_GROSSISSENT = (
+    "attendance", "incidents", "grades", "payments", "notifications",
+    "students", "incident_reports", "attendance_justifications",
+    "receipts", "audit_logs", "events", "obligations",
+)
+
+# Une sous-requête peut légitimement ignorer `tenant_id` : celles de la
+# console de plateforme, qui comptent VOLONTAIREMENT au travers de tous les
+# établissements. Aucune aujourd'hui — et toute nouvelle entrée ici doit
+# porter sa raison, faute de quoi la dispense devient une porte dérobée.
+DISPENSES = {
+    # "fichier.py:123": "raison",
+}
+
+_DEBUT_SOUS_REQUETE = re.compile(r"\(\s*SELECT\b", re.I)
+
+
+def _sous_requetes(source):
+    """Chaque `( SELECT … )` du fichier, avec sa ligne, parenthèses équilibrées."""
+    for m in _DEBUT_SOUS_REQUETE.finditer(source):
+        profondeur, fin = 0, None
+        for j in range(m.start(), len(source)):
+            if source[j] == "(":
+                profondeur += 1
+            elif source[j] == ")":
+                profondeur -= 1
+                if profondeur == 0:
+                    fin = j
+                    break
+        if fin is None:
+            continue
+        yield source[:m.start()].count("\n") + 1, source[m.start():fin + 1]
+
+
+class SousRequetesBorneesTests(unittest.TestCase):
+    """Aucune sous-requête sur une table qui grossit ne doit oublier tenant_id."""
+
+    def _fichiers(self):
+        racine = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+        return sorted(glob.glob(os.path.join(racine, "*.py")))
+
+    def test_aucune_sous_requete_n_oublie_tenant_id(self):
+        fautives = []
+        for chemin in self._fichiers():
+            nom = os.path.basename(chemin)
+            with open(chemin, encoding="utf-8") as f:
+                source = f.read()
+            for ligne, fragment in _sous_requetes(source):
+                table = re.search(r"\bFROM\s+(\w+)", fragment, re.I)
+                if not table or table.group(1).lower() not in TABLES_QUI_GROSSISSENT:
+                    continue
+                if re.search(r"\btenant_id\b", fragment, re.I):
+                    continue
+                if f"{nom}:{ligne}" in DISPENSES:
+                    continue
+                fautives.append(f"  {nom}:{ligne}\n      {' '.join(fragment.split())[:140]}")
+        self.assertEqual(
+            fautives, [],
+            "Des sous-requêtes agrègent une table qui grossit sans nommer `tenant_id`.\n"
+            "Le résultat sera juste — et le coût faux. `tenant_id` est la colonne de\n"
+            "TÊTE de ces index : absente du filtre, l'index ne peut pas servir et le\n"
+            "moteur balaie toute la table, une fois par ligne de la requête extérieure.\n"
+            "Invisible en développement, fatal en janvier.\n\n" + "\n".join(fautives),
+        )
+
+    def test_le_balayage_reconnait_une_requete_fautive(self):
+        """Un garde-fou qu'on n'a jamais vu se déclencher ne garde rien."""
+        fautif = 'x = """SELECT (SELECT COUNT(*) FROM attendance a WHERE a.student_id=s.id) FROM students s"""'
+        trouve = [
+            f for _, f in _sous_requetes(fautif)
+            if re.search(r"\bFROM\s+attendance\b", f, re.I)
+            and not re.search(r"\btenant_id\b", f, re.I)
+        ]
+        self.assertTrue(trouve, "le balayage ne reconnaît plus le défaut qu'il est censé interdire")
+
+    def test_le_balayage_accepte_une_requete_bornee(self):
+        """…et il ne doit pas crier sur une requête correcte."""
+        correct = 'x = """SELECT (SELECT COUNT(*) FROM attendance a WHERE a.tenant_id=s.tenant_id AND a.student_id=s.id) FROM students s"""'
+        fautives = [
+            f for _, f in _sous_requetes(correct)
+            if re.search(r"\bFROM\s+attendance\b", f, re.I)
+            and not re.search(r"\btenant_id\b", f, re.I)
+        ]
+        self.assertEqual(fautives, [], "le balayage refuse une requête pourtant bornée")
 
 
 if __name__ == "__main__":

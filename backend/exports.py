@@ -85,7 +85,7 @@ def _eleves(conn, tid, aid, f):
 def _classes(conn, tid, aid, f):
     return ["Classe", "Niveau", "Effectif"], conn.execute(
         f"""SELECT c.name, COALESCE(c.level,''),
-                  (SELECT COUNT(*) FROM students s WHERE s.class_id=c.id AND s.status='active')
+                  (SELECT COUNT(*) FROM students s WHERE s.tenant_id=c.tenant_id AND s.class_id=c.id AND s.status='active')
             FROM classes c WHERE c.tenant_id=?{_annee('c.academic_year_id', aid)[0]}
             ORDER BY c.name""", (tid,) + _annee('c.academic_year_id', aid)[1]).fetchall()
 

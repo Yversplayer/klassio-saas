@@ -778,7 +778,8 @@ def list_deliberations():
             f"""SELECT d.*, c.name AS class_name, a.label AS year_label,
                        p.label AS period_label,
                        (SELECT COUNT(*) FROM students s
-                         WHERE s.class_id=d.class_id AND s.status='active') AS student_count,
+                         WHERE s.tenant_id=d.tenant_id AND s.class_id=d.class_id
+                           AND s.status='active') AS student_count,
                        (SELECT COUNT(*) FROM deliberation_entries e
                          WHERE e.deliberation_id=d.id AND e.kind='DECISION'
                            AND e.superseded_at IS NULL) AS decided_count

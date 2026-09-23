@@ -376,13 +376,21 @@ def get_recent_incidents(conn, ctx):
 
 def get_class_finance_for_teacher(conn, ctx):
     result = []
+    tid = ctx["tenant_id"]
     for c in school.teacher_class_rows(conn, ctx):
+        # `tenant_id` partout, y compris là où la classe suffirait à borner.
+        # Ce n'est pas une précaution d'isolation — les classes viennent déjà
+        # de `teacher_class_rows`, qui est borné — c'est ce qui rend les index
+        # utilisables : tous commencent par tenant_id, et une colonne de tête
+        # absente du filtre fait retomber le moteur sur un balayage complet.
         row = conn.execute(
             """SELECT COUNT(DISTINCT s.id) n, COALESCE(SUM(o.amount),0) due,
                       COALESCE((SELECT SUM(p.amount) FROM payments p JOIN obligations o2 ON o2.id=p.obligation_id
-                                JOIN students s2 ON s2.id=o2.student_id WHERE s2.class_id=? AND p.status='CONFIRMED'),0) paid
-               FROM students s LEFT JOIN obligations o ON o.student_id=s.id WHERE s.class_id=? AND s.status='active'""",
-            (c["id"], c["id"]),
+                                JOIN students s2 ON s2.id=o2.student_id
+                                 WHERE s2.tenant_id=? AND s2.class_id=? AND p.status='CONFIRMED'),0) paid
+               FROM students s LEFT JOIN obligations o ON o.student_id=s.id
+              WHERE s.tenant_id=? AND s.class_id=? AND s.status='active'""",
+            (tid, c["id"], tid, c["id"]),
         ).fetchone()
         result.append({"name": c["name"], "n": row["n"], "due": row["due"] or 0, "paid": row["paid"] or 0})
     return result

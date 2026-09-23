@@ -1,0 +1,136 @@
+{
+    "metrics": {
+        "http_req_sending": {
+            "med": 0.027,
+            "p(95)": 0.09479999999999995,
+            "p(99)": 0.164,
+            "max": 3.873
+        },
+        "http_req_receiving": {
+            "med": 0.097,
+            "p(95)": 0.6299999999999998,
+            "p(99)": 5.707960000000029,
+            "max": 42.612
+        },
+        "pic_avant": {
+            "p(99)": 1013.37748,
+            "max": 1018.336,
+            "med": 173.713,
+            "p(95)": 853.5709999999979
+        },
+        "data_received": {
+            "rate": 48071.517717512324,
+            "count": 4377046
+        },
+        "http_req_tls_handshaking": {
+            "med": 0,
+            "p(95)": 0,
+            "p(99)": 0,
+            "max": 0
+        },
+        "data_sent": {
+            "count": 162809,
+            "rate": 1788.0725329526954
+        },
+        "vus_max": {
+            "value": 150,
+            "min": 150,
+            "max": 150
+        },
+        "iterations": {
+            "count": 1084,
+            "rate": 11.905181075497802
+        },
+        "pic_apres": {
+            "med": 116.128,
+            "p(95)": 379.62659999999994,
+            "p(99)": 1411.3856399999986,
+            "max": 1881.375
+        },
+        "http_reqs": {
+            "count": 1085,
+            "rate": 11.916163714866343
+        },
+        "vus": {
+            "value": 1,
+            "min": 1,
+            "max": 150
+        },
+        "http_req_failed": {
+            "passes": 3,
+            "fails": 1082,
+            "thresholds": {
+                "rate<0.05": false
+            },
+            "value": 0.0027649769585253456
+        },
+        "http_req_blocked": {
+            "med": 0.008,
+            "p(95)": 0.38459999999999994,
+            "p(99)": 0.7184400000000069,
+            "max": 8.698
+        },
+        "http_req_waiting": {
+            "med": 6345.675,
+            "p(95)": 6682.58,
+            "p(99)": 6739.54588,
+            "max": 6853.193
+        },
+        "pic_pendant": {
+            "p(95)": 6701.61685,
+            "p(99)": 6766.3751600000005,
+            "max": 6853.308,
+            "med": 6504.8125
+        },
+        "http_req_duration{expected_response:true}": {
+            "med": 6345.8085,
+            "p(95)": 6683.06,
+            "p(99)": 6739.76974,
+            "max": 6853.308
+        },
+        "http_req_connecting": {
+            "med": 0,
+            "p(95)": 0.291,
+            "p(99)": 0.4429600000000005,
+            "max": 5.508
+        },
+        "iteration_duration": {
+            "max": 7854.436286,
+            "med": 7346.069808,
+            "p(95)": 7684.21855325,
+            "p(99)": 7740.16627119
+        },
+        "checks": {
+            "passes": 1081,
+            "fails": 3,
+            "value": 0.9972324723247232
+        },
+        "http_req_duration": {
+            "med": 6345.786,
+            "p(95)": 6683.009,
+            "p(99)": 6739.66936,
+            "max": 6853.308
+        }
+    },
+    "setup_data": {
+        "debut": 1790203653540,
+        "h": {
+            "Authorization": "Bearer 6vYrwy0-mJ82t0cS-Kdc_1ldVUVSUzdK-OarfcGTWYs"
+        }
+    },
+    "root_group": {
+        "name": "",
+        "path": "",
+        "id": "d41d8cd98f00b204e9800998ecf8427e",
+        "groups": {},
+        "checks": {
+                "tableau de bord servi": {
+                    "name": "tableau de bord servi",
+                    "path": "::tableau de bord servi",
+                    "id": "f2fe9af296f035638cf5ad01f3ef43fe",
+                    "passes": 1081,
+                    "fails": 3
+                }
+            }
+    }
+}

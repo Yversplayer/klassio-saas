@@ -59,9 +59,9 @@ def today():
         return jsonify({"date": day, "classes_pending_roll": [], "late_today": [], "absent_today": [], "reports": [], "justifications": [], "open_incidents": [], "convocations": [], "alerts": []})
     cfilter, cparams = ("", []) if class_ids is None else (f" AND c.id IN ({','.join('?' for _ in class_ids)})", list(class_ids))
     pending_roll = [dict(r) for r in conn.execute(
-        f"""SELECT c.id, c.name, c.cycle, (SELECT COUNT(*) FROM students s WHERE s.class_id=c.id AND s.status='active') AS student_count,
+        f"""SELECT c.id, c.name, c.cycle, (SELECT COUNT(*) FROM students s WHERE s.tenant_id=c.tenant_id AND s.class_id=c.id AND s.status='active') AS student_count,
                    (SELECT u.name FROM class_teachers ct JOIN users u ON u.id=ct.user_id WHERE ct.class_id=c.id AND ct.is_titulaire=1 LIMIT 1) AS titulaire
-            FROM classes c WHERE c.tenant_id=?{cfilter} AND NOT EXISTS (SELECT 1 FROM attendance a WHERE a.class_id=c.id AND a.date=?)
+            FROM classes c WHERE c.tenant_id=?{cfilter} AND NOT EXISTS (SELECT 1 FROM attendance a WHERE a.tenant_id=c.tenant_id AND a.class_id=c.id AND a.date=?)
             ORDER BY c.name""", [tenant_id] + cparams + [day])]
     sfilter, sparams = ("", []) if class_ids is None else (f" AND s.class_id IN ({','.join('?' for _ in class_ids)})", list(class_ids))
     late = [dict(r) for r in conn.execute(
@@ -69,7 +69,23 @@ def today():
             WHERE a.tenant_id=? AND a.date=? AND a.status='late'{sfilter} ORDER BY a.arrival_time, s.last_name""", [tenant_id, day] + sparams)]
     absent = [dict(r) for r in conn.execute(
         f"""SELECT s.id, s.first_name, s.last_name, s.code, c.name AS class_name, a.note,
-                   (SELECT COUNT(*) FROM attendance a2 WHERE a2.student_id=s.id AND a2.status='absent' AND a2.date>=?) AS absences_30d
+                   -- LA SOUS-REQUÊTE LA PLUS CHÈRE DE KLASSIO, ET POURQUOI.
+                   --
+                   -- Elle compte les absences des 30 derniers jours, une fois par
+                   -- élève absent aujourd'hui. Sans `a2.tenant_id`, l'index
+                   -- idx_attendance_student(tenant_id, student_id, date) commence
+                   -- par une colonne absente du filtre : inutilisable. Le moteur
+                   -- balayait donc les 300 000 lignes de `attendance` POUR CHAQUE
+                   -- absent — 133 absents un jour ordinaire, soit 40 millions de
+                   -- lignes lues pour afficher une page.
+                   --
+                   -- La colonne n'ajoute aucune restriction (un élève et ses
+                   -- présences sont du même établissement, et la requête
+                   -- extérieure est déjà bornée par a.tenant_id) : elle ne fait
+                   -- qu'ÉNONCER au moteur ce qui était déjà vrai.
+                   --
+                   -- Mesuré sur 5 écoles × 2 000 élèves : 12 264 ms → 56 ms.
+                   (SELECT COUNT(*) FROM attendance a2 WHERE a2.tenant_id=s.tenant_id AND a2.student_id=s.id AND a2.status='absent' AND a2.date>=?) AS absences_30d
             FROM attendance a JOIN students s ON s.id=a.student_id LEFT JOIN classes c ON c.id=s.class_id
             WHERE a.tenant_id=? AND a.date=? AND a.status='absent'{sfilter} ORDER BY absences_30d DESC, s.last_name""", [(date.today() - timedelta(days=30)).isoformat(), tenant_id, day] + sparams)]
     reports = [dict(r) for r in conn.execute(

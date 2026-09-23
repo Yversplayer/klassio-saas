@@ -1,0 +1,314 @@
+
+         /\      Grafana   /‾‾/  
+    /\  /  \     |\  __   /  /   
+   /  \/    \    | |/ /  /   ‾‾\ 
+  /          \   |   (  |  (‾)  |
+ / __________ \  |_|\_\  \_____/ 
+
+
+     execution: local
+        script: /Users/macbookpro/klassio-saas/tools/k6/charge.js
+        output: -
+
+     scenarios: (100.00%) 1 scenario, 100 max VUs, 1m27s max duration (incl. graceful stop):
+              * matinee: Up to 100 looping VUs for 1m7s over 3 stages (gracefulRampDown: 20s, gracefulStop: 30s)
+
+
+running (0m01.0s), 004/100 VUs, 0 complete and 0 interrupted iterations
+matinee   [   1% ] 004/100 VUs  0m00.3s/1m07.0s
+
+running (0m02.0s), 013/100 VUs, 0 complete and 0 interrupted iterations
+matinee   [   2% ] 013/100 VUs  0m01.3s/1m07.0s
+
+running (0m03.0s), 022/100 VUs, 0 complete and 0 interrupted iterations
+matinee   [   3% ] 022/100 VUs  0m02.3s/1m07.0s
+
+running (0m04.0s), 031/100 VUs, 0 complete and 0 interrupted iterations
+matinee   [   5% ] 031/100 VUs  0m03.3s/1m07.0s
+
+running (0m05.0s), 040/100 VUs, 0 complete and 0 interrupted iterations
+matinee   [   6% ] 040/100 VUs  0m04.3s/1m07.0s
+
+running (0m06.0s), 048/100 VUs, 4 complete and 0 interrupted iterations
+matinee   [   8% ] 048/100 VUs  0m05.3s/1m07.0s
+
+running (0m07.0s), 057/100 VUs, 8 complete and 0 interrupted iterations
+matinee   [   9% ] 057/100 VUs  0m06.3s/1m07.0s
+
+running (0m08.0s), 067/100 VUs, 13 complete and 0 interrupted iterations
+matinee   [  11% ] 067/100 VUs  0m07.3s/1m07.0s
+
+running (0m09.0s), 075/100 VUs, 18 complete and 0 interrupted iterations
+matinee   [  12% ] 075/100 VUs  0m08.3s/1m07.0s
+
+running (0m10.0s), 085/100 VUs, 20 complete and 0 interrupted iterations
+matinee   [  14% ] 085/100 VUs  0m09.3s/1m07.0s
+
+running (0m11.0s), 094/100 VUs, 24 complete and 0 interrupted iterations
+matinee   [  15% ] 094/100 VUs  0m10.3s/1m07.0s
+
+running (0m12.0s), 100/100 VUs, 29 complete and 0 interrupted iterations
+matinee   [  17% ] 100/100 VUs  0m11.3s/1m07.0s
+
+running (0m13.0s), 100/100 VUs, 33 complete and 0 interrupted iterations
+matinee   [  18% ] 100/100 VUs  0m12.4s/1m07.0s
+
+running (0m14.0s), 100/100 VUs, 36 complete and 0 interrupted iterations
+matinee   [  20% ] 100/100 VUs  0m13.3s/1m07.0s
+
+running (0m15.0s), 100/100 VUs, 39 complete and 0 interrupted iterations
+matinee   [  21% ] 100/100 VUs  0m14.3s/1m07.0s
+
+running (0m16.0s), 100/100 VUs, 44 complete and 0 interrupted iterations
+matinee   [  23% ] 100/100 VUs  0m15.3s/1m07.0s
+
+running (0m17.0s), 100/100 VUs, 47 complete and 0 interrupted iterations
+matinee   [  24% ] 100/100 VUs  0m16.3s/1m07.0s
+
+running (0m18.0s), 100/100 VUs, 55 complete and 0 interrupted iterations
+matinee   [  26% ] 100/100 VUs  0m17.3s/1m07.0s
+
+running (0m19.0s), 100/100 VUs, 67 complete and 0 interrupted iterations
+matinee   [  27% ] 100/100 VUs  0m18.3s/1m07.0s
+
+running (0m20.0s), 100/100 VUs, 79 complete and 0 interrupted iterations
+matinee   [  29% ] 100/100 VUs  0m19.3s/1m07.0s
+
+running (0m21.0s), 100/100 VUs, 94 complete and 0 interrupted iterations
+matinee   [  30% ] 100/100 VUs  0m20.3s/1m07.0s
+
+running (0m22.0s), 100/100 VUs, 103 complete and 0 interrupted iterations
+matinee   [  32% ] 100/100 VUs  0m21.3s/1m07.0s
+
+running (0m23.0s), 100/100 VUs, 109 complete and 0 interrupted iterations
+matinee   [  33% ] 100/100 VUs  0m22.3s/1m07.0s
+
+running (0m24.0s), 100/100 VUs, 121 complete and 0 interrupted iterations
+matinee   [  35% ] 100/100 VUs  0m23.3s/1m07.0s
+
+running (0m25.0s), 100/100 VUs, 129 complete and 0 interrupted iterations
+matinee   [  36% ] 100/100 VUs  0m24.3s/1m07.0s
+
+running (0m26.0s), 100/100 VUs, 137 complete and 0 interrupted iterations
+matinee   [  38% ] 100/100 VUs  0m25.3s/1m07.0s
+
+running (0m27.0s), 100/100 VUs, 139 complete and 0 interrupted iterations
+matinee   [  39% ] 100/100 VUs  0m26.3s/1m07.0s
+
+running (0m28.0s), 100/100 VUs, 142 complete and 0 interrupted iterations
+matinee   [  41% ] 100/100 VUs  0m27.3s/1m07.0s
+
+running (0m29.0s), 100/100 VUs, 148 complete and 0 interrupted iterations
+matinee   [  42% ] 100/100 VUs  0m28.3s/1m07.0s
+
+running (0m30.0s), 100/100 VUs, 155 complete and 0 interrupted iterations
+matinee   [  44% ] 100/100 VUs  0m29.3s/1m07.0s
+
+running (0m31.0s), 100/100 VUs, 163 complete and 0 interrupted iterations
+matinee   [  45% ] 100/100 VUs  0m30.3s/1m07.0s
+
+running (0m32.0s), 100/100 VUs, 176 complete and 0 interrupted iterations
+matinee   [  47% ] 100/100 VUs  0m31.3s/1m07.0s
+
+running (0m33.0s), 100/100 VUs, 186 complete and 0 interrupted iterations
+matinee   [  48% ] 100/100 VUs  0m32.3s/1m07.0s
+
+running (0m34.0s), 100/100 VUs, 194 complete and 0 interrupted iterations
+matinee   [  50% ] 100/100 VUs  0m33.3s/1m07.0s
+
+running (0m35.0s), 100/100 VUs, 204 complete and 0 interrupted iterations
+matinee   [  51% ] 100/100 VUs  0m34.3s/1m07.0s
+
+running (0m36.0s), 100/100 VUs, 210 complete and 0 interrupted iterations
+matinee   [  53% ] 100/100 VUs  0m35.3s/1m07.0s
+
+running (0m37.0s), 100/100 VUs, 218 complete and 0 interrupted iterations
+matinee   [  54% ] 100/100 VUs  0m36.3s/1m07.0s
+
+running (0m38.0s), 100/100 VUs, 224 complete and 0 interrupted iterations
+matinee   [  56% ] 100/100 VUs  0m37.3s/1m07.0s
+
+running (0m39.0s), 100/100 VUs, 233 complete and 0 interrupted iterations
+matinee   [  57% ] 100/100 VUs  0m38.3s/1m07.0s
+
+running (0m40.0s), 100/100 VUs, 241 complete and 0 interrupted iterations
+matinee   [  59% ] 100/100 VUs  0m39.3s/1m07.0s
+
+running (0m41.0s), 100/100 VUs, 248 complete and 0 interrupted iterations
+matinee   [  60% ] 100/100 VUs  0m40.3s/1m07.0s
+
+running (0m42.0s), 100/100 VUs, 254 complete and 0 interrupted iterations
+matinee   [  62% ] 100/100 VUs  0m41.3s/1m07.0s
+
+running (0m43.0s), 100/100 VUs, 261 complete and 0 interrupted iterations
+matinee   [  63% ] 100/100 VUs  0m42.3s/1m07.0s
+
+running (0m44.0s), 100/100 VUs, 265 complete and 0 interrupted iterations
+matinee   [  65% ] 100/100 VUs  0m43.3s/1m07.0s
+
+running (0m45.0s), 100/100 VUs, 270 complete and 0 interrupted iterations
+matinee   [  66% ] 100/100 VUs  0m44.3s/1m07.0s
+
+running (0m46.0s), 100/100 VUs, 271 complete and 0 interrupted iterations
+matinee   [  68% ] 100/100 VUs  0m45.3s/1m07.0s
+
+running (0m47.0s), 100/100 VUs, 276 complete and 0 interrupted iterations
+matinee   [  69% ] 100/100 VUs  0m46.3s/1m07.0s
+
+running (0m48.0s), 100/100 VUs, 285 complete and 0 interrupted iterations
+matinee   [  71% ] 100/100 VUs  0m47.3s/1m07.0s
+
+running (0m49.0s), 100/100 VUs, 297 complete and 0 interrupted iterations
+matinee   [  72% ] 100/100 VUs  0m48.3s/1m07.0s
+
+running (0m50.0s), 100/100 VUs, 314 complete and 0 interrupted iterations
+matinee   [  74% ] 100/100 VUs  0m49.3s/1m07.0s
+
+running (0m51.0s), 100/100 VUs, 325 complete and 0 interrupted iterations
+matinee   [  75% ] 100/100 VUs  0m50.3s/1m07.0s
+
+running (0m52.0s), 100/100 VUs, 335 complete and 0 interrupted iterations
+matinee   [  77% ] 100/100 VUs  0m51.3s/1m07.0s
+
+running (0m53.0s), 100/100 VUs, 336 complete and 0 interrupted iterations
+matinee   [  78% ] 100/100 VUs  0m52.3s/1m07.0s
+
+running (0m54.0s), 100/100 VUs, 336 complete and 0 interrupted iterations
+matinee   [  80% ] 100/100 VUs  0m53.3s/1m07.0s
+
+running (0m55.0s), 100/100 VUs, 337 complete and 0 interrupted iterations
+matinee   [  81% ] 100/100 VUs  0m54.3s/1m07.0s
+
+running (0m56.0s), 100/100 VUs, 341 complete and 0 interrupted iterations
+matinee   [  83% ] 100/100 VUs  0m55.3s/1m07.0s
+
+running (0m57.0s), 100/100 VUs, 342 complete and 0 interrupted iterations
+matinee   [  84% ] 100/100 VUs  0m56.3s/1m07.0s
+
+running (0m58.0s), 100/100 VUs, 342 complete and 0 interrupted iterations
+matinee   [  86% ] 100/100 VUs  0m57.3s/1m07.0s
+
+running (0m59.0s), 100/100 VUs, 343 complete and 0 interrupted iterations
+matinee   [  87% ] 100/100 VUs  0m58.3s/1m07.0s
+
+running (1m00.0s), 096/100 VUs, 350 complete and 0 interrupted iterations
+matinee   [  89% ] 096/100 VUs  0m59.3s/1m07.0s
+
+running (1m01.0s), 093/100 VUs, 354 complete and 0 interrupted iterations
+matinee   [  90% ] 093/100 VUs  1m00.3s/1m07.0s
+
+running (1m02.0s), 090/100 VUs, 363 complete and 0 interrupted iterations
+matinee   [  92% ] 090/100 VUs  1m01.3s/1m07.0s
+
+running (1m03.0s), 084/100 VUs, 371 complete and 0 interrupted iterations
+matinee   [  93% ] 084/100 VUs  1m02.3s/1m07.0s
+
+running (1m04.0s), 081/100 VUs, 377 complete and 0 interrupted iterations
+matinee   [  95% ] 081/100 VUs  1m03.3s/1m07.0s
+
+running (1m05.0s), 074/100 VUs, 387 complete and 0 interrupted iterations
+matinee   [  96% ] 074/100 VUs  1m04.3s/1m07.0s
+
+running (1m06.0s), 073/100 VUs, 390 complete and 0 interrupted iterations
+matinee   [  98% ] 073/100 VUs  1m05.3s/1m07.0s
+
+running (1m07.0s), 067/100 VUs, 397 complete and 0 interrupted iterations
+matinee   [  99% ] 067/100 VUs  1m06.3s/1m07.0s
+
+running (1m08.0s), 061/100 VUs, 405 complete and 0 interrupted iterations
+matinee ↓ [ 100% ] 066/100 VUs  1m7s
+
+running (1m09.0s), 051/100 VUs, 415 complete and 0 interrupted iterations
+matinee ↓ [ 100% ] 066/100 VUs  1m7s
+
+running (1m10.0s), 039/100 VUs, 427 complete and 0 interrupted iterations
+matinee ↓ [ 100% ] 066/100 VUs  1m7s
+
+running (1m11.0s), 028/100 VUs, 438 complete and 0 interrupted iterations
+matinee ↓ [ 100% ] 066/100 VUs  1m7s
+
+running (1m12.0s), 011/100 VUs, 455 complete and 0 interrupted iterations
+matinee ↓ [ 100% ] 066/100 VUs  1m7s
+
+running (1m13.0s), 002/100 VUs, 464 complete and 0 interrupted iterations
+matinee ↓ [ 100% ] 066/100 VUs  1m7s
+
+running (1m14.0s), 001/100 VUs, 465 complete and 0 interrupted iterations
+matinee ↓ [ 100% ] 066/100 VUs  1m7s
+
+
+  █ THRESHOLDS 
+
+    checks
+    ✓ 'rate>0.99' rate=100.00%
+
+    http_req_duration{name:login}
+    ✓ 'p(95)<3000' p(95)=207.33ms
+
+    http_req_failed
+    ✓ 'rate<0.01' rate=0.00%
+
+    klassio_dossier_eleve
+    ✗ 'p(95)<500' p(95)=2.13s
+
+    klassio_liste_eleves
+    ✗ 'p(95)<1500' p(95)=3.27s
+
+    klassio_rapports
+    ✗ 'p(95)<1200' p(95)=2.28s
+
+    klassio_tableau_de_bord
+    ✗ 'p(95)<800' p(95)=3.36s
+
+
+  █ TOTAL RESULTS 
+
+    checks_total.......: 6990    93.87867/s
+    checks_succeeded...: 100.00% 6990 out of 6990
+    checks_failed......: 0.00%   0 out of 6990
+
+    ✓ tableau de bord : 200
+    ✓ tableau de bord : champs attendus
+    ✓ élèves : 200
+    ✓ élèves : liste non vide
+    ✓ élèves : champ « code » présent
+    ✓ dossier : 200
+    ✓ dossier : champs attendus
+    ✓ rapports : 200
+    ✓ rapports : champs attendus
+    ✓ classes : 200
+    ✓ classes : liste non vide
+    ✓ classes : champ « name » présent
+    ✓ enfants : 200
+    ✓ enfants : liste non vide
+    ✓ enfants : champ « code » présent
+
+    CUSTOM
+    klassio_dossier_eleve..........: med=823.33ms p(90)=1.79s    p(95)=2.13s    p(99)=3.72s    max=4.56s   
+    klassio_liste_eleves...........: med=949.11ms p(90)=2.13s    p(95)=3.27s    p(99)=4.44s    max=5.02s   
+    klassio_rapports...............: med=1.02s    p(90)=2.04s    p(95)=2.28s    p(99)=3.95s    max=5.1s    
+    klassio_tableau_de_bord........: med=934.18ms p(90)=2.16s    p(95)=3.36s    p(99)=4.9s     max=5.05s   
+
+    HTTP
+    http_req_duration..............: med=842.13ms p(90)=1.85s    p(95)=2.3s     p(99)=4.34s    max=5.1s    
+      { expected_response:true }...: med=842.13ms p(90)=1.85s    p(95)=2.3s     p(99)=4.34s    max=5.1s    
+      { name:login }...............: med=207.01ms p(90)=207.29ms p(95)=207.33ms p(99)=207.36ms max=207.37ms
+    http_req_failed................: 0.00%  0 out of 3731
+    http_reqs......................: 3731   50.108915/s
+
+    EXECUTION
+    iteration_duration.............: med=13.06s   p(90)=20.6s    p(95)=21.87s   p(99)=23.78s   max=25.49s  
+    iterations.....................: 466    6.258578/s
+    vus............................: 1      min=1         max=100
+    vus_max........................: 100    min=100       max=100
+
+    NETWORK
+    data_received..................: 371 MB 5.0 MB/s
+    data_sent......................: 600 kB 8.1 kB/s
+
+
+
+
+running (1m14.5s), 000/100 VUs, 466 complete and 0 interrupted iterations
+matinee ✓ [ 100% ] 000/100 VUs  1m7s
+time="2026-09-23T23:45:21+01:00" level=error msg="thresholds on metrics 'klassio_dossier_eleve, klassio_liste_eleves, klassio_rapports, klassio_tableau_de_bord' have been crossed"

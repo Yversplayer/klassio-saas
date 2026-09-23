@@ -1,0 +1,340 @@
+{
+    "metrics": {
+        "http_reqs": {
+            "count": 3731,
+            "rate": 50.10891537392559
+        },
+        "iteration_duration": {
+            "max": 25499.319989,
+            "med": 13064.582288500002,
+            "p(90)": 20604.765973499998,
+            "p(95)": 21871.2677005,
+            "p(99)": 23788.83335675
+        },
+        "checks": {
+            "passes": 6990,
+            "fails": 0,
+            "thresholds": {
+                "rate>0.99": false
+            },
+            "value": 1
+        },
+        "http_req_duration{expected_response:true}": {
+            "med": 842.136,
+            "p(90)": 1851.875,
+            "p(95)": 2308.6925,
+            "p(99)": 4347.418799999997,
+            "max": 5100.03
+        },
+        "http_req_connecting": {
+            "p(99)": 0.9448999999999951,
+            "max": 16.781,
+            "med": 0,
+            "p(90)": 0.323,
+            "p(95)": 0.403
+        },
+        "http_req_receiving": {
+            "p(90)": 2.469,
+            "p(95)": 6.725,
+            "p(99)": 30.169199999999933,
+            "max": 186.336,
+            "med": 0.132
+        },
+        "group_duration": {
+            "max": 10844.040322,
+            "med": 1543.3305839999998,
+            "p(90)": 3928.7022471000005,
+            "p(95)": 5340.294838649999,
+            "p(99)": 10034.81371816
+        },
+        "klassio_rapports": {
+            "p(99)": 3951.3578,
+            "max": 5100.03,
+            "med": 1029.4965,
+            "p(90)": 2048.9719999999998,
+            "p(95)": 2283.33075,
+            "thresholds": {
+                "p(95)<1200": true
+            }
+        },
+        "data_sent": {
+            "count": 600042,
+            "rate": 8058.819029429392
+        },
+        "klassio_tableau_de_bord": {
+            "p(90)": 2168.5330000000004,
+            "p(95)": 3362.288,
+            "p(99)": 4909.433750000002,
+            "max": 5057.6,
+            "med": 934.1895,
+            "thresholds": {
+                "p(95)<800": true
+            }
+        },
+        "vus": {
+            "value": 1,
+            "min": 1,
+            "max": 100
+        },
+        "http_req_waiting": {
+            "p(99)": 4346.896799999997,
+            "max": 5099.022,
+            "med": 839.814,
+            "p(90)": 1847.819,
+            "p(95)": 2308.4595
+        },
+        "data_received": {
+            "count": 371315719,
+            "rate": 4986927.885387117
+        },
+        "klassio_liste_eleves": {
+            "p(95)": 3277.90575,
+            "p(99)": 4442.224900000001,
+            "max": 5024.105,
+            "med": 949.114,
+            "p(90)": 2133.3464999999997,
+            "thresholds": {
+                "p(95)<1500": true
+            }
+        },
+        "vus_max": {
+            "value": 100,
+            "min": 100,
+            "max": 100
+        },
+        "klassio_dossier_eleve": {
+            "med": 823.338,
+            "p(90)": 1793.069,
+            "p(95)": 2134.2855,
+            "p(99)": 3727.1485500000103,
+            "max": 4560.063,
+            "thresholds": {
+                "p(95)<500": true
+            }
+        },
+        "http_req_sending": {
+            "med": 0.022,
+            "p(90)": 0.061,
+            "p(95)": 0.084,
+            "p(99)": 0.20809999999999945,
+            "max": 21.759
+        },
+        "http_req_duration{name:login}": {
+            "med": 207.017,
+            "p(90)": 207.2994,
+            "p(95)": 207.3347,
+            "p(99)": 207.36294,
+            "max": 207.37,
+            "thresholds": {
+                "p(95)<3000": false
+            }
+        },
+        "http_req_duration": {
+            "med": 842.136,
+            "p(90)": 1851.875,
+            "p(95)": 2308.6925,
+            "p(99)": 4347.418799999997,
+            "max": 5100.03
+        },
+        "http_req_blocked": {
+            "med": 0.006,
+            "p(90)": 0.392,
+            "p(95)": 0.4865,
+            "p(99)": 1.0878999999999932,
+            "max": 16.846
+        },
+        "http_req_tls_handshaking": {
+            "p(95)": 0,
+            "p(99)": 0,
+            "max": 0,
+            "med": 0,
+            "p(90)": 0
+        },
+        "iterations": {
+            "count": 466,
+            "rate": 6.25857801239596
+        },
+        "http_req_failed": {
+            "passes": 0,
+            "fails": 3731,
+            "thresholds": {
+                "rate<0.01": false
+            },
+            "value": 0
+        }
+    },
+    "setup_data": {
+        "alpha": {
+            "comptes": {
+                "parent": "parent@alpha.charge.test",
+                "professeur": "prof@alpha.charge.test",
+                "directeur": "direction@alpha.charge.test",
+                "discipline": "dd@alpha.charge.test"
+            },
+            "eleves_count": 2000,
+            "etiquette": "alpha",
+            "exemples": {
+                "eleve_nom": "Badibanga1021",
+                "class_id": "9bc92b97416346fca1d456ac337b9acd",
+                "eleve_code": "STU-2295-QGQU",
+                "eleve_id": "d4427a4bae094765a9cb9d6aa59b4212"
+            },
+            "tenant_id": "279dade92d0140fda38dcab727608ccc",
+            "classes_count": 24
+        },
+        "directeur": {
+            "Authorization": "Bearer hjYy3YWP2LdmlfTcXenXNbCJnKEF9ScQsGmcYydnKfk"
+        },
+        "parent": {
+            "Authorization": "Bearer e78SlZjQNxJrvCXxY4_MjlvUIAxm6kGG8zdwnkVBQPw"
+        },
+        "professeur": {
+            "Authorization": "Bearer iFElZYWaN_H62HjYmKDuv2E7tBK8hcNmIDwAKudYOuE"
+        }
+    },
+    "root_group": {
+        "name": "",
+        "path": "",
+        "id": "d41d8cd98f00b204e9800998ecf8427e",
+        "groups": {
+            "Direction — ouverture de l’espace": {
+                "groups": {},
+                "checks": {
+                        "tableau de bord : 200": {
+                            "name": "tableau de bord : 200",
+                            "path": "::Direction — ouverture de l’espace::tableau de bord : 200",
+                            "id": "b132c8ab4f0caf8268ab78b473a5bd6b",
+                            "passes": 466,
+                            "fails": 0
+                        },
+                        "tableau de bord : champs attendus": {
+                            "name": "tableau de bord : champs attendus",
+                            "path": "::Direction — ouverture de l’espace::tableau de bord : champs attendus",
+                            "id": "233152b92b0f59769a9694fa5df7a8f0",
+                            "passes": 466,
+                            "fails": 0
+                        },
+                        "élèves : 200": {
+                            "path": "::Direction — ouverture de l’espace::élèves : 200",
+                            "id": "7323da4710431cefcfff647929fbd7dd",
+                            "passes": 466,
+                            "fails": 0,
+                            "name": "élèves : 200"
+                        },
+                        "élèves : liste non vide": {
+                            "id": "dbe607b1b7fb5ff7df3056c45b7b1ac0",
+                            "passes": 466,
+                            "fails": 0,
+                            "name": "élèves : liste non vide",
+                            "path": "::Direction — ouverture de l’espace::élèves : liste non vide"
+                        },
+                        "élèves : champ « code » présent": {
+                            "name": "élèves : champ « code » présent",
+                            "path": "::Direction — ouverture de l’espace::élèves : champ « code » présent",
+                            "id": "b72770124418b9ccb6f12497c679afe5",
+                            "passes": 466,
+                            "fails": 0
+                        },
+                        "dossier : 200": {
+                            "fails": 0,
+                            "name": "dossier : 200",
+                            "path": "::Direction — ouverture de l’espace::dossier : 200",
+                            "id": "435489f072990161ad4e89995d966d78",
+                            "passes": 466
+                        },
+                        "dossier : champs attendus": {
+                            "name": "dossier : champs attendus",
+                            "path": "::Direction — ouverture de l’espace::dossier : champs attendus",
+                            "id": "60aebe96b4ba7398529c3dd96941f0b0",
+                            "passes": 466,
+                            "fails": 0
+                        }
+                    },
+                "name": "Direction — ouverture de l’espace",
+                "path": "::Direction — ouverture de l’espace",
+                "id": "e48ce5274377cb51d227390cf5904f60"
+            },
+            "Direction — rapports": {
+                "id": "e875060d480ef2f3f2b67bf0815c6bf0",
+                "groups": {},
+                "checks": {
+                        "rapports : 200": {
+                            "id": "82a1d2c649142eab0240bd7c60bc6b07",
+                            "passes": 466,
+                            "fails": 0,
+                            "name": "rapports : 200",
+                            "path": "::Direction — rapports::rapports : 200"
+                        },
+                        "rapports : champs attendus": {
+                            "path": "::Direction — rapports::rapports : champs attendus",
+                            "id": "41ebf71493c04e0be33e16eb0bf1853b",
+                            "passes": 466,
+                            "fails": 0,
+                            "name": "rapports : champs attendus"
+                        }
+                    },
+                "name": "Direction — rapports",
+                "path": "::Direction — rapports"
+            },
+            "Professeur — sa classe": {
+                "name": "Professeur — sa classe",
+                "path": "::Professeur — sa classe",
+                "id": "6a8666b74970bebe236ccb828eb94446",
+                "groups": {},
+                "checks": {
+                        "classes : 200": {
+                            "path": "::Professeur — sa classe::classes : 200",
+                            "id": "2487ef4d70e9fbda2e911ba4bff89f4e",
+                            "passes": 466,
+                            "fails": 0,
+                            "name": "classes : 200"
+                        },
+                        "classes : liste non vide": {
+                            "name": "classes : liste non vide",
+                            "path": "::Professeur — sa classe::classes : liste non vide",
+                            "id": "531f1e5a5e62a823615b634d04debdf1",
+                            "passes": 466,
+                            "fails": 0
+                        },
+                        "classes : champ « name » présent": {
+                            "id": "2852f9eb3eee7d1a95db1bd7441e9a3d",
+                            "passes": 466,
+                            "fails": 0,
+                            "name": "classes : champ « name » présent",
+                            "path": "::Professeur — sa classe::classes : champ « name » présent"
+                        }
+                    }
+            },
+            "Parent — ses enfants": {
+                "name": "Parent — ses enfants",
+                "path": "::Parent — ses enfants",
+                "id": "5b556ba0d6e43ec6e9a9ccbcfe8966c7",
+                "groups": {},
+                "checks": {
+                        "enfants : 200": {
+                            "name": "enfants : 200",
+                            "path": "::Parent — ses enfants::enfants : 200",
+                            "id": "97cf6a8f8f1c4b416fd97d57c9330afd",
+                            "passes": 466,
+                            "fails": 0
+                        },
+                        "enfants : liste non vide": {
+                            "fails": 0,
+                            "name": "enfants : liste non vide",
+                            "path": "::Parent — ses enfants::enfants : liste non vide",
+                            "id": "8d63426def47fd8e05900fd49b0b2083",
+                            "passes": 466
+                        },
+                        "enfants : champ « code » présent": {
+                            "name": "enfants : champ « code » présent",
+                            "path": "::Parent — ses enfants::enfants : champ « code » présent",
+                            "id": "5e7570aa44eabc3ddb89d14cdf2d6e98",
+                            "passes": 466,
+                            "fails": 0
+                        }
+                    }
+            }
+        },
+        "checks": {}
+    }
+}

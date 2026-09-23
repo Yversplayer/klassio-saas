@@ -1,7 +1,13 @@
 # KLASSIO — audit de performance et de scalabilité
 
-Mesures du 2026-09-13. Aucune ligne de Klassio n'a été modifiée pour cet audit :
-tout ce qui suit décrit le produit tel qu'il est aujourd'hui.
+Campagne d'origine : **2026-09-13**, sans modifier une ligne du produit.
+Seconde campagne : **2026-09-24** — §11. Elle a confirmé le diagnostic de
+§5.1 et l'a étendu : le même défaut vivait dans **six autres** sous-requêtes
+que ce rapport ne nommait pas. Elles sont corrigées, et un garde-fou balaie
+désormais tout le backend pour qu'aucune ne revienne (§11.4).
+
+Les §1 à §10 restent ceux du 13/09 : ils décrivent le produit AVANT ces
+corrections, et c'est ce qui rend la comparaison lisible.
 
 ---
 
@@ -315,9 +321,14 @@ La performance n'a jamais été obtenue au détriment de l'isolation.
 
 ---
 
-## 9. Recommandations — par priorité, non appliquées
+## 9. Recommandations — par priorité
 
-### P1 — Ajouter `tenant_id` aux sous-requêtes (effet mesuré : 2 418×)
+> **État au 24/09 : P1 et P2 sont appliquées.** P1 a d'abord été posée là où
+> ce rapport la désignait (`class_students`, `list_classes`), puis étendue le
+> 24/09 aux six autres sous-requêtes portant le même défaut — voir §11. P3 et
+> P4 restent ouvertes.
+
+### P1 — Ajouter `tenant_id` aux sous-requêtes (effet mesuré : 2 418×) — FAITE
 
 `backend/api_school.py`, route `class_students` : les trois sous-requêtes
 `attendance` et celle sur `incidents` doivent filtrer sur `x.tenant_id =
@@ -339,16 +350,22 @@ planificateur.
 **À faire avant toute mise en production.** Sans lui, chaque école cessera de
 pouvoir consulter ses classes vers le milieu de l'année.
 
-### P2 — Un garde-fou contre la réapparition du défaut
+### P2 — Un garde-fou contre la réapparition du défaut — FAITE
 
 Le défaut est invisible en développement : la base de travail contient 249
 lignes d'appel, où un balayage complet coûte moins qu'un index. Il n'apparaît
 qu'en volume. Deux protections complémentaires :
 
 - un test qui vérifie le PLAN d'exécution des requêtes sensibles (`SEARCH` /
-  `Index Scan` attendu, jamais `SCAN` / `Seq Scan`) ;
+  `Index Scan` attendu, jamais `SCAN` / `Seq Scan`) — `tests/test_plans.py`,
+  `PlansDExecutionTests` ;
+- un test qui BALAIE le code source et refuse toute sous-requête sur une table
+  qui grossit sans `tenant_id` — `tests/test_plans.py`,
+  `SousRequetesBorneesTests`, ajouté le 24/09. Le premier ne voyait que les
+  trois requêtes qu'on lui avait recopiées ; c'est pour cela que six défauts
+  identiques ont survécu onze jours. Celui-ci est exhaustif par construction ;
 - l'exécution périodique de `seed_echelle.py` + `audit.js` en intégration
-  continue, avec un seuil sur les routes concernées.
+  continue, avec un seuil sur les routes concernées — toujours à faire.
 
 ### P3 — Revoir les agrégats du tableau de bord
 
@@ -389,3 +406,101 @@ lecture.
 l'environnement de travail de l'utilisateur, k6 sur les mêmes cœurs. Les
 rapports et les plans d'exécution sont fiables ; les req/s ne sont pas une
 prévision de production.
+
+---
+
+## 11. Campagne du 2026-09-24
+
+### 11.1 Conditions
+
+Mêmes outils, même machine, jeu d'échelle régénéré : 5 établissements,
+10 000 élèves, 120 000 notes, 300 000 lignes d'appel, 5 987 reçus. Moteur
+SQLite (le mode PostgreSQL local reste celui de `pg_tests.py`). Gunicorn
+2 workers × 4 fils, comme au 13/09.
+
+### 11.2 Ce que la campagne a trouvé
+
+`GET /api/discipline/today` — la page d'accueil du Directeur des disciplines —
+répondait en **27,6 s de médiane** à 20 utilisateurs. Une seule sous-requête en
+était responsable :
+
+```sql
+(SELECT COUNT(*) FROM attendance a2
+  WHERE a2.student_id = s.id AND a2.status = 'absent' AND a2.date >= ?)
+```
+
+Exactement le défaut de §5.1, à un endroit que §5.1 ne nommait pas. Elle compte
+les absences des 30 derniers jours **une fois par élève absent du jour** — 133
+un jour ordinaire — et sans `tenant_id` chaque exécution balaie les 300 000
+lignes de `attendance`. Soit 40 millions de lignes lues pour afficher une page.
+
+Mesure de la seule sous-requête, hors serveur :
+
+| | durée |
+|---|---|
+| Telle qu'écrite | **12 264 ms** |
+| Avec `a2.tenant_id` | **56 ms** |
+
+Le balayage du code a ensuite révélé **cinq autres** occurrences du même motif :
+`api_discipline.py` (effectif de classe, et l'appel non fait), `api_school.py`
+(`/api/classes`), `api_academics.py` (délibérations), `exports.py`,
+`api_life.py` (convocations du calendrier) et `ai_assistant.py` (finance de
+classe). Toutes corrigées de la même façon : nommer `tenant_id`, qui n'ajoute
+aucune restriction métier — un élève et ses présences sont du même
+établissement — mais rend l'index utilisable.
+
+### 11.3 Effet mesuré
+
+`audit.js`, 5 écoles, 20 VU, jeu d'échelle, SQLite en WAL :
+
+| | avant | après | |
+|---|---|---|---|
+| `GET /discipline/today` médiane | 27,6 s | **220 ms** | ÷ 125 |
+| `GET /dashboard` médiane | 664 ms | **312 ms** | ÷ 2,1 |
+| `GET /reports/summary` médiane | 1,12 s | **624 ms** | ÷ 1,8 |
+| `GET /students/:id` médiane | 302 ms | **131 ms** | ÷ 2,3 |
+| itération du rôle « discipline » | 30,4 s | **777 ms** | ÷ 39 |
+| débit global | 28,6 req/s | **54,1 req/s** | × 1,9 |
+| fuites inter-établissements | 0 | **0** | |
+| erreurs | 0 | **0** | |
+
+En mode de journalisation par défaut (`delete`), le même jeu passait de
+12,85 req/s et **55 `database is locked`** à 38,8 req/s et **une seule**. Ces
+verrous n'étaient pas une fragilité de SQLite mais sa conséquence : des
+requêtes de douze secondes tiennent des verrous plus longtemps que le délai
+d'attente des autres. En WAL, zéro erreur sur 3 880 requêtes.
+
+### 11.4 Ce qui empêche le retour du défaut
+
+`tests/test_plans.py` porte désormais deux garde-fous complémentaires. Le
+second relit tout le backend et refuse une sous-requête sur une table qui
+grossit si elle ne nomme pas `tenant_id`. Il a été falsifié : en réintroduisant
+la sous-requête d'origine, il échoue en désignant `api_discipline.py:88` ;
+restaurée, il repasse.
+
+### 11.5 Montée en charge, après correction
+
+`charge.js`, jeu de charge (2 000 + 500 élèves), plateau de 45 s :
+
+| VU | p50 | p95 | p99 | erreurs | req/s |
+|---|---|---|---|---|---|
+| 1 | 24 ms | 97 ms | 224 ms | 0 % | 1,4 |
+| 10 | 21 ms | 78 ms | 143 ms | 0 % | 11,5 |
+| 25 | 24 ms | 121 ms | 199 ms | 0 % | 28,1 |
+| 50 | 77 ms | 336 ms | 468 ms | 0 % | 50,9 |
+| 100 | 638 ms | 1 706 ms | 2 253 ms | 0 % | 57,6 |
+
+Le débit plafonne vers 55 req/s — deux workers, quatre fils, SQLite. Au-delà,
+le système **met en file d'attente sans jamais échouer** : zéro erreur et zéro
+contrôle en échec à 100 utilisateurs simultanés. Les seuils de `charge.js` sont
+dépassés à ce palier, et c'est l'information qu'on vient y chercher.
+
+### 11.6 Campagne fonctionnelle
+
+`complet.js` après correction : **196 contrôles, aucun échec**, et les treize
+compteurs d'invariants à zéro — accès non autorisés, fuites entre
+établissements, escalades de rôle, notes non proclamées vues d'un parent,
+surpaiements, écritures de l'assistant. `finance.js` : 1 071 paiements
+concurrents, aucun double comptage. `recus.js` : 1 105 paiements confirmés,
+aucun sans reçu, aucun 500. `verifier_invariants.py` sur le jeu d'échelle :
+26 invariants, aucun violé.

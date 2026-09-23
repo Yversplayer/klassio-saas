@@ -262,7 +262,7 @@ def calendar_feed():
         if class_ids is None:
             sfilter, sparams = "", []
         else:
-            sfilter, sparams = f" AND cv.student_id IN (SELECT id FROM students WHERE class_id IN ({','.join('?' for _ in class_ids)}))", list(class_ids)
+            sfilter, sparams = f" AND cv.student_id IN (SELECT id FROM students WHERE tenant_id=cv.tenant_id AND class_id IN ({','.join('?' for _ in class_ids)}))", list(class_ids)
         for cv in conn.execute(f"SELECT cv.*, s.first_name, s.last_name FROM convocations cv JOIN students s ON s.id=cv.student_id WHERE cv.tenant_id=? AND cv.scheduled_on BETWEEN ? AND ? AND cv.status<>'cancelled'{sfilter}",
                                [tenant_id, start, end] + sparams):
             items.append({"date": cv["scheduled_on"], "time": cv["scheduled_time"], "kind": "convocation", "title": f"Convocation — {cv['first_name']} {cv['last_name']}", "body": cv["motif"], "link": f"eleve-dossier.html?id={cv['student_id']}&tab=discipline"})

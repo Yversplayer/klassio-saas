@@ -756,7 +756,10 @@ def attendance_overview():
         params += allowed
     rows = conn.execute(
         f"""SELECT c.id, c.name, c.cycle,
-                   (SELECT COUNT(*) FROM students s WHERE s.class_id=c.id AND s.status='active') AS student_count,
+                   -- Voir api_discipline.py : sans `s.tenant_id`, l'index de
+                   -- `students` ne peut pas servir et l'effectif se paie par un
+                   -- balayage complet, une fois par classe.
+                   (SELECT COUNT(*) FROM students s WHERE s.tenant_id=c.tenant_id AND s.class_id=c.id AND s.status='active') AS student_count,
                    SUM(CASE WHEN a.status='present' THEN 1 ELSE 0 END) present, SUM(CASE WHEN a.status='late' THEN 1 ELSE 0 END) late, SUM(CASE WHEN a.status='absent' THEN 1 ELSE 0 END) absent,
                    SUM(CASE WHEN a.status='excused' THEN 1 ELSE 0 END) excused, COUNT(a.id) recorded
             FROM classes c LEFT JOIN attendance a ON a.class_id=c.id AND a.date=? AND a.tenant_id=c.tenant_id
