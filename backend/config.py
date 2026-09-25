@@ -109,6 +109,53 @@ if PG_SCHEMA and not PG_SCHEMA.replace("_", "").isalnum():
     raise ValueError("KLASSIO_PG_SCHEMA : lettres, chiffres et « _ » uniquement.")
 
 
+# ---------------------------------------------------------------------------
+# Où va VRAIMENT la base PostgreSQL
+# ---------------------------------------------------------------------------
+#
+# Les garde-fous qui protègent la production ne se fondent pas sur une
+# étiquette du genre ENVIRONMENT=development : une étiquette se copie, s'oublie,
+# ment. Ils regardent l'HÔTE de la base visée. Une base sur cette machine est
+# jetable par construction ; une base sur un autre hôte peut être celle d'une
+# école.
+#
+# Seul l'hôte est extrait. Le mot de passe ne quitte jamais la chaîne.
+
+HOTES_LOCAUX = {"", "localhost", "127.0.0.1", "::1"}
+
+
+def hote_postgres(url=None):
+    """L'hôte d'une chaîne PostgreSQL (URI ou forme « host=… dbname=… »).
+
+    None si aucune base PostgreSQL n'est configurée.
+    """
+    url = SUPABASE_DB_URL if url is None else url
+    if not url:
+        return None
+    url = url.strip()
+    if "://" in url:
+        from urllib.parse import parse_qs, urlsplit
+        morceaux = urlsplit(url)
+        hote = morceaux.hostname or ""
+        if not hote:
+            # libpq accepte l'hôte en paramètre : ?host=/var/run/postgresql
+            hote = (parse_qs(morceaux.query).get("host") or [""])[0]
+        return hote
+    for paire in url.split():
+        if paire.startswith("host="):
+            return paire[len("host="):].strip("'\"")
+    return ""
+
+
+def postgres_est_local(url=None):
+    """Vrai si la base PostgreSQL visée est sur cette machine (ou absente)."""
+    hote = hote_postgres(url)
+    if hote is None:
+        return True
+    # Un chemin est une socket Unix : forcément locale.
+    return hote in HOTES_LOCAUX or hote.startswith("/")
+
+
 def supabase_configured():
     return bool(SUPABASE_URL and (SUPABASE_ANON_KEY or SUPABASE_SERVICE_KEY))
 

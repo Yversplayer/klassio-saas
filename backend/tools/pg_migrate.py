@@ -2,7 +2,9 @@
 
     python backend/tools/pg_migrate.py schema    crée les tables et index
     python backend/tools/pg_migrate.py donnees   copie les données
-    python backend/tools/pg_migrate.py tout      les deux
+    python backend/tools/pg_migrate.py tout      EFFACE la base cible, puis les deux
+                                                 (refusé si elle contient des écoles,
+                                                 sauf --effacer-la-base-cible)
     python backend/tools/pg_migrate.py controle  compare les effectifs table par table
 
 La copie respecte l'ordre des clés étrangères, calculé depuis la base cible
@@ -60,6 +62,26 @@ def reinitialiser():
     identifiant élève, périmètre du DD…) n'existe pas dans schema.sql mais est
     ajoutée par db._migrate(). Sans cette étape, la copie les ignorerait.
     """
+    # CETTE FONCTION EFFACE TOUTE LA BASE CIBLE. Jusqu'au 25/09 elle le
+    # faisait sans rien demander, et `tout` — présenté plus haut comme « les
+    # deux » — commence par elle. La chaîne de connexion étant dans
+    # backend/.env, une commande recopiée de cette documentation effaçait la
+    # base de production. Elle n'agit plus que sur une base VIDE d'écoles, sauf
+    # consentement écrit en toutes lettres.
+    with connect_pg() as pg:
+        try:
+            n = pg.execute("SELECT COUNT(*) FROM tenants").fetchone()[0]
+        except Exception:
+            pg.rollback()
+            n = 0
+    if n and "--effacer-la-base-cible" not in sys.argv:
+        print(f"Refus : la base cible ({config.hote_postgres()}) contient {n} établissement(s).\n"
+              "« reinit » et « tout » commencent par DROP SCHEMA public CASCADE : tout serait\n"
+              "effacé, élèves, notes, paiements et reçus compris.\n"
+              "Pour ajouter des données sans rien effacer : pg_migrate.py donnees\n"
+              "Si l'effacement est VOULU, et une sauvegarde faite : ajoutez --effacer-la-base-cible",
+              file=sys.stderr)
+        return 3
     with connect_pg() as pg:
         pg.execute("DROP SCHEMA public CASCADE")
         pg.execute("CREATE SCHEMA public")

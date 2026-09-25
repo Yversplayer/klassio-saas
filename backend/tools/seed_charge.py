@@ -133,7 +133,13 @@ def main(argv=None):
                          help="fichier d'environnement pour les scripts de charge")
     parseur.add_argument("--base-url", default="http://127.0.0.1:5001",
                          help="adresse du serveur que les scripts viseront")
+    parseur.add_argument("--base-distante-jetable", action="store_true",
+                         help="autoriser une base PostgreSQL DISTANTE, uniquement si elle est vide")
     args = parseur.parse_args(argv)
+
+    # AVANT toute connexion : une base distante n'est jamais peuplée par
+    # défaut — voir db.exiger_base_jetable.
+    db.exiger_base_jetable("seed_charge.py", args.base_distante_jetable)
 
     if not db.is_postgres():
         chemin = os.path.abspath(db.DB_PATH)

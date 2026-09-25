@@ -22,7 +22,15 @@ import sql_dialect
 # l'écrasent déjà en Python, mais lancer le serveur sur une base jetable
 # demandait jusqu'ici de modifier le code.
 JOURNAL_SQLITE = (config.get("KLASSIO_SQLITE_JOURNAL", "delete") or "delete").strip().lower()
-DB_PATH = config.get("KLASSIO_DB_PATH") or os.path.join(os.path.dirname(__file__), "klassio.db")
+#
+# Un chemin RELATIF est résolu depuis backend/ — là où vit déjà le fichier
+# .env qui le déclare — et non depuis le dossier où l'on se trouve en lançant
+# la commande. Sinon `KLASSIO_DB_PATH=klassio_demo.db` désignerait deux bases
+# différentes selon qu'on démarre depuis la racine ou depuis backend/, et
+# l'outil de démonstration peuplerait une base que l'API ne lit pas.
+_chemin_base = config.get("KLASSIO_DB_PATH") or "klassio.db"
+DB_PATH = (_chemin_base if os.path.isabs(_chemin_base)
+           else os.path.join(os.path.dirname(os.path.abspath(__file__)), _chemin_base))
 SCHEMA_PATH = os.path.join(os.path.dirname(__file__), "schema.sql")
 SCHEMA_PG_PATH = os.path.join(os.path.dirname(__file__), "schema_postgres.sql")
 
@@ -274,6 +282,65 @@ def get_connection():
         # démarrer.
         pass
     return conn
+
+
+def _nombre_d_etablissements():
+    """Combien d'établissements la base visée contient-elle déjà ?
+
+    0 si la table n'existe pas encore : une base neuve est vide par définition.
+    """
+    try:
+        conn = get_connection()
+    except Exception:
+        return 0
+    try:
+        return conn.execute("SELECT COUNT(*) FROM tenants").fetchone()[0]
+    except Exception:
+        return 0
+    finally:
+        try:
+            conn.close()
+        except Exception:
+            pass
+
+
+def exiger_base_jetable(outil, distante_autorisee=False):
+    """Refuse qu'un outil de PEUPLEMENT écrive ailleurs que dans une base jetable.
+
+    POURQUOI. Les outils de démonstration et de charge créent des comptes dont
+    le mot de passe est PUBLIÉ dans le README — c'est ce qui permet à un
+    développeur de se connecter sans rien demander à personne. Créés dans une
+    vraie base, ces comptes seraient une porte d'entrée documentée
+    publiquement. Or jusqu'au 25/09, ces outils ne protégeaient que la base
+    SQLite de travail : il suffisait de KLASSIO_DB_BACKEND=postgres, avec une
+    chaîne de connexion déjà présente dans backend/.env, pour peupler la
+    production.
+
+    LA RÈGLE.
+      • SQLite : toujours local, donc accepté (la base de travail
+        backend/klassio.db est refusée par chaque outil, séparément).
+      • PostgreSQL sur cette machine : accepté.
+      • PostgreSQL DISTANT : refusé, sauf si l'on passe explicitement
+        `--base-distante-jetable` ET que la base ne contient encore aucun
+        établissement. Une base de recette neuve passe ; une base d'école,
+        jamais — même par erreur, même avec le drapeau.
+    """
+    if not is_postgres() or config.postgres_est_local():
+        return
+    hote = config.hote_postgres()
+    if not distante_autorisee:
+        raise SystemExit(
+            f"Refus : {outil} écrirait dans une base PostgreSQL DISTANTE ({hote}).\n"
+            "Ses comptes de démonstration ont un mot de passe publié dans le README :\n"
+            "les créer sur une vraie base l'ouvrirait à quiconque a lu le dépôt.\n"
+            "Pour une démonstration, visez SQLite (le défaut) ou un PostgreSQL local.\n"
+            "Pour une base de RECETTE neuve et jetable : --base-distante-jetable.")
+    n = _nombre_d_etablissements()
+    if n:
+        raise SystemExit(
+            f"Refus : la base distante {hote} contient déjà {n} établissement(s).\n"
+            f"{outil} n'écrit dans une base distante que si elle est VIDE : une base\n"
+            "qui contient des écoles n'est pas jetable, quel que soit le drapeau passé.")
 
 
 def init_db():

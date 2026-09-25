@@ -60,18 +60,18 @@ class PortalTests(unittest.TestCase):
         # Sans email ni téléphone : refusé
         self.assertEqual(self.c.post("/api/invitations/accept", json={"token": inv["token"], "name": "Jean", "password": "Secret123!"}).status_code, 400)
         # Téléphone saisi « à la congolaise »
-        r = self.c.post("/api/invitations/accept", json={"token": inv["token"], "name": "Jean M", "phone": "0971 83 92 37", "password": "Secret123!"})
+        r = self.c.post("/api/invitations/accept", json={"token": inv["token"], "name": "Jean M", "phone": "0900 00 01 23", "password": "Secret123!"})
         self.assertEqual(r.status_code, 201, r.get_data(as_text=True))
         me = self.c.get("/api/me", headers={"Authorization": "Bearer " + r.get_json()["token"]}).get_json()
-        self.assertEqual(me["phone"], "+243971839237"); self.assertIsNone(me["email"])  # email technique jamais exposé
+        self.assertEqual(me["phone"], "+243900000123"); self.assertIsNone(me["email"])  # email technique jamais exposé
         self.assertEqual(me["branding"]["name"], "École du Téléphone")
         # Connexion par téléphone, formats variés ; mauvais mot de passe refusé
-        for ident in ("+243971839237", "0971839237", "243 971 839 237"):
+        for ident in ("+243900000123", "0900000123", "243 900 000 123"):
             self.assertEqual(self.c.post("/api/auth/login", json={"identifier": ident, "password": "Secret123!"}).status_code, 200, ident)
-        self.assertEqual(self.c.post("/api/auth/login", json={"identifier": "0971839237", "password": "Faux!1234"}).status_code, 401)
+        self.assertEqual(self.c.post("/api/auth/login", json={"identifier": "0900000123", "password": "Faux!1234"}).status_code, 401)
         # Le numéro est unique
         inv2 = self.c.post("/api/invitations", json={"role": "parent", "student_ids": [kid["id"]]}, headers=h).get_json()
-        self.assertEqual(self.c.post("/api/invitations/accept", json={"token": inv2["token"], "name": "Autre", "phone": "+243971839237", "password": "Secret123!"}).status_code, 409)
+        self.assertEqual(self.c.post("/api/invitations/accept", json={"token": inv2["token"], "name": "Autre", "phone": "+243900000123", "password": "Secret123!"}).status_code, 409)
         # Le parent complète son profil (email) puis se connecte par email aussi
         ph = {"Authorization": "Bearer " + r.get_json()["token"]}
         self.assertEqual(self.c.put("/api/me", json={"email": "jean@portal.test"}, headers=ph).status_code, 200)

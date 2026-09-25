@@ -10,8 +10,23 @@
 backend/.env
 .env
 *.env
+# Variantes d'environnement (.env.local, .env.production, .env.staging…) :
+# chacune peut porter les vraies valeurs. Seul le MODÈLE est publié.
+.env.*
+!.env.example
 !*.env.example
 !backend/.env.example
+# Clés privées, certificats, fichiers d'identifiants de fournisseurs.
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa*
+id_ed25519*
+id_ecdsa*
+credentials*.json
+service-account*.json
+secrets.*
 
 # ---------------------------------------------------------------------------
 # 2. DONNÉES RÉELLES. `klassio.db` contient des élèves mineurs nommés, leurs
@@ -24,6 +39,16 @@ backend/.env
 *.sqlite
 *.sqlite3
 backend/klassio.db.avant-*
+# Vidages et sauvegardes : une copie de base reste une base.
+*.dump
+*.sql.gz
+*.backup
+*.bak
+# Fichiers déposés par les utilisateurs et journaux d'exécution : ils
+# contiennent des noms, des pièces justificatives, des adresses.
+uploads/
+logs/
+*.log
 
 # ---------------------------------------------------------------------------
 # 3. Reconstructible — inutile de le versionner.
@@ -35,10 +60,16 @@ __pycache__/
 .pytest_cache/
 .coverage
 htmlcov/
+# Aucune chaîne de build aujourd'hui (le frontend est servi tel quel) — ces
+# lignes empêchent qu'un outil ajouté demain ne publie ses artefacts.
+node_modules/
+dist/
+build/
+.cache/
 
 # Sorties brutes de k6 : les résumés .json sont gardés (REPRISE y renvoie),
 # les vidages console ne servent qu'une fois.
-tools/k6/resultats/*.txt
+tools/k6/resultats/**/*.txt
 
 # macOS
 .DS_Store

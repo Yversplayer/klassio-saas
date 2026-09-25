@@ -236,7 +236,13 @@ def main(argv=None):
     p.add_argument("--sortie", default="tools/k6/env-echelle.json")
     p.add_argument("--base-url", default="http://127.0.0.1:5010")
     p.add_argument("--graine", type=int, default=42)
+    p.add_argument("--base-distante-jetable", action="store_true",
+                         help="autoriser une base PostgreSQL DISTANTE, uniquement si elle est vide")
     args = p.parse_args(argv)
+
+    # AVANT toute connexion : une base distante n'est jamais peuplée par
+    # défaut — voir db.exiger_base_jetable.
+    db.exiger_base_jetable("seed_echelle.py", args.base_distante_jetable)
 
     if not db.is_postgres() and os.path.abspath(db.DB_PATH) == os.path.abspath(os.path.join(RACINE, "klassio.db")):
         raise SystemExit("Refus : ce script peuplerait backend/klassio.db, la base de travail.\n"

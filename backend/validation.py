@@ -98,7 +98,7 @@ def valid_payment_method(value):
 
 def valid_phone(value):
     """Numéro de téléphone normalisé en E.164. Accepte les saisies courantes
-    en RDC (« 0971 83 92 37 », « +243 971 839 237 », « 243971839237 ») et
+    en RDC (« 0900 00 01 23 », « +243 900 000 123 », « 243900000123 ») et
     tout numéro international commençant par +. Retourne None si vide."""
     if value is None:
         return None

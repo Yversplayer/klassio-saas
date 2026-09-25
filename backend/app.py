@@ -2398,6 +2398,16 @@ def _startup_banner():
     print(f"Klassio — moteur de données : {config.DB_BACKEND}")
     if config.DB_BACKEND == "sqlite":
         print(f"  base locale : {db.DB_PATH}")
+    elif config.postgres_est_local():
+        print(f"  base PostgreSQL locale ({config.hote_postgres() or 'socket'})")
+    else:
+        # Démarrer sur une base distante n'est pas interdit — c'est la
+        # production elle-même. Mais on ne doit jamais le faire SANS LE SAVOIR :
+        # un .env recopié d'une autre machine suffit à brancher un poste de
+        # développement sur les données d'une école.
+        print(f"  ⚠  BASE POSTGRESQL DISTANTE : {config.hote_postgres()}")
+        print("     Chaque écriture de cette session touche cette base. Si vous pensiez")
+        print("     travailler en local : arrêtez, et retirez KLASSIO_DB_BACKEND=postgres.")
     if config.supabase_configured():
         st = supabase_client.status()
         etat = "connecté" if st["authenticated"] else f"NON connecté ({st['detail']})"

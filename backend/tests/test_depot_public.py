@@ -161,7 +161,10 @@ class DepotPublicTests(unittest.TestCase):
         chemin = os.path.join(RACINE, "backend", ".env.example")
         if not os.path.exists(chemin):
             self.skipTest("pas de .env.example")
-        sensibles = re.compile(r"(KEY|SECRET|PASSWORD|TOKEN|DB_URL)$")
+        # SUPABASE_URL n'est pas un secret, mais un MODÈLE ne doit désigner
+        # aucune infrastructure réelle : copié tel quel, il ne doit pointer
+        # que vers la machine du développeur.
+        sensibles = re.compile(r"(KEY|SECRET|PASSWORD|TOKEN|DB_URL|DATABASE_URL|SUPABASE_URL)$")
         remplies = []
         with open(chemin, encoding="utf-8") as f:
             for n, ligne in enumerate(f, 1):
@@ -184,7 +187,7 @@ class LeGardeFouSaitReconnaitreTests(unittest.TestCase):
             "clé Anthropic": "sk-" + "ant-" + "a" * 30,
             "clé Brevo (fournisseur d'e-mail de Klassio)": "xkey" + "sib-" + "0" * 32,
             "JWT — clé Supabase ?": "eyJhbG" + "ciOiJIUzI1NiJ9.eyJyb2xlIjoiYW5vbiJ9.abc",
-            "jeton de session en clair": "Bear" + "er 6fvykQao0xauptnj4hP66AtljLFZjnMIqf",
+            "jeton de session en clair": "Bear" + "er FAUXjetonFAUXjetonFAUXjeton0123456789",
             "URL PostgreSQL avec mot de passe": "postgresql://postgres" + ":Vr4iM0tDeP4sse@hote:5432/db",
         }
         for nature, texte in echantillons.items():
