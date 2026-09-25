@@ -2,6 +2,10 @@
 # Aucune n'est installée en production : voir requirements.txt.
 #
 #   backend_venv/bin/pip install -r requirements-dev.txt
+#
+# Cette commande installe AUSSI l'application (ligne suivante) : un programmeur
+# qui découvre le dépôt n'a qu'une commande à taper pour pouvoir tout lancer.
+-r requirements.txt
 
 # PostgreSQL 16 réel, embarqué dans une roue pip (10 Mo). Permet d'exécuter la
 # suite contre le vrai moteur sans Docker, sans droits administrateur et sans

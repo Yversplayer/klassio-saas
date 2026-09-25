@@ -268,9 +268,11 @@ fichier créé uniquement dans le miroir sera perdu** — c'est déjà arrivé.
   n'est envoyé. Invitations, réinitialisation de mot de passe et avis de
   résultats attendent un compte fournisseur et la vérification du domaine
   (SPF/DKIM). Ne présente pas un envoi capturé comme un envoi.
-- **Pas de bulletins PDF.** L'API compose un bulletin complet en JSON
-  (`school.bulletin()`, `GET /api/classes/<id>/bulletins`) ; l'artefact
-  imprimable n'existe pas.
+- ~~Pas de bulletins PDF.~~ **Ils existent depuis le 23/09** :
+  `backend/pdf_bulletin.py` (PDF 1.4 écrit à la main, sans dépendance),
+  `GET /api/students/<id>/bulletin.pdf` et `GET /api/classes/<id>/bulletins.pdf`,
+  couverts par `tests/test_bulletin_pdf.py` — y compris le cas qui compte : un
+  parent ne reçoit jamais une période non proclamée.
 - **Pas de notifications de calendrier.**
 - **Sauvegardes jamais restaurées** : RPO et RTO non établis.
 - **Jamais déployé.**

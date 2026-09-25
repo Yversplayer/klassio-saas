@@ -1,2 +1,9 @@
-flask>=3.0,<4.0
-openpyxl>=3.1,<4.0
+# Une seule liste de dépendances fait foi : celle de la racine.
+#
+# Celle-ci en était une copie, et elle avait pris du retard : pypdf n'y
+# figurait pas. Qui suivait l'ancien README (`cd backend && pip install -r
+# requirements.txt`) obtenait une application qui démarrait — puis répondait
+# 500 dès qu'une Direction importait son règlement en PDF, et un module de
+# tests qui ne se chargeait même pas. Le fichier est gardé pour ne casser
+# aucune commande existante ; il ne fait plus que renvoyer à la racine.
+-r ../requirements.txt
