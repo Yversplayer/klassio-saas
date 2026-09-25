@@ -39,9 +39,9 @@ OUTILS = os.path.join(os.path.dirname(__file__), "..", "tools")
 
 # Fictives. Le mot de passe est volontairement présent : on vérifie qu'il ne
 # ressort jamais.
-DISTANTE = "postgresql://postgres.abcdefgh:NE-DOIT-JAMAIS-SORTIR@aws-0-eu-west-1.pooler.supabase.com:6543/postgres"
-DISTANTE_RENDER = "postgres://klassio:NE-DOIT-JAMAIS-SORTIR@dpg-xyz.frankfurt-postgres.render.com/klassio"
-LOCALE = "postgresql://postgres:mdp@localhost:5432/klassio"
+DISTANTE = "postgresql://postgres.abcdefgh:NE_DOIT_JAMAIS_SORTIR@aws-0-eu-west-1.pooler.supabase.com:6543/postgres"
+DISTANTE_RENDER = "postgres://klassio:NE_DOIT_JAMAIS_SORTIR@dpg-xyz.frankfurt-postgres.render.com/klassio"
+LOCALE = "postgresql://postgres:MDP_LOCAL@localhost:5432/klassio"
 
 
 def _charger(nom):
@@ -58,7 +58,7 @@ def _aucune_connexion(*_a, **_k):
 class HoteDeLaBaseTests(unittest.TestCase):
 
     def test_01_les_bases_de_cette_machine_sont_locales(self):
-        for url in (LOCALE, "postgresql://u:p@127.0.0.1/db", "postgresql://u:p@[::1]:5432/db",
+        for url in (LOCALE, "postgresql://U:MDP@127.0.0.1/db", "postgresql://U:MDP@[::1]:5432/db",
                     "postgresql:///klassio?host=/tmp/pg", "host=/var/run/postgresql dbname=k",
                     "host=localhost dbname=k user=u"):
             self.assertTrue(config.postgres_est_local(url), url)
@@ -73,7 +73,7 @@ class HoteDeLaBaseTests(unittest.TestCase):
 
     def test_04_le_mot_de_passe_ne_sort_jamais(self):
         for url in (DISTANTE, DISTANTE_RENDER):
-            self.assertNotIn("NE-DOIT-JAMAIS-SORTIR", config.hote_postgres(url))
+            self.assertNotIn("NE_DOIT_JAMAIS_SORTIR", config.hote_postgres(url))
 
 
 class BaseJetableTests(unittest.TestCase):
@@ -109,7 +109,7 @@ class BaseJetableTests(unittest.TestCase):
             for p in patches:
                 p.stop()
         self.assertIn("DISTANTE", str(refus.exception))
-        self.assertNotIn("NE-DOIT-JAMAIS-SORTIR", str(refus.exception))
+        self.assertNotIn("NE_DOIT_JAMAIS_SORTIR", str(refus.exception))
         compteur.assert_not_called()
 
     def test_11_meme_avec_le_drapeau_une_base_qui_contient_des_ecoles_est_refusee(self):
