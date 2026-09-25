@@ -1,208 +1,22 @@
 {
-    "setup_data": {
-        "avant": 61181,
-        "beta": {
-            "tenant_id": "e7b6a7871d994ed8952996d11da42154",
-            "classes_count": 24,
-            "comptes": {
-                "discipline": "dd@beta.charge.test",
-                "parent": "parent@beta.charge.test",
-                "professeur": "prof@beta.charge.test",
-                "directeur": "direction@beta.charge.test"
-            },
-            "eleves_count": 500,
-            "etiquette": "beta",
-            "exemples": {
-                "class_id": "d2fd0681a05c4a0a91e9f86fb4d695b2",
-                "eleve_code": "STU-A6MA-NDJU",
-                "eleve_id": "ab6c4c076f5144089dc28dafb26d7bd2",
-                "eleve_nom": "Badibanga11"
-            }
-        },
-        "h": {
-            "Authorization": "Bearer 1TVh5p2dQw10TGKzcbQYujhFz1N6SMIENc22wOI3I-I"
-        },
-        "obligations": [
-            {
-                "id": "744186466f824ad6b5c237bef22cc14d",
-                "restant": 350
-            },
-            {
-                "id": "afca6f34b69e436c85b37d6fdf4b2275",
-                "restant": 200
-            },
-            {
-                "id": "250ef7c85480400c95be7a1aecbe5524",
-                "restant": 350
-            },
-            {
-                "id": "a8e0cdfff5b54ff4b6832d39ed031326",
-                "restant": 167
-            },
-            {
-                "id": "17cd59455529458fa41f59807664c275",
-                "restant": 167
-            },
-            {
-                "id": "c78871f0bfd74da7b86dfbede4b7c51d",
-                "restant": 250
-            },
-            {
-                "id": "bc124b80876b456ba6282824238d6e22",
-                "restant": 300
-            },
-            {
-                "restant": 200,
-                "id": "525f30db1f7742b496f064691c9d13f0"
-            },
-            {
-                "id": "3af52019457b49e4a30624cc1d987f68",
-                "restant": 200
-            },
-            {
-                "id": "cb108bd1c13e430aa8f0c1de20af9b23",
-                "restant": 125
-            },
-            {
-                "restant": 267,
-                "id": "32d95c732a8142c397e392937234be2a"
-            },
-            {
-                "id": "58944683a7e8496d9cda310729812581",
-                "restant": 400
-            },
-            {
-                "id": "84bb79fdd45e49fa88ab00adcccee5c7",
-                "restant": 200
-            },
-            {
-                "id": "534af31bc0f74242a7539b668ae2458e",
-                "restant": 267
-            },
-            {
-                "id": "528d5da666c44a90af2ea46869f12b47",
-                "restant": 250
-            },
-            {
-                "id": "330c6b312f1c447991bffee6391a2263",
-                "restant": 400
-            },
-            {
-                "restant": 234,
-                "id": "8fb5781d4fb347b0801dc183df5b2041"
-            },
-            {
-                "id": "d63da7b83a3f4bb490753ff166fbd5be",
-                "restant": 250
-            },
-            {
-                "id": "771d708f3ead4538a03f6c50b41579cb",
-                "restant": 234
-            },
-            {
-                "id": "b1d54c08caeb4c9196077059c4e21507",
-                "restant": 125
-            },
-            {
-                "id": "662c3731097f47d1b3d2987ecccf7d72",
-                "restant": 150
-            },
-            {
-                "id": "ef652bb3ef734e95a171d1f7a79cbfe5",
-                "restant": 350
-            },
-            {
-                "restant": 350,
-                "id": "0d48bb432688467292c93aeeb46692ea"
-            },
-            {
-                "id": "76508bf725d24e319a308ba70c23f6d1",
-                "restant": 250
-            },
-            {
-                "id": "116517c016904ca69ed4f08c4e63591e",
-                "restant": 200
-            },
-            {
-                "restant": 400,
-                "id": "d772121318c042b592142f8590aab70a"
-            },
-            {
-                "id": "3a5af6ff027c4c07b66e844aad653aaf",
-                "restant": 125
-            },
-            {
-                "id": "dafadecbc1d54b0f9a6db9c918cacb03",
-                "restant": 350
-            },
-            {
-                "id": "92c10b0a201043619ce1aff469db339a",
-                "restant": 250
-            },
-            {
-                "id": "9f2d0624caa047949fbaffc7c292a75e",
-                "restant": 400
-            },
-            {
-                "id": "1aa77b9eabfa4a66be617ced2c488bc5",
-                "restant": 250
-            },
-            {
-                "restant": 350,
-                "id": "1a4e9919ab754eb888ff81cdcb386b89"
-            },
-            {
-                "id": "bc572723070d4491b8197f3247609ebb",
-                "restant": 200
-            },
-            {
-                "id": "236c63478b2d48a397fced9fac20dcce",
-                "restant": 400
-            },
-            {
-                "id": "20cc14a72c7447e981503bfa94fb05e0",
-                "restant": 175
-            },
-            {
-                "id": "9596e490d6084d329f7107acf6795867",
-                "restant": 400
-            },
-            {
-                "id": "ff16dca7857f4cadb7d36702bf63a512",
-                "restant": 234
-            },
-            {
-                "id": "ebb53adb4e22441598f029dd29b2fa90",
-                "restant": 300
-            },
-            {
-                "id": "62efae92667548eebfa568466a56fea6",
-                "restant": 300
-            },
-            {
-                "id": "1f84c30e00f54a9abc9d64fe3e079666",
-                "restant": 400
-            }
-        ]
-    },
     "root_group": {
         "groups": {},
         "checks": {
-                "paiement accepté, rejoué, ou refusé pour une raison connue": {
-                    "name": "paiement accepté, rejoué, ou refusé pour une raison connue",
-                    "path": "::paiement accepté, rejoué, ou refusé pour une raison connue",
-                    "id": "c1381f616a3da6534f6358b50765dbe4",
-                    "passes": 4113,
-                    "fails": 0
-                },
-                "rejeu : jamais une seconde écriture": {
-                    "passes": 1071,
-                    "fails": 0,
-                    "name": "rejeu : jamais une seconde écriture",
-                    "path": "::rejeu : jamais une seconde écriture",
-                    "id": "e2de4f370ab867bb41fa75e89fd80398"
-                }
+            "paiement accepté, rejoué, ou refusé pour une raison connue": {
+                "name": "paiement accepté, rejoué, ou refusé pour une raison connue",
+                "path": "::paiement accepté, rejoué, ou refusé pour une raison connue",
+                "id": "c1381f616a3da6534f6358b50765dbe4",
+                "passes": 4113,
+                "fails": 0
             },
+            "rejeu : jamais une seconde écriture": {
+                "passes": 1071,
+                "fails": 0,
+                "name": "rejeu : jamais une seconde écriture",
+                "path": "::rejeu : jamais une seconde écriture",
+                "id": "e2de4f370ab867bb41fa75e89fd80398"
+            }
+        },
         "name": "",
         "path": "",
         "id": "d41d8cd98f00b204e9800998ecf8427e"

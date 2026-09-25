@@ -406,425 +406,6 @@
             }
         }
     },
-    "setup_data": {
-        "sessions": [
-            {
-                "portee_professeur": 286,
-                "classe_ecriture": "72bb3600d1f64348ab9143c087e84da9",
-                "classes_count": 42,
-                "eleves_ecriture": [
-                    "57a05c581f2248d5bd3acddb0feb2f66",
-                    "3b224dc5c7894fab8272e60012db6835",
-                    "e14f90bf97c64f7aa1357e3315c217ba",
-                    "c5d8be7c099744bebf9bc891d0667ae8",
-                    "f561f585c9b548a5a61430d1bf5ffd7b",
-                    "11313818dd884b39992c2b064d3d89e9",
-                    "17bc793a98f344a0a84d98e57e0d9d6a",
-                    "7937ad7d0e9e4d2f8e3b06fa18ff0555",
-                    "db3523edf8a747b9ba3cd0fd7a6d23e1",
-                    "26e0e0bfc0714ad2b0cc37ec54599311",
-                    "bf533e6a072a44b6b2911357d3b91e97",
-                    "4a8a832f4a314110a4dd9690d6ebd8ff",
-                    "3b0669f0a05a4c06a09d2e09867b242e",
-                    "0d1db2eec14c44e19ea9e968d6ebb16e",
-                    "fd898dde120449749b316816b2198680",
-                    "e9eee465bfe24e4f85cb3fba78b977f5",
-                    "6505c9ed888640368f62bfc238ccea93",
-                    "f012731df3fc4e788f1c166615de2512",
-                    "9d5133a0fd2f4e5aacc26d8d42e1194d",
-                    "712bf2fef26c451b8823a02bb2d4090b",
-                    "fb9f2a1233964b80a19937c8a826e111",
-                    "ae802614e8cc4b3eb17c42b8945e2cce",
-                    "b8954495239044108c2495a865d46f5f",
-                    "90c0b16aa5474e89adb25a99bd612da6",
-                    "c924e3828a894348a7abf6317a0038fb",
-                    "d23bc99ecd984302a8d29b67bb923b75",
-                    "c0683df1970c4b67a4980bd87447054a",
-                    "1445f220ced44f6896739e431a6a5bc0",
-                    "258a81e7e9ba4bc4b50996c2a6a03932",
-                    "c6e0d02e62e442c182c799259d8e1997",
-                    "3b388420c6dd414287a0dcec6fec3757",
-                    "d4d72822e9b248e3b0919770368f4c28",
-                    "7763e9155f9c47bf88aa6103e4f0737f",
-                    "dff4f0e60f4e4048a3dbb31622208bcf",
-                    "e25c3322922942a0ba8aef70c3196f9e",
-                    "e87f11dc64f54848b7a92c426dd7ae9b",
-                    "ac994b8e035f4cf68b841feb41df9586",
-                    "73fb03bceb2540c2828e24f46843dcae",
-                    "6f1a7975ddce4369af5c535e7d01c950",
-                    "41d032b875ea423b9ba82dd67897e384",
-                    "aed00397363a484f99cf488e7312cde6",
-                    "2ceb27a691f5414c8c399183be63c0a0",
-                    "e030c54d59ea446a9b5618b637b1b67a",
-                    "505331a03aaf49ca8c27b62512d97cbf",
-                    "765835cfabdf48de9e3011438d09294c",
-                    "2402602cf00242239586476390dfa109",
-                    "b40ec758149341efb14694b08cef7891",
-                    "81e6090a0e4d4937ab89cf3768076b2a"
-                ],
-                "etiquette": "ecole1",
-                "exemples": {
-                    "eleve_professeur": "2bb68fb56b2147938bcb97200a7c0360",
-                    "class_id": "72bb3600d1f64348ab9143c087e84da9",
-                    "eleve_code": "STU-1000000",
-                    "eleve_discipline": "8e1da520fce54acea3a3c07abf8bf2eb",
-                    "eleve_id": "3b388420c6dd414287a0dcec6fec3757",
-                    "eleve_nom": "Mbala0",
-                    "eleve_parent": "b619052649774de2993385dafce85c1e"
-                },
-                "tenant_id": "efd908f473f94aa8a2d0a38d1b87fd94",
-                "eleves_count": 2000,
-                "jetons": {
-                    "directeur": {
-                        "Authorization": "Bearer bwSqLIfcqzPceW3g88QwRE_eAVF_wWMKyX4jE-6h9LU"
-                    },
-                    "discipline": {
-                        "Authorization": "Bearer NKIozmQnOg_-d_DSk-koMRml5jiH6ElauUEwqEaH2Lw"
-                    },
-                    "parent": {
-                        "Authorization": "Bearer qrEnwoQlRScifHxJPNBA2Ii6QFlU3gKIyM8sLGB5jik"
-                    },
-                    "professeur": {
-                        "Authorization": "Bearer Qrn5sk3VTdHrTkQuwDCF3A-T0rN7KSkBRkw0EHlVG0c"
-                    }
-                },
-                "portee_discipline": 992,
-                "portee_parent": 3
-            },
-            {
-                "eleves_ecriture": [
-                    "7f583b4c716f4b10a2692a98548eb181",
-                    "c1a8c6f0b1f746b6a670e3c7f9c6edb3",
-                    "5fde20aa174a437f9041a1f66251faa7",
-                    "01df8d6fb1d24e47afa8053df1e34eb9",
-                    "33b9495c7fb140df924991030c3280a8",
-                    "6bf00f1761564f8ba91d2b978c5f7a40",
-                    "347976c49588445a9acf51d9e05042c0",
-                    "d28288309cda45108f508d48ed3ce415",
-                    "cf405722544541779ba034555c61df59",
-                    "bdbc990c34b64818b6a6e36f5c30a484",
-                    "02fe1e8218b0435fac044ed9a6ebbe27",
-                    "3ea10db2575f4e3e981d4b2310d793f1",
-                    "83159a9e9d50420bb7ecdfa458c3e92a",
-                    "0f5310f618d040c1bb035463af0cafdb",
-                    "b083df58013b4ec8b5ade795568aa080",
-                    "c97a71ea270b44e5a72bfffb911c6d10",
-                    "223f4557876d4d748d8f78c23047ee3d",
-                    "240e542efc4c486796afac3c56331389",
-                    "44127c7e80be46c39c4006feaf23a0ce",
-                    "60ec37794ee44fa7b5ea18271be36741",
-                    "2ca950626a9f48f9894bbe4ab650b886",
-                    "ed5010f9d5d946a899bb7ac4fabffc71",
-                    "593f3633c84441d7b6fff4c8fabaf1dd",
-                    "0364371fcf504687b4258a52d0c094d2",
-                    "6a861b90b3b1450ebbb98380e660103a",
-                    "0759eb2231ac43e08bba8b9dd9d4ba51",
-                    "9b065ae89b1941f690e8e9b7113c5a22",
-                    "42cfcdaa10504e7da3e082c93dc141a8",
-                    "9e5e092565e0456bb247676354f0132f",
-                    "9ec8a5a2c4214498a422ead3c8a16d94",
-                    "1894e390743a476a8fabfcbf457ab79e",
-                    "d1789938526147ecb769441756eab07e",
-                    "ad45f4b7e0f648d3999bfb49433723f4",
-                    "f0736e95066f417f84b730269be68559",
-                    "f496135f7d6a463f95621982f79cea4d",
-                    "cf27e35ffbe6405994120c73ad46e9c7",
-                    "55845f764bce4381b1e5afa954a0f751",
-                    "3b7aa73036244b129ba0d28dfea6f769",
-                    "d25067d192cc4d448a95dcd70e6a96a6",
-                    "d6b90058b9924053afa392070417737e",
-                    "6f47838e9dc2401788007bc228b82d94",
-                    "ac06236de63242c7bbf422c1fe5bb178",
-                    "41ad7e3e34644c51b1d2e5c900f29fcf",
-                    "c7288580de89474693f4486130c80e79",
-                    "66e9cca019b6461a8ed8377111b98018",
-                    "e673d45f9d8740f69ae6da769efc38ca",
-                    "2d2109d96a4d428c8542945ad6fd1dfe",
-                    "0e242956cfbb4a7f84b4e0abd7667b35"
-                ],
-                "etiquette": "ecole2",
-                "exemples": {
-                    "eleve_code": "STU-2000000",
-                    "eleve_discipline": "d4fc4faca3e94268a64f1c7ae9a4e7de",
-                    "eleve_id": "2ca950626a9f48f9894bbe4ab650b886",
-                    "eleve_nom": "Lukusa0",
-                    "eleve_parent": "02ad61a6b3794934ab5dd551cd653c31",
-                    "eleve_professeur": "ed026e29daec4e1dbb121089b8974692",
-                    "class_id": "542667cba82641c69486efc8ed6a88df"
-                },
-                "jetons": {
-                    "directeur": {
-                        "Authorization": "Bearer dONY7BdhsfBw_UWuBgXUxhXe1uWBc6f3dVN3m225L-E"
-                    },
-                    "discipline": {
-                        "Authorization": "Bearer bhC5Vqw5CHJyzmYZbJhMK6vvgOQquSKw_h5vNTVb6nQ"
-                    },
-                    "parent": {
-                        "Authorization": "Bearer NPeB8IYAlzzptIT1Fl1BDnSPn6bPT58FUZA-vz3IiJo"
-                    },
-                    "professeur": {
-                        "Authorization": "Bearer fG6_RcQpY1mvEeQydKkeQO_wWBHQQLlnRo2SQH_nNjQ"
-                    }
-                },
-                "portee_discipline": 992,
-                "classe_ecriture": "542667cba82641c69486efc8ed6a88df",
-                "classes_count": 42,
-                "eleves_count": 2000,
-                "portee_parent": 3,
-                "portee_professeur": 286,
-                "tenant_id": "6fa52b484f8b48babb89cac72ef4802b"
-            },
-            {
-                "eleves_count": 2000,
-                "etiquette": "ecole3",
-                "exemples": {
-                    "eleve_discipline": "52212b03b7e745d2ac3f89c18965dda6",
-                    "eleve_id": "8835acf3776644bcad3afade3d9b47c1",
-                    "eleve_nom": "Tshibangu0",
-                    "eleve_parent": "fb92583e4c5e4d0d87c8defb14c28111",
-                    "eleve_professeur": "52212b03b7e745d2ac3f89c18965dda6",
-                    "class_id": "fc4d8835471b48f88413e7d4a0a41544",
-                    "eleve_code": "STU-3000000"
-                },
-                "portee_discipline": 992,
-                "portee_professeur": 286,
-                "tenant_id": "eef58f432e754555a84156f7c8eac11c",
-                "classe_ecriture": "fc4d8835471b48f88413e7d4a0a41544",
-                "classes_count": 42,
-                "eleves_ecriture": [
-                    "2a2ae0b6e3874912a83d3db107995410",
-                    "95dbd4147d9545f78d30426b53d538c5",
-                    "aaaa57860b664e35bab4e0160a5f511d",
-                    "eef487b2f99444c582f24de0a7234753",
-                    "36a2c34bc1f2402eb8170c76188e60d4",
-                    "57bddbf137074943bb115d93a71da9ef",
-                    "526667e32c3d44b8a21020c1449c709e",
-                    "c369cc0425bf428c914dfb1a62cde8b3",
-                    "ae98509c8de141fc848354e8a58a054e",
-                    "a8ba115fc635458da012ab265953615a",
-                    "07037f1f3aab471c9c4322ab90e47660",
-                    "bae07eb0f7404a2e83bc5a5499ca7ab0",
-                    "4a19ccabd13d4862b08a32edc09ad0bf",
-                    "1367c5fca25c485796a7e94e7e9c364a",
-                    "006d7b9f227247af80704523c19447be",
-                    "7a095046e7a34493a8d1dc7381102d7f",
-                    "42140de4c7524af18604bb5b1ca1f697",
-                    "6940ad9816f3459094e174d4699bb289",
-                    "589aaf3a42bd4124bb45a3f41a96c756",
-                    "64fa2b71eef14092984f90d205c37462",
-                    "78ebaf65e00d4a0e8bd134c07a159319",
-                    "457496dbca614156b6e0eed55e425e22",
-                    "b8f7990dd0174b0f87e8dac973230787",
-                    "7da1b32b385444c2ae7e1ffe3f6dff7e",
-                    "ff2768b6120a46de918732dd0367317e",
-                    "0c6685b782b04370aaabb0a6445a769a",
-                    "c4edf8198e0e4662a344b26474e2328d",
-                    "839557190d4e4973aac743f37d26b4aa",
-                    "517af4ca2586450e8682b7a67a773913",
-                    "cb16144903324bb88ba0aeab50e66bc5",
-                    "3568d9e27ef34993b0ff9642a4627eae",
-                    "aa37471b02984c2993ed63efcefeb303",
-                    "b7270b2a11f341e6aead9ac2df276ebd",
-                    "ebcb2c4e4d024c55a38a22b38be0b822",
-                    "1653751e1cb44aeda485d9d778d28d2d",
-                    "cb60d63240bf4fd892243a2c19cdf2d0",
-                    "5753e79fe6d745549c28dd04d36f069a",
-                    "706e25496ae64e66b2347faf52d18afc",
-                    "416f37d2b6184bff967c5ced4f2536e2",
-                    "bc1aff8872fc49aab8781c51234f3477",
-                    "3da53bf15179424badfb3e94c0c7ccda",
-                    "4934b9bc2bd646aab8a66bc93ad5f476",
-                    "fafed5eae94b4d39a4564d4b34ba63a6",
-                    "623a12038a7546b0bf6f497775c6b959",
-                    "c3e9ff73ff7247d3b202907f569db3ef",
-                    "8835acf3776644bcad3afade3d9b47c1",
-                    "de15041cb6e44d94a38dc34b1a399aa4",
-                    "26537fac54a148468452c1a4be91aa44"
-                ],
-                "jetons": {
-                    "directeur": {
-                        "Authorization": "Bearer Mrn2cqWk9gRhUHaHTAc7WxTXcL7sxV1Oq10jx9gwOGk"
-                    },
-                    "discipline": {
-                        "Authorization": "Bearer -62JG4fAWK1EMxDXcWjW3dKQWA1hnS9LCOVeBnhXcSI"
-                    },
-                    "parent": {
-                        "Authorization": "Bearer LSDhskL6c8lkXO2jbghqmq5siHJE_a9dR8C2VHIX66M"
-                    },
-                    "professeur": {
-                        "Authorization": "Bearer -rqppkQBOjHI_O8obpRu_-gYOf_s57_WEgj4WlYdifc"
-                    }
-                },
-                "portee_parent": 2
-            },
-            {
-                "portee_parent": 3,
-                "classes_count": 42,
-                "portee_professeur": 286,
-                "tenant_id": "d5d2d4062c4448189590f1e823e87264",
-                "classe_ecriture": "15074f3c1bf14378a3ebe21e8de57ad8",
-                "eleves_count": 2000,
-                "eleves_ecriture": [
-                    "f0e9180d1b5e4f05bdd7c58f432ae2c1",
-                    "d32202bc35f14591b0190724e941ab8e",
-                    "a76d69b1a99f4202837d45db1e97724a",
-                    "5a777c7f52ba49cc9eacf90de75cf8ad",
-                    "55386be492ef401c95e29d2071568357",
-                    "16c8308546464a44a4e78c68152df136",
-                    "78154b0fcf0a405e9e29aaadac01dc42",
-                    "0966981ca4df4e26bf0d893955f2a551",
-                    "9d5d4f2fbe574bf68be09210e7fc1909",
-                    "0c76c7610cb747218df2a193819fe896",
-                    "5d89d22ef3da442bb68aef4e57e74173",
-                    "bb927cbe48404df8b62d83808d5b04e0",
-                    "6eb220066ad8493a8c935c0f6839604d",
-                    "8dbd22c02a6c48b78d10311def2375a5",
-                    "0dda34b2ed8e4ea89811923f0d28e57a",
-                    "0556507094a4417788d30bbb34fad622",
-                    "8334a2bb545e483ea59b16d334b63f08",
-                    "387cea0fa02843b8bfa8e4e5486c2414",
-                    "c0d1a1d1d4cb4502983ac2e1c7ce5434",
-                    "705b6e83323344e19b0a846171f082c1",
-                    "e00bbc1f1f9041aebe61f34bc049212c",
-                    "d7e1d42bd7ae47a6a3d7e3703231ce07",
-                    "9886daef67764612aad019e3e8154d20",
-                    "7ea89719ed4845888605f3d96e346edc",
-                    "9963939887b94ae6b1ba0743e5c991fc",
-                    "a9d56f45af0d4d37a459e7ee48bc12a9",
-                    "18e6628cdb4b45b3a4f2568437a7d9a8",
-                    "f03202ee590b4d59aa0f02de9f0cc772",
-                    "adfa63f2c3df4b38babef6d709c9f724",
-                    "09797824c4344f64969628835374e007",
-                    "58c5ece1ee304b639cd019eb771d5a83",
-                    "25190df1f1c54c0ebe2e07cc36760cbf",
-                    "29c9216617434ffb914f298363ebf53b",
-                    "dfe7e1b82822418d8765da336424a303",
-                    "7705c07f778b4528b08304001f5282b5",
-                    "7d90cac5230f4f2089a83bfdc0019e8a",
-                    "23160517c33f4ca78bd96b9c0ca29ea2",
-                    "14f155885bdc4b3d8f4a47b69b24cc57",
-                    "8fab97e079fb4707ac369ceb2c762df5",
-                    "2ef2014d44d6475188ddfde27b0541c7",
-                    "05dbae273ec34fd0bc545e3698e7f60d",
-                    "09bc4d55fc1c4437b83ffe756d256bfb",
-                    "af0da5c4699d46e1bb9061814be06ac5",
-                    "e92d72f57afd4af69b97676b23dec14f",
-                    "5a7cbe974fa24e2c91d4f79234bcf5d0",
-                    "9ca959c325b9465093b300f7b74318d7",
-                    "340238b72afb444db6c8a4e5d796ac57",
-                    "7bb43efd66e348edae6678dd3905b776"
-                ],
-                "etiquette": "ecole4",
-                "exemples": {
-                    "eleve_parent": "387cea0fa02843b8bfa8e4e5486c2414",
-                    "eleve_professeur": "f8a77f62322b421783e8c7f11e5ad373",
-                    "class_id": "15074f3c1bf14378a3ebe21e8de57ad8",
-                    "eleve_code": "STU-4000000",
-                    "eleve_discipline": "2709ac1698de49c3ad52cbc03590f4f2",
-                    "eleve_id": "387cea0fa02843b8bfa8e4e5486c2414",
-                    "eleve_nom": "Kabongo0"
-                },
-                "jetons": {
-                    "directeur": {
-                        "Authorization": "Bearer KDLVE5ODrtawxLD1PKEE-n1ZvEjz17bNh-x4I1m2Xck"
-                    },
-                    "discipline": {
-                        "Authorization": "Bearer O9LvswMbuxeFAp3n52lR_tOHmG6OIbwqNOqe8rG0ntg"
-                    },
-                    "parent": {
-                        "Authorization": "Bearer NkyRk0clDzLXPQP-J36ljnbL4wSXZ5Ko2yyr8C5y8PM"
-                    },
-                    "professeur": {
-                        "Authorization": "Bearer hMVjs6Nxjy0YQucdiCDGRNGVVTzGv-N9fuvVgcTTYFg"
-                    }
-                },
-                "portee_discipline": 992
-            },
-            {
-                "classe_ecriture": "83fc6a91c5244863958d3596db09eeed",
-                "classes_count": 42,
-                "exemples": {
-                    "eleve_discipline": "04fafce611ba4a22b0a196ee62aae81d",
-                    "eleve_id": "a669ec5f409c49c28ffa1aaf79119087",
-                    "eleve_nom": "Ilunga0",
-                    "eleve_parent": "a669ec5f409c49c28ffa1aaf79119087",
-                    "eleve_professeur": "9d2bf9b28d30400b88feac7baba10b70",
-                    "class_id": "83fc6a91c5244863958d3596db09eeed",
-                    "eleve_code": "STU-5000000"
-                },
-                "jetons": {
-                    "parent": {
-                        "Authorization": "Bearer Ryz8d_xUhtFQoXvmqhG2O1NDPrKeXgKOvLEzTyHNepI"
-                    },
-                    "professeur": {
-                        "Authorization": "Bearer DZpw3QCW0D4Wbms3YhxyFkXw2akHDRXSc8Q0YlTSw68"
-                    },
-                    "directeur": {
-                        "Authorization": "Bearer wbdVGCVyR9IKtrvSYlLeI68jloYsjLYnWOKV7Hbp6W8"
-                    },
-                    "discipline": {
-                        "Authorization": "Bearer ZFBF9loizjKAxiVKbspEzdkIzKQkRTU7p13DZMp5nQs"
-                    }
-                },
-                "portee_professeur": 286,
-                "eleves_count": 2000,
-                "eleves_ecriture": [
-                    "9d2bf9b28d30400b88feac7baba10b70",
-                    "9740d47fca3b407889bd99ef356b7136",
-                    "b2319127be024c55853ddfb4db16472b",
-                    "1ed17eaf136f4b348c09a1c6a3ecb045",
-                    "acccf7e07082495f9c4f36158c9bcf6c",
-                    "c852d43a0d05406786f970d9b67ca12f",
-                    "913251d5aab84186aad149ef35d0b9f8",
-                    "7296153e3f8b4804bb27975f78ec66ac",
-                    "a669ec5f409c49c28ffa1aaf79119087",
-                    "8ccfd26c318f427ca884ef27b212cfe5",
-                    "97de189a4175447cbb8d0a97f00d4c24",
-                    "c45c3b449f62484389daf93dc3ef01f0",
-                    "b3243711b81c4c8e8d26e606eb6b340a",
-                    "deda390941e1429ca7a65bf267051cf1",
-                    "f4d76749b60a4c598e39cade2a62545c",
-                    "e9b9d764b7074660bd815625c10a0fd9",
-                    "6261ac46d935465d8adaecdff1a153ce",
-                    "28600df1a6bb41158379f9f3b550f1d8",
-                    "f3e4ef92799848d28fe269f45cf16d2e",
-                    "12a0112e216b4ed5b66026807d676896",
-                    "1249a19626bc4b76b3bb0ebb99392529",
-                    "75d15af499f04939b6f08bf4d2377fea",
-                    "789fbf3a2d8a4ae3a01bf318184e127d",
-                    "6a857155764a474e9e66f7ac87a3e346",
-                    "cdeb72f4335b4b5b98af9800e2fbb9f1",
-                    "2c902da67b5d4792a9d73d77a76d0f57",
-                    "f175d02a8ab8436facf597a229d0a38d",
-                    "5b17280b85c141c1b5c7e057c332b48e",
-                    "c58ca929ade74b0381f7ed4c3aa2f5ff",
-                    "b9ee8cb548484ff4a72ec6b748a576ed",
-                    "395bb44fdbd8437ba702bc2d7a5b0679",
-                    "74955ca3fdce4d69bd0aba6e22da0691",
-                    "cd39445a75484d7ba1b455ba7e7adc47",
-                    "bdef79748cdf4fe5a7d003a1fb8b5de8",
-                    "89b0123566b94324893ca7c52c945d4b",
-                    "110eea0733d54c6491d81d3bcb69d32f",
-                    "40a5dbc8b17f45faa07a0d2e5d34448f",
-                    "f60d9a39c5204a1ea811d99e079a75db",
-                    "aeaa6275c18e4791817f0677b6db85a0",
-                    "a443991adc6046e6b37399b28d4ba944",
-                    "e86901dd42f041e5a3f0d1eb7adb3a9c",
-                    "8779f395cc89442b8522b62e72ca6d08",
-                    "c11dbb49d03d45ed8dd5b682cf6526f6",
-                    "ca40f428c6ab4c1c866f3a7dfa3da332",
-                    "0515b00becac48aca716bc74b6f5adb6",
-                    "3e2be78504df4fcaae7f95e7112e4682",
-                    "be262958cf8f455895101699c5ce2a57",
-                    "4be22f0a2b21483887b84c99dde8b008"
-                ],
-                "etiquette": "ecole5",
-                "portee_discipline": 992,
-                "portee_parent": 2,
-                "tenant_id": "aaab8df982924cf699827047dc538d7a"
-            }
-        ]
-    },
     "root_group": {
         "groups": {
             "parent": {
@@ -833,21 +414,21 @@
                 "id": "32433ba3ced9c893ffc15810a9fd6b0c",
                 "groups": {},
                 "checks": {
-                        "enfants du parent : contenu attendu": {
-                            "name": "enfants du parent : contenu attendu",
-                            "path": "::parent::enfants du parent : contenu attendu",
-                            "id": "8f5b0599728afa2aeb4024b55d61ca7b",
-                            "passes": 136,
-                            "fails": 0
-                        },
-                        "dossier enfant : contenu attendu": {
-                            "path": "::parent::dossier enfant : contenu attendu",
-                            "id": "cfbad938a0e0a453059ee6d1c6b29091",
-                            "passes": 136,
-                            "fails": 0,
-                            "name": "dossier enfant : contenu attendu"
-                        }
+                    "enfants du parent : contenu attendu": {
+                        "name": "enfants du parent : contenu attendu",
+                        "path": "::parent::enfants du parent : contenu attendu",
+                        "id": "8f5b0599728afa2aeb4024b55d61ca7b",
+                        "passes": 136,
+                        "fails": 0
+                    },
+                    "dossier enfant : contenu attendu": {
+                        "path": "::parent::dossier enfant : contenu attendu",
+                        "id": "cfbad938a0e0a453059ee6d1c6b29091",
+                        "passes": 136,
+                        "fails": 0,
+                        "name": "dossier enfant : contenu attendu"
                     }
+                }
             },
             "directeur": {
                 "name": "directeur",
@@ -855,35 +436,35 @@
                 "id": "bc16421ce7e07531984570fbac4c04fe",
                 "groups": {},
                 "checks": {
-                        "tableau de bord : contenu attendu": {
-                            "passes": 20,
-                            "fails": 0,
-                            "name": "tableau de bord : contenu attendu",
-                            "path": "::directeur::tableau de bord : contenu attendu",
-                            "id": "b62fa82f6da9175b2312d56e5045a4d3"
-                        },
-                        "liste élèves : contenu attendu": {
-                            "name": "liste élèves : contenu attendu",
-                            "path": "::directeur::liste élèves : contenu attendu",
-                            "id": "bd0aa9b188e6d8b363ae76ebcd01ae00",
-                            "passes": 20,
-                            "fails": 0
-                        },
-                        "dossier élève : contenu attendu": {
-                            "fails": 0,
-                            "name": "dossier élève : contenu attendu",
-                            "path": "::directeur::dossier élève : contenu attendu",
-                            "id": "ca953893295096592b540681be1efb38",
-                            "passes": 20
-                        },
-                        "rapports : contenu attendu": {
-                            "name": "rapports : contenu attendu",
-                            "path": "::directeur::rapports : contenu attendu",
-                            "id": "facc00fcd1d3afd40feb68529752eb88",
-                            "passes": 20,
-                            "fails": 0
-                        }
+                    "tableau de bord : contenu attendu": {
+                        "passes": 20,
+                        "fails": 0,
+                        "name": "tableau de bord : contenu attendu",
+                        "path": "::directeur::tableau de bord : contenu attendu",
+                        "id": "b62fa82f6da9175b2312d56e5045a4d3"
+                    },
+                    "liste élèves : contenu attendu": {
+                        "name": "liste élèves : contenu attendu",
+                        "path": "::directeur::liste élèves : contenu attendu",
+                        "id": "bd0aa9b188e6d8b363ae76ebcd01ae00",
+                        "passes": 20,
+                        "fails": 0
+                    },
+                    "dossier élève : contenu attendu": {
+                        "fails": 0,
+                        "name": "dossier élève : contenu attendu",
+                        "path": "::directeur::dossier élève : contenu attendu",
+                        "id": "ca953893295096592b540681be1efb38",
+                        "passes": 20
+                    },
+                    "rapports : contenu attendu": {
+                        "name": "rapports : contenu attendu",
+                        "path": "::directeur::rapports : contenu attendu",
+                        "id": "facc00fcd1d3afd40feb68529752eb88",
+                        "passes": 20,
+                        "fails": 0
                     }
+                }
             },
             "professeur": {
                 "name": "professeur",
@@ -891,35 +472,35 @@
                 "id": "743a5834d8af671c5631b3c886c38d06",
                 "groups": {},
                 "checks": {
-                        "élèves du professeur : contenu attendu": {
-                            "name": "élèves du professeur : contenu attendu",
-                            "path": "::professeur::élèves du professeur : contenu attendu",
-                            "id": "a2d597621cf43cd4e1381758f66fb912",
-                            "passes": 111,
-                            "fails": 0
-                        }
+                    "élèves du professeur : contenu attendu": {
+                        "name": "élèves du professeur : contenu attendu",
+                        "path": "::professeur::élèves du professeur : contenu attendu",
+                        "id": "a2d597621cf43cd4e1381758f66fb912",
+                        "passes": 111,
+                        "fails": 0
                     }
+                }
             },
             "discipline": {
                 "path": "::discipline",
                 "id": "a20f2419e539d6f340a3629ea3621bfd",
                 "groups": {},
                 "checks": {
-                        "aperçu discipline : contenu attendu": {
-                            "name": "aperçu discipline : contenu attendu",
-                            "path": "::discipline::aperçu discipline : contenu attendu",
-                            "id": "6a564c7575d5d09c05b4d9cb48c32dc9",
-                            "passes": 4,
-                            "fails": 0
-                        },
-                        "dossier élève (DD) : contenu attendu": {
-                            "id": "99b4e1b16d73d87b5d1c118d4c36a807",
-                            "passes": 4,
-                            "fails": 0,
-                            "name": "dossier élève (DD) : contenu attendu",
-                            "path": "::discipline::dossier élève (DD) : contenu attendu"
-                        }
+                    "aperçu discipline : contenu attendu": {
+                        "name": "aperçu discipline : contenu attendu",
+                        "path": "::discipline::aperçu discipline : contenu attendu",
+                        "id": "6a564c7575d5d09c05b4d9cb48c32dc9",
+                        "passes": 4,
+                        "fails": 0
                     },
+                    "dossier élève (DD) : contenu attendu": {
+                        "id": "99b4e1b16d73d87b5d1c118d4c36a807",
+                        "passes": 4,
+                        "fails": 0,
+                        "name": "dossier élève (DD) : contenu attendu",
+                        "path": "::discipline::dossier élève (DD) : contenu attendu"
+                    }
+                },
                 "name": "discipline"
             }
         },

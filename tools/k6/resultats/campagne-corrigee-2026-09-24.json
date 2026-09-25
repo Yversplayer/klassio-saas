@@ -1,53 +1,4 @@
 {
-    "setup_data": {
-        "isolation": {
-            "b": {
-                "etiquette": "beta",
-                "exemples": {
-                    "class_id": "d2fd0681a05c4a0a91e9f86fb4d695b2",
-                    "eleve_code": "STU-A6MA-NDJU",
-                    "eleve_id": "ab6c4c076f5144089dc28dafb26d7bd2",
-                    "eleve_nom": "Badibanga11"
-                },
-                "tenant_id": "e7b6a7871d994ed8952996d11da42154",
-                "classes_count": 24,
-                "comptes": {
-                    "directeur": "direction@beta.charge.test",
-                    "discipline": "dd@beta.charge.test",
-                    "parent": "parent@beta.charge.test",
-                    "professeur": "prof@beta.charge.test"
-                },
-                "eleves_count": 500
-            },
-            "hA": {
-                "Authorization": "Bearer dRLkFVjqkxy0sGdGZ4iiS-HaeR-u_oxMMAlhcofER3Y"
-            },
-            "hB": {
-                "Authorization": "Bearer jEn765mJLobxLbxeOFgc2Q5b_kOvKrfgKDdz-OlneJ8"
-            },
-            "hParentB": {
-                "Authorization": "Bearer qY5lYSqwMG1llL31F1baqDNfiSqlq1rjYN2GrrhEIE0"
-            },
-            "a": {
-                "classes_count": 24,
-                "comptes": {
-                    "professeur": "prof@alpha.charge.test",
-                    "directeur": "direction@alpha.charge.test",
-                    "discipline": "dd@alpha.charge.test",
-                    "parent": "parent@alpha.charge.test"
-                },
-                "eleves_count": 2000,
-                "etiquette": "alpha",
-                "exemples": {
-                    "class_id": "9bc92b97416346fca1d456ac337b9acd",
-                    "eleve_code": "STU-2295-QGQU",
-                    "eleve_id": "d4427a4bae094765a9cb9d6aa59b4212",
-                    "eleve_nom": "Badibanga1021"
-                },
-                "tenant_id": "279dade92d0140fda38dcab727608ccc"
-            }
-        }
-    },
     "root_group": {
         "groups": {
             "Direction": {
@@ -56,166 +7,166 @@
                 "id": "822e05e4528c624820eb94093cdfb545",
                 "groups": {},
                 "checks": {
-                        "me : 200": {
-                            "name": "me : 200",
-                            "path": "::Direction::me : 200",
-                            "id": "82501ca322d587eed7392515afd07a9a",
-                            "passes": 1,
-                            "fails": 0
-                        },
-                        "me : champs attendus": {
-                            "name": "me : champs attendus",
-                            "path": "::Direction::me : champs attendus",
-                            "id": "b9191f7eff5b1ce635547e10869bcc08",
-                            "passes": 1,
-                            "fails": 0
-                        },
-                        "tableau de bord : 200": {
-                            "fails": 0,
-                            "name": "tableau de bord : 200",
-                            "path": "::Direction::tableau de bord : 200",
-                            "id": "334724ab762c4a7a6898587aa3aa23f3",
-                            "passes": 1
-                        },
-                        "tableau de bord : champs attendus": {
-                            "name": "tableau de bord : champs attendus",
-                            "path": "::Direction::tableau de bord : champs attendus",
-                            "id": "5d16efa96f3c53fdd2991ce5728ce6f9",
-                            "passes": 1,
-                            "fails": 0
-                        },
-                        "élèves : 200": {
-                            "name": "élèves : 200",
-                            "path": "::Direction::élèves : 200",
-                            "id": "8b7cfa292be1ea6aa485c78d8005ed5d",
-                            "passes": 1,
-                            "fails": 0
-                        },
-                        "élèves : liste non vide": {
-                            "fails": 0,
-                            "name": "élèves : liste non vide",
-                            "path": "::Direction::élèves : liste non vide",
-                            "id": "1155688336d7d972635d0855669c9714",
-                            "passes": 1
-                        },
-                        "élèves : champ « code » présent": {
-                            "id": "e6b8794149cf8685806db561f98a96da",
-                            "passes": 1,
-                            "fails": 0,
-                            "name": "élèves : champ « code » présent",
-                            "path": "::Direction::élèves : champ « code » présent"
-                        },
-                        "classes : 200": {
-                            "fails": 0,
-                            "name": "classes : 200",
-                            "path": "::Direction::classes : 200",
-                            "id": "a507ead4eb6ae4e404cf24f93158624d",
-                            "passes": 1
-                        },
-                        "classes : liste non vide": {
-                            "name": "classes : liste non vide",
-                            "path": "::Direction::classes : liste non vide",
-                            "id": "25a303ff3c3bf5dd9449d034ed77740e",
-                            "passes": 1,
-                            "fails": 0
-                        },
-                        "classes : champ « name » présent": {
-                            "passes": 1,
-                            "fails": 0,
-                            "name": "classes : champ « name » présent",
-                            "path": "::Direction::classes : champ « name » présent",
-                            "id": "24cf681d8979240c232dcbdf4363c023"
-                        },
-                        "rapports : 200": {
-                            "path": "::Direction::rapports : 200",
-                            "id": "98b5bd6684075fded22af55c615bcc2e",
-                            "passes": 1,
-                            "fails": 0,
-                            "name": "rapports : 200"
-                        },
-                        "rapports : champs attendus": {
-                            "name": "rapports : champs attendus",
-                            "path": "::Direction::rapports : champs attendus",
-                            "id": "4f1e9ecdc8604e13d2add039f5e646bc",
-                            "passes": 1,
-                            "fails": 0
-                        },
-                        "réglages : 200": {
-                            "name": "réglages : 200",
-                            "path": "::Direction::réglages : 200",
-                            "id": "0a0c99f943f9a9ad5f61f36460500504",
-                            "passes": 1,
-                            "fails": 0
-                        },
-                        "réglages : champs attendus": {
-                            "name": "réglages : champs attendus",
-                            "path": "::Direction::réglages : champs attendus",
-                            "id": "76f872a80251cf91d2a189668d59ec13",
-                            "passes": 1,
-                            "fails": 0
-                        },
-                        "dossier élève : 200": {
-                            "id": "8c3863b421b6b3a20c787b5f592f8e80",
-                            "passes": 1,
-                            "fails": 0,
-                            "name": "dossier élève : 200",
-                            "path": "::Direction::dossier élève : 200"
-                        },
-                        "dossier élève : identité présente": {
-                            "fails": 0,
-                            "name": "dossier élève : identité présente",
-                            "path": "::Direction::dossier élève : identité présente",
-                            "id": "9ab4b2268aa4e1ddb2e7d6ff9dbd8909",
-                            "passes": 1
-                        },
-                        "dossier élève : finance recalculée": {
-                            "name": "dossier élève : finance recalculée",
-                            "path": "::Direction::dossier élève : finance recalculée",
-                            "id": "60d4e47e48d1fb81f3c1fbfad90f3efc",
-                            "passes": 1,
-                            "fails": 0
-                        },
-                        "finance élève : solde cohérent": {
-                            "passes": 1,
-                            "fails": 0,
-                            "name": "finance élève : solde cohérent",
-                            "path": "::Direction::finance élève : solde cohérent",
-                            "id": "5a01709707cba4c8aed98bc4cbe05540"
-                        }
+                    "me : 200": {
+                        "name": "me : 200",
+                        "path": "::Direction::me : 200",
+                        "id": "82501ca322d587eed7392515afd07a9a",
+                        "passes": 1,
+                        "fails": 0
+                    },
+                    "me : champs attendus": {
+                        "name": "me : champs attendus",
+                        "path": "::Direction::me : champs attendus",
+                        "id": "b9191f7eff5b1ce635547e10869bcc08",
+                        "passes": 1,
+                        "fails": 0
+                    },
+                    "tableau de bord : 200": {
+                        "fails": 0,
+                        "name": "tableau de bord : 200",
+                        "path": "::Direction::tableau de bord : 200",
+                        "id": "334724ab762c4a7a6898587aa3aa23f3",
+                        "passes": 1
+                    },
+                    "tableau de bord : champs attendus": {
+                        "name": "tableau de bord : champs attendus",
+                        "path": "::Direction::tableau de bord : champs attendus",
+                        "id": "5d16efa96f3c53fdd2991ce5728ce6f9",
+                        "passes": 1,
+                        "fails": 0
+                    },
+                    "élèves : 200": {
+                        "name": "élèves : 200",
+                        "path": "::Direction::élèves : 200",
+                        "id": "8b7cfa292be1ea6aa485c78d8005ed5d",
+                        "passes": 1,
+                        "fails": 0
+                    },
+                    "élèves : liste non vide": {
+                        "fails": 0,
+                        "name": "élèves : liste non vide",
+                        "path": "::Direction::élèves : liste non vide",
+                        "id": "1155688336d7d972635d0855669c9714",
+                        "passes": 1
+                    },
+                    "élèves : champ « code » présent": {
+                        "id": "e6b8794149cf8685806db561f98a96da",
+                        "passes": 1,
+                        "fails": 0,
+                        "name": "élèves : champ « code » présent",
+                        "path": "::Direction::élèves : champ « code » présent"
+                    },
+                    "classes : 200": {
+                        "fails": 0,
+                        "name": "classes : 200",
+                        "path": "::Direction::classes : 200",
+                        "id": "a507ead4eb6ae4e404cf24f93158624d",
+                        "passes": 1
+                    },
+                    "classes : liste non vide": {
+                        "name": "classes : liste non vide",
+                        "path": "::Direction::classes : liste non vide",
+                        "id": "25a303ff3c3bf5dd9449d034ed77740e",
+                        "passes": 1,
+                        "fails": 0
+                    },
+                    "classes : champ « name » présent": {
+                        "passes": 1,
+                        "fails": 0,
+                        "name": "classes : champ « name » présent",
+                        "path": "::Direction::classes : champ « name » présent",
+                        "id": "24cf681d8979240c232dcbdf4363c023"
+                    },
+                    "rapports : 200": {
+                        "path": "::Direction::rapports : 200",
+                        "id": "98b5bd6684075fded22af55c615bcc2e",
+                        "passes": 1,
+                        "fails": 0,
+                        "name": "rapports : 200"
+                    },
+                    "rapports : champs attendus": {
+                        "name": "rapports : champs attendus",
+                        "path": "::Direction::rapports : champs attendus",
+                        "id": "4f1e9ecdc8604e13d2add039f5e646bc",
+                        "passes": 1,
+                        "fails": 0
+                    },
+                    "réglages : 200": {
+                        "name": "réglages : 200",
+                        "path": "::Direction::réglages : 200",
+                        "id": "0a0c99f943f9a9ad5f61f36460500504",
+                        "passes": 1,
+                        "fails": 0
+                    },
+                    "réglages : champs attendus": {
+                        "name": "réglages : champs attendus",
+                        "path": "::Direction::réglages : champs attendus",
+                        "id": "76f872a80251cf91d2a189668d59ec13",
+                        "passes": 1,
+                        "fails": 0
+                    },
+                    "dossier élève : 200": {
+                        "id": "8c3863b421b6b3a20c787b5f592f8e80",
+                        "passes": 1,
+                        "fails": 0,
+                        "name": "dossier élève : 200",
+                        "path": "::Direction::dossier élève : 200"
+                    },
+                    "dossier élève : identité présente": {
+                        "fails": 0,
+                        "name": "dossier élève : identité présente",
+                        "path": "::Direction::dossier élève : identité présente",
+                        "id": "9ab4b2268aa4e1ddb2e7d6ff9dbd8909",
+                        "passes": 1
+                    },
+                    "dossier élève : finance recalculée": {
+                        "name": "dossier élève : finance recalculée",
+                        "path": "::Direction::dossier élève : finance recalculée",
+                        "id": "60d4e47e48d1fb81f3c1fbfad90f3efc",
+                        "passes": 1,
+                        "fails": 0
+                    },
+                    "finance élève : solde cohérent": {
+                        "passes": 1,
+                        "fails": 0,
+                        "name": "finance élève : solde cohérent",
+                        "path": "::Direction::finance élève : solde cohérent",
+                        "id": "5a01709707cba4c8aed98bc4cbe05540"
                     }
+                }
             },
             "Professeur": {
                 "groups": {},
                 "checks": {
-                        "professeur : ne voit que ses classes": {
-                            "passes": 1,
-                            "fails": 0,
-                            "name": "professeur : ne voit que ses classes",
-                            "path": "::Professeur::professeur : ne voit que ses classes",
-                            "id": "7a086754128cdceba44cf0da1a2fa365"
-                        },
-                        "élèves du professeur : 200": {
-                            "name": "élèves du professeur : 200",
-                            "path": "::Professeur::élèves du professeur : 200",
-                            "id": "d0b9fddcb5e04e87123530e5844cd8f2",
-                            "passes": 1,
-                            "fails": 0
-                        },
-                        "élèves du professeur : liste non vide": {
-                            "name": "élèves du professeur : liste non vide",
-                            "path": "::Professeur::élèves du professeur : liste non vide",
-                            "id": "d565d764835fdfb01791f2ce7bba9306",
-                            "passes": 1,
-                            "fails": 0
-                        },
-                        "élèves du professeur : champ « code » présent": {
-                            "name": "élèves du professeur : champ « code » présent",
-                            "path": "::Professeur::élèves du professeur : champ « code » présent",
-                            "id": "f67c0bc2046291b31f326a14bf90aa63",
-                            "passes": 1,
-                            "fails": 0
-                        }
+                    "professeur : ne voit que ses classes": {
+                        "passes": 1,
+                        "fails": 0,
+                        "name": "professeur : ne voit que ses classes",
+                        "path": "::Professeur::professeur : ne voit que ses classes",
+                        "id": "7a086754128cdceba44cf0da1a2fa365"
                     },
+                    "élèves du professeur : 200": {
+                        "name": "élèves du professeur : 200",
+                        "path": "::Professeur::élèves du professeur : 200",
+                        "id": "d0b9fddcb5e04e87123530e5844cd8f2",
+                        "passes": 1,
+                        "fails": 0
+                    },
+                    "élèves du professeur : liste non vide": {
+                        "name": "élèves du professeur : liste non vide",
+                        "path": "::Professeur::élèves du professeur : liste non vide",
+                        "id": "d565d764835fdfb01791f2ce7bba9306",
+                        "passes": 1,
+                        "fails": 0
+                    },
+                    "élèves du professeur : champ « code » présent": {
+                        "name": "élèves du professeur : champ « code » présent",
+                        "path": "::Professeur::élèves du professeur : champ « code » présent",
+                        "id": "f67c0bc2046291b31f326a14bf90aa63",
+                        "passes": 1,
+                        "fails": 0
+                    }
+                },
                 "name": "Professeur",
                 "path": "::Professeur",
                 "id": "a43a53ba6af7e0d641dc26f49909bb48"
@@ -224,21 +175,21 @@
                 "id": "642c46068f161f436074be7f3c05a435",
                 "groups": {},
                 "checks": {
-                        "parent : périmètre réduit à ses enfants": {
-                            "path": "::Parent::parent : périmètre réduit à ses enfants",
-                            "id": "2dbbab3df3bd05f6ffcca2bbefd381d6",
-                            "passes": 1,
-                            "fails": 0,
-                            "name": "parent : périmètre réduit à ses enfants"
-                        },
-                        "parent : rapports d’établissement refusés": {
-                            "path": "::Parent::parent : rapports d’établissement refusés",
-                            "id": "011f00f5756ed43c34fac47fb0275711",
-                            "passes": 1,
-                            "fails": 0,
-                            "name": "parent : rapports d’établissement refusés"
-                        }
+                    "parent : périmètre réduit à ses enfants": {
+                        "path": "::Parent::parent : périmètre réduit à ses enfants",
+                        "id": "2dbbab3df3bd05f6ffcca2bbefd381d6",
+                        "passes": 1,
+                        "fails": 0,
+                        "name": "parent : périmètre réduit à ses enfants"
                     },
+                    "parent : rapports d’établissement refusés": {
+                        "path": "::Parent::parent : rapports d’établissement refusés",
+                        "id": "011f00f5756ed43c34fac47fb0275711",
+                        "passes": 1,
+                        "fails": 0,
+                        "name": "parent : rapports d’établissement refusés"
+                    }
+                },
                 "name": "Parent",
                 "path": "::Parent"
             },
@@ -248,54 +199,54 @@
                 "id": "b760801d520b2a5d598a4e65c60df9e1",
                 "groups": {},
                 "checks": {
-                        "discipline : 200": {
-                            "name": "discipline : 200",
-                            "path": "::Discipline::discipline : 200",
-                            "id": "14180f17e1b831e43e14d097fbdcfc76",
-                            "passes": 1,
-                            "fails": 0
-                        },
-                        "discipline : champs attendus": {
-                            "passes": 1,
-                            "fails": 0,
-                            "name": "discipline : champs attendus",
-                            "path": "::Discipline::discipline : champs attendus",
-                            "id": "bfbc593febb46b1357fc409c34c82b00"
-                        }
+                    "discipline : 200": {
+                        "name": "discipline : 200",
+                        "path": "::Discipline::discipline : 200",
+                        "id": "14180f17e1b831e43e14d097fbdcfc76",
+                        "passes": 1,
+                        "fails": 0
+                    },
+                    "discipline : champs attendus": {
+                        "passes": 1,
+                        "fails": 0,
+                        "name": "discipline : champs attendus",
+                        "path": "::Discipline::discipline : champs attendus",
+                        "id": "bfbc593febb46b1357fc409c34c82b00"
                     }
+                }
             },
             "Alpha travaille, et ne voit jamais Beta": {
                 "groups": {},
                 "checks": {
-                        "alpha : voit ses propres élèves": {
-                            "passes": 1,
-                            "fails": 0,
-                            "name": "alpha : voit ses propres élèves",
-                            "path": "::Alpha travaille, et ne voit jamais Beta::alpha : voit ses propres élèves",
-                            "id": "ead62247d1703dd7545532cdbdd8b0f3"
-                        },
-                        "directeur alpha : dossier d’un autre établissement refusé": {
-                            "fails": 0,
-                            "name": "directeur alpha : dossier d’un autre établissement refusé",
-                            "path": "::Alpha travaille, et ne voit jamais Beta::directeur alpha : dossier d’un autre établissement refusé",
-                            "id": "6303a0b0b5bb125c21ff9d263519e955",
-                            "passes": 1
-                        },
-                        "directeur alpha : classe d’un autre établissement refusée": {
-                            "fails": 0,
-                            "name": "directeur alpha : classe d’un autre établissement refusée",
-                            "path": "::Alpha travaille, et ne voit jamais Beta::directeur alpha : classe d’un autre établissement refusée",
-                            "id": "b0622b04d7ace9bb69dd588762589a21",
-                            "passes": 1
-                        },
-                        "directeur alpha : recherche ne traverse pas les établissements": {
-                            "path": "::Alpha travaille, et ne voit jamais Beta::directeur alpha : recherche ne traverse pas les établissements",
-                            "id": "89cc8f1cf753bda81fba2faee2bc10a7",
-                            "passes": 1,
-                            "fails": 0,
-                            "name": "directeur alpha : recherche ne traverse pas les établissements"
-                        }
+                    "alpha : voit ses propres élèves": {
+                        "passes": 1,
+                        "fails": 0,
+                        "name": "alpha : voit ses propres élèves",
+                        "path": "::Alpha travaille, et ne voit jamais Beta::alpha : voit ses propres élèves",
+                        "id": "ead62247d1703dd7545532cdbdd8b0f3"
                     },
+                    "directeur alpha : dossier d’un autre établissement refusé": {
+                        "fails": 0,
+                        "name": "directeur alpha : dossier d’un autre établissement refusé",
+                        "path": "::Alpha travaille, et ne voit jamais Beta::directeur alpha : dossier d’un autre établissement refusé",
+                        "id": "6303a0b0b5bb125c21ff9d263519e955",
+                        "passes": 1
+                    },
+                    "directeur alpha : classe d’un autre établissement refusée": {
+                        "fails": 0,
+                        "name": "directeur alpha : classe d’un autre établissement refusée",
+                        "path": "::Alpha travaille, et ne voit jamais Beta::directeur alpha : classe d’un autre établissement refusée",
+                        "id": "b0622b04d7ace9bb69dd588762589a21",
+                        "passes": 1
+                    },
+                    "directeur alpha : recherche ne traverse pas les établissements": {
+                        "path": "::Alpha travaille, et ne voit jamais Beta::directeur alpha : recherche ne traverse pas les établissements",
+                        "id": "89cc8f1cf753bda81fba2faee2bc10a7",
+                        "passes": 1,
+                        "fails": 0,
+                        "name": "directeur alpha : recherche ne traverse pas les établissements"
+                    }
+                },
                 "name": "Alpha travaille, et ne voit jamais Beta",
                 "path": "::Alpha travaille, et ne voit jamais Beta",
                 "id": "8bf0c51d479c96c975d2176d722cec7d"
@@ -305,56 +256,56 @@
                 "id": "f1a2f51e1d638a02a7c78987cafd95a8",
                 "groups": {},
                 "checks": {
-                        "beta : voit ses propres élèves": {
-                            "passes": 1,
-                            "fails": 0,
-                            "name": "beta : voit ses propres élèves",
-                            "path": "::Beta travaille, et ne voit jamais Alpha::beta : voit ses propres élèves",
-                            "id": "9988f404f10f3fb405e497da0fa2126f"
-                        },
-                        "directeur beta : dossier d’un autre établissement refusé": {
-                            "id": "11b7df355de2e21d1d6da461e7c25bfd",
-                            "passes": 1,
-                            "fails": 0,
-                            "name": "directeur beta : dossier d’un autre établissement refusé",
-                            "path": "::Beta travaille, et ne voit jamais Alpha::directeur beta : dossier d’un autre établissement refusé"
-                        },
-                        "directeur beta : classe d’un autre établissement refusée": {
-                            "name": "directeur beta : classe d’un autre établissement refusée",
-                            "path": "::Beta travaille, et ne voit jamais Alpha::directeur beta : classe d’un autre établissement refusée",
-                            "id": "6a281f56dcb3b40334e60c265e058b48",
-                            "passes": 1,
-                            "fails": 0
-                        },
-                        "directeur beta : recherche ne traverse pas les établissements": {
-                            "name": "directeur beta : recherche ne traverse pas les établissements",
-                            "path": "::Beta travaille, et ne voit jamais Alpha::directeur beta : recherche ne traverse pas les établissements",
-                            "id": "67e7008fc72cfcb24c6f0d818c432fbc",
-                            "passes": 1,
-                            "fails": 0
-                        },
-                        "parent beta : dossier d’un autre établissement refusé": {
-                            "passes": 1,
-                            "fails": 0,
-                            "name": "parent beta : dossier d’un autre établissement refusé",
-                            "path": "::Beta travaille, et ne voit jamais Alpha::parent beta : dossier d’un autre établissement refusé",
-                            "id": "40719ed92fccd7d11debedc13da6bb9c"
-                        },
-                        "parent beta : classe d’un autre établissement refusée": {
-                            "name": "parent beta : classe d’un autre établissement refusée",
-                            "path": "::Beta travaille, et ne voit jamais Alpha::parent beta : classe d’un autre établissement refusée",
-                            "id": "0117597884d583b3f172c6be37b1df04",
-                            "passes": 1,
-                            "fails": 0
-                        },
-                        "parent beta : recherche ne traverse pas les établissements": {
-                            "name": "parent beta : recherche ne traverse pas les établissements",
-                            "path": "::Beta travaille, et ne voit jamais Alpha::parent beta : recherche ne traverse pas les établissements",
-                            "id": "8cd61feaa8807e623d0a43a56c801348",
-                            "passes": 1,
-                            "fails": 0
-                        }
+                    "beta : voit ses propres élèves": {
+                        "passes": 1,
+                        "fails": 0,
+                        "name": "beta : voit ses propres élèves",
+                        "path": "::Beta travaille, et ne voit jamais Alpha::beta : voit ses propres élèves",
+                        "id": "9988f404f10f3fb405e497da0fa2126f"
                     },
+                    "directeur beta : dossier d’un autre établissement refusé": {
+                        "id": "11b7df355de2e21d1d6da461e7c25bfd",
+                        "passes": 1,
+                        "fails": 0,
+                        "name": "directeur beta : dossier d’un autre établissement refusé",
+                        "path": "::Beta travaille, et ne voit jamais Alpha::directeur beta : dossier d’un autre établissement refusé"
+                    },
+                    "directeur beta : classe d’un autre établissement refusée": {
+                        "name": "directeur beta : classe d’un autre établissement refusée",
+                        "path": "::Beta travaille, et ne voit jamais Alpha::directeur beta : classe d’un autre établissement refusée",
+                        "id": "6a281f56dcb3b40334e60c265e058b48",
+                        "passes": 1,
+                        "fails": 0
+                    },
+                    "directeur beta : recherche ne traverse pas les établissements": {
+                        "name": "directeur beta : recherche ne traverse pas les établissements",
+                        "path": "::Beta travaille, et ne voit jamais Alpha::directeur beta : recherche ne traverse pas les établissements",
+                        "id": "67e7008fc72cfcb24c6f0d818c432fbc",
+                        "passes": 1,
+                        "fails": 0
+                    },
+                    "parent beta : dossier d’un autre établissement refusé": {
+                        "passes": 1,
+                        "fails": 0,
+                        "name": "parent beta : dossier d’un autre établissement refusé",
+                        "path": "::Beta travaille, et ne voit jamais Alpha::parent beta : dossier d’un autre établissement refusé",
+                        "id": "40719ed92fccd7d11debedc13da6bb9c"
+                    },
+                    "parent beta : classe d’un autre établissement refusée": {
+                        "name": "parent beta : classe d’un autre établissement refusée",
+                        "path": "::Beta travaille, et ne voit jamais Alpha::parent beta : classe d’un autre établissement refusée",
+                        "id": "0117597884d583b3f172c6be37b1df04",
+                        "passes": 1,
+                        "fails": 0
+                    },
+                    "parent beta : recherche ne traverse pas les établissements": {
+                        "name": "parent beta : recherche ne traverse pas les établissements",
+                        "path": "::Beta travaille, et ne voit jamais Alpha::parent beta : recherche ne traverse pas les établissements",
+                        "id": "8cd61feaa8807e623d0a43a56c801348",
+                        "passes": 1,
+                        "fails": 0
+                    }
+                },
                 "name": "Beta travaille, et ne voit jamais Alpha"
             }
         },

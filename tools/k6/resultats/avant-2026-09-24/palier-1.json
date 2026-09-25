@@ -1,33 +1,4 @@
 {
-    "setup_data": {
-        "alpha": {
-            "comptes": {
-                "directeur": "direction@alpha.charge.test",
-                "discipline": "dd@alpha.charge.test",
-                "parent": "parent@alpha.charge.test",
-                "professeur": "prof@alpha.charge.test"
-            },
-            "eleves_count": 2000,
-            "etiquette": "alpha",
-            "exemples": {
-                "eleve_id": "d4427a4bae094765a9cb9d6aa59b4212",
-                "eleve_nom": "Badibanga1021",
-                "class_id": "9bc92b97416346fca1d456ac337b9acd",
-                "eleve_code": "STU-2295-QGQU"
-            },
-            "tenant_id": "279dade92d0140fda38dcab727608ccc",
-            "classes_count": 24
-        },
-        "directeur": {
-            "Authorization": "Bearer 4PzaqefXzSYkDlTnm9H4TRm_SA0nRQOoPEQWGstC0bo"
-        },
-        "parent": {
-            "Authorization": "Bearer AYNKLBbIfk3lGHrtkg2GCYfeWmdxiIfngcTq6dwga1k"
-        },
-        "professeur": {
-            "Authorization": "Bearer Y85zFG7m6SUK4lgfRuLeagN0YtqVbjp90pPvq9k5D7w"
-        }
-    },
     "root_group": {
         "path": "",
         "id": "d41d8cd98f00b204e9800998ecf8427e",
@@ -38,76 +9,76 @@
                 "id": "e48ce5274377cb51d227390cf5904f60",
                 "groups": {},
                 "checks": {
-                        "tableau de bord : 200": {
-                            "id": "b132c8ab4f0caf8268ab78b473a5bd6b",
-                            "passes": 11,
-                            "fails": 0,
-                            "name": "tableau de bord : 200",
-                            "path": "::Direction — ouverture de l’espace::tableau de bord : 200"
-                        },
-                        "tableau de bord : champs attendus": {
-                            "id": "233152b92b0f59769a9694fa5df7a8f0",
-                            "passes": 11,
-                            "fails": 0,
-                            "name": "tableau de bord : champs attendus",
-                            "path": "::Direction — ouverture de l’espace::tableau de bord : champs attendus"
-                        },
-                        "élèves : 200": {
-                            "path": "::Direction — ouverture de l’espace::élèves : 200",
-                            "id": "7323da4710431cefcfff647929fbd7dd",
-                            "passes": 11,
-                            "fails": 0,
-                            "name": "élèves : 200"
-                        },
-                        "élèves : liste non vide": {
-                            "fails": 0,
-                            "name": "élèves : liste non vide",
-                            "path": "::Direction — ouverture de l’espace::élèves : liste non vide",
-                            "id": "dbe607b1b7fb5ff7df3056c45b7b1ac0",
-                            "passes": 11
-                        },
-                        "élèves : champ « code » présent": {
-                            "fails": 0,
-                            "name": "élèves : champ « code » présent",
-                            "path": "::Direction — ouverture de l’espace::élèves : champ « code » présent",
-                            "id": "b72770124418b9ccb6f12497c679afe5",
-                            "passes": 11
-                        },
-                        "dossier : 200": {
-                            "passes": 11,
-                            "fails": 0,
-                            "name": "dossier : 200",
-                            "path": "::Direction — ouverture de l’espace::dossier : 200",
-                            "id": "435489f072990161ad4e89995d966d78"
-                        },
-                        "dossier : champs attendus": {
-                            "passes": 11,
-                            "fails": 0,
-                            "name": "dossier : champs attendus",
-                            "path": "::Direction — ouverture de l’espace::dossier : champs attendus",
-                            "id": "60aebe96b4ba7398529c3dd96941f0b0"
-                        }
+                    "tableau de bord : 200": {
+                        "id": "b132c8ab4f0caf8268ab78b473a5bd6b",
+                        "passes": 11,
+                        "fails": 0,
+                        "name": "tableau de bord : 200",
+                        "path": "::Direction — ouverture de l’espace::tableau de bord : 200"
+                    },
+                    "tableau de bord : champs attendus": {
+                        "id": "233152b92b0f59769a9694fa5df7a8f0",
+                        "passes": 11,
+                        "fails": 0,
+                        "name": "tableau de bord : champs attendus",
+                        "path": "::Direction — ouverture de l’espace::tableau de bord : champs attendus"
+                    },
+                    "élèves : 200": {
+                        "path": "::Direction — ouverture de l’espace::élèves : 200",
+                        "id": "7323da4710431cefcfff647929fbd7dd",
+                        "passes": 11,
+                        "fails": 0,
+                        "name": "élèves : 200"
+                    },
+                    "élèves : liste non vide": {
+                        "fails": 0,
+                        "name": "élèves : liste non vide",
+                        "path": "::Direction — ouverture de l’espace::élèves : liste non vide",
+                        "id": "dbe607b1b7fb5ff7df3056c45b7b1ac0",
+                        "passes": 11
+                    },
+                    "élèves : champ « code » présent": {
+                        "fails": 0,
+                        "name": "élèves : champ « code » présent",
+                        "path": "::Direction — ouverture de l’espace::élèves : champ « code » présent",
+                        "id": "b72770124418b9ccb6f12497c679afe5",
+                        "passes": 11
+                    },
+                    "dossier : 200": {
+                        "passes": 11,
+                        "fails": 0,
+                        "name": "dossier : 200",
+                        "path": "::Direction — ouverture de l’espace::dossier : 200",
+                        "id": "435489f072990161ad4e89995d966d78"
+                    },
+                    "dossier : champs attendus": {
+                        "passes": 11,
+                        "fails": 0,
+                        "name": "dossier : champs attendus",
+                        "path": "::Direction — ouverture de l’espace::dossier : champs attendus",
+                        "id": "60aebe96b4ba7398529c3dd96941f0b0"
                     }
+                }
             },
             "Direction — rapports": {
                 "id": "e875060d480ef2f3f2b67bf0815c6bf0",
                 "groups": {},
                 "checks": {
-                        "rapports : 200": {
-                            "path": "::Direction — rapports::rapports : 200",
-                            "id": "82a1d2c649142eab0240bd7c60bc6b07",
-                            "passes": 11,
-                            "fails": 0,
-                            "name": "rapports : 200"
-                        },
-                        "rapports : champs attendus": {
-                            "path": "::Direction — rapports::rapports : champs attendus",
-                            "id": "41ebf71493c04e0be33e16eb0bf1853b",
-                            "passes": 11,
-                            "fails": 0,
-                            "name": "rapports : champs attendus"
-                        }
+                    "rapports : 200": {
+                        "path": "::Direction — rapports::rapports : 200",
+                        "id": "82a1d2c649142eab0240bd7c60bc6b07",
+                        "passes": 11,
+                        "fails": 0,
+                        "name": "rapports : 200"
                     },
+                    "rapports : champs attendus": {
+                        "path": "::Direction — rapports::rapports : champs attendus",
+                        "id": "41ebf71493c04e0be33e16eb0bf1853b",
+                        "passes": 11,
+                        "fails": 0,
+                        "name": "rapports : champs attendus"
+                    }
+                },
                 "name": "Direction — rapports",
                 "path": "::Direction — rapports"
             },
@@ -144,28 +115,28 @@
                 "id": "5b556ba0d6e43ec6e9a9ccbcfe8966c7",
                 "groups": {},
                 "checks": {
-                        "enfants : 200": {
-                            "fails": 0,
-                            "name": "enfants : 200",
-                            "path": "::Parent — ses enfants::enfants : 200",
-                            "id": "97cf6a8f8f1c4b416fd97d57c9330afd",
-                            "passes": 11
-                        },
-                        "enfants : liste non vide": {
-                            "path": "::Parent — ses enfants::enfants : liste non vide",
-                            "id": "8d63426def47fd8e05900fd49b0b2083",
-                            "passes": 11,
-                            "fails": 0,
-                            "name": "enfants : liste non vide"
-                        },
-                        "enfants : champ « code » présent": {
-                            "passes": 11,
-                            "fails": 0,
-                            "name": "enfants : champ « code » présent",
-                            "path": "::Parent — ses enfants::enfants : champ « code » présent",
-                            "id": "5e7570aa44eabc3ddb89d14cdf2d6e98"
-                        }
+                    "enfants : 200": {
+                        "fails": 0,
+                        "name": "enfants : 200",
+                        "path": "::Parent — ses enfants::enfants : 200",
+                        "id": "97cf6a8f8f1c4b416fd97d57c9330afd",
+                        "passes": 11
                     },
+                    "enfants : liste non vide": {
+                        "path": "::Parent — ses enfants::enfants : liste non vide",
+                        "id": "8d63426def47fd8e05900fd49b0b2083",
+                        "passes": 11,
+                        "fails": 0,
+                        "name": "enfants : liste non vide"
+                    },
+                    "enfants : champ « code » présent": {
+                        "passes": 11,
+                        "fails": 0,
+                        "name": "enfants : champ « code » présent",
+                        "path": "::Parent — ses enfants::enfants : champ « code » présent",
+                        "id": "5e7570aa44eabc3ddb89d14cdf2d6e98"
+                    }
+                },
                 "name": "Parent — ses enfants",
                 "path": "::Parent — ses enfants"
             }

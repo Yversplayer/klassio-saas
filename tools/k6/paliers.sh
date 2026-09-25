@@ -29,6 +29,11 @@ for n in $PALIERS; do
     --summary-export="$SORTIE/palier-${n}.json" \
     "$RACINE/tools/k6/charge.js" > "$SORTIE/palier-${n}.txt" 2>&1
   code=$?
+  # k6 recopie dans l'export ce que renvoie setup() — donc les en-têtes
+  # « Authorization: Bearer … » des comptes connectés. Ces résumés sont
+  # versionnés, et le dépôt est PUBLIC : on retire la clé avant qu'elle ne
+  # touche le disque suivi. Les mesures, elles, sont toutes dans `metrics`.
+  "$RACINE/backend_venv/bin/python" "$RACINE/tools/k6/nettoyer_export.py" "$SORTIE/palier-${n}.json"
   # Un seuil dépassé (code 99) n'interrompt PAS le balayage : c'est précisément
   # l'information qu'on vient chercher. On le note et on continue.
   echo "   code de sortie k6 : $code  (0 = tous seuils tenus, 99 = seuil dépassé)"

@@ -66,49 +66,49 @@
                 "id": "e875060d480ef2f3f2b67bf0815c6bf0",
                 "groups": {},
                 "checks": {
-                        "rapports : 200": {
-                            "id": "82a1d2c649142eab0240bd7c60bc6b07",
-                            "passes": 522,
-                            "fails": 0,
-                            "name": "rapports : 200",
-                            "path": "::Direction — rapports::rapports : 200"
-                        },
-                        "rapports : champs attendus": {
-                            "name": "rapports : champs attendus",
-                            "path": "::Direction — rapports::rapports : champs attendus",
-                            "id": "41ebf71493c04e0be33e16eb0bf1853b",
-                            "passes": 522,
-                            "fails": 0
-                        }
+                    "rapports : 200": {
+                        "id": "82a1d2c649142eab0240bd7c60bc6b07",
+                        "passes": 522,
+                        "fails": 0,
+                        "name": "rapports : 200",
+                        "path": "::Direction — rapports::rapports : 200"
                     },
+                    "rapports : champs attendus": {
+                        "name": "rapports : champs attendus",
+                        "path": "::Direction — rapports::rapports : champs attendus",
+                        "id": "41ebf71493c04e0be33e16eb0bf1853b",
+                        "passes": 522,
+                        "fails": 0
+                    }
+                },
                 "name": "Direction — rapports"
             },
             "Professeur — sa classe": {
                 "id": "6a8666b74970bebe236ccb828eb94446",
                 "groups": {},
                 "checks": {
-                        "classes : 200": {
-                            "name": "classes : 200",
-                            "path": "::Professeur — sa classe::classes : 200",
-                            "id": "2487ef4d70e9fbda2e911ba4bff89f4e",
-                            "passes": 522,
-                            "fails": 0
-                        },
-                        "classes : liste non vide": {
-                            "path": "::Professeur — sa classe::classes : liste non vide",
-                            "id": "531f1e5a5e62a823615b634d04debdf1",
-                            "passes": 522,
-                            "fails": 0,
-                            "name": "classes : liste non vide"
-                        },
-                        "classes : champ « name » présent": {
-                            "name": "classes : champ « name » présent",
-                            "path": "::Professeur — sa classe::classes : champ « name » présent",
-                            "id": "2852f9eb3eee7d1a95db1bd7441e9a3d",
-                            "passes": 522,
-                            "fails": 0
-                        }
+                    "classes : 200": {
+                        "name": "classes : 200",
+                        "path": "::Professeur — sa classe::classes : 200",
+                        "id": "2487ef4d70e9fbda2e911ba4bff89f4e",
+                        "passes": 522,
+                        "fails": 0
                     },
+                    "classes : liste non vide": {
+                        "path": "::Professeur — sa classe::classes : liste non vide",
+                        "id": "531f1e5a5e62a823615b634d04debdf1",
+                        "passes": 522,
+                        "fails": 0,
+                        "name": "classes : liste non vide"
+                    },
+                    "classes : champ « name » présent": {
+                        "name": "classes : champ « name » présent",
+                        "path": "::Professeur — sa classe::classes : champ « name » présent",
+                        "id": "2852f9eb3eee7d1a95db1bd7441e9a3d",
+                        "passes": 522,
+                        "fails": 0
+                    }
+                },
                 "name": "Professeur — sa classe",
                 "path": "::Professeur — sa classe"
             },
@@ -118,28 +118,28 @@
                 "id": "5b556ba0d6e43ec6e9a9ccbcfe8966c7",
                 "groups": {},
                 "checks": {
-                        "enfants : 200": {
-                            "id": "97cf6a8f8f1c4b416fd97d57c9330afd",
-                            "passes": 522,
-                            "fails": 0,
-                            "name": "enfants : 200",
-                            "path": "::Parent — ses enfants::enfants : 200"
-                        },
-                        "enfants : liste non vide": {
-                            "passes": 522,
-                            "fails": 0,
-                            "name": "enfants : liste non vide",
-                            "path": "::Parent — ses enfants::enfants : liste non vide",
-                            "id": "8d63426def47fd8e05900fd49b0b2083"
-                        },
-                        "enfants : champ « code » présent": {
-                            "fails": 0,
-                            "name": "enfants : champ « code » présent",
-                            "path": "::Parent — ses enfants::enfants : champ « code » présent",
-                            "id": "5e7570aa44eabc3ddb89d14cdf2d6e98",
-                            "passes": 522
-                        }
+                    "enfants : 200": {
+                        "id": "97cf6a8f8f1c4b416fd97d57c9330afd",
+                        "passes": 522,
+                        "fails": 0,
+                        "name": "enfants : 200",
+                        "path": "::Parent — ses enfants::enfants : 200"
+                    },
+                    "enfants : liste non vide": {
+                        "passes": 522,
+                        "fails": 0,
+                        "name": "enfants : liste non vide",
+                        "path": "::Parent — ses enfants::enfants : liste non vide",
+                        "id": "8d63426def47fd8e05900fd49b0b2083"
+                    },
+                    "enfants : champ « code » présent": {
+                        "fails": 0,
+                        "name": "enfants : champ « code » présent",
+                        "path": "::Parent — ses enfants::enfants : champ « code » présent",
+                        "id": "5e7570aa44eabc3ddb89d14cdf2d6e98",
+                        "passes": 522
                     }
+                }
             }
         },
         "checks": {}
@@ -306,35 +306,6 @@
             "p(90)": 15146.7521585,
             "p(95)": 15883.425199,
             "p(99)": 16971.882870509995
-        }
-    },
-    "setup_data": {
-        "alpha": {
-            "etiquette": "alpha",
-            "exemples": {
-                "eleve_code": "STU-2295-QGQU",
-                "eleve_id": "d4427a4bae094765a9cb9d6aa59b4212",
-                "eleve_nom": "Badibanga1021",
-                "class_id": "9bc92b97416346fca1d456ac337b9acd"
-            },
-            "tenant_id": "279dade92d0140fda38dcab727608ccc",
-            "classes_count": 24,
-            "comptes": {
-                "directeur": "direction@alpha.charge.test",
-                "discipline": "dd@alpha.charge.test",
-                "parent": "parent@alpha.charge.test",
-                "professeur": "prof@alpha.charge.test"
-            },
-            "eleves_count": 2000
-        },
-        "directeur": {
-            "Authorization": "Bearer kE3viaVUekn6JqCNqHCV4mMzrNeq0PqzYVw5BJDsa-Y"
-        },
-        "parent": {
-            "Authorization": "Bearer Yo-8QdV8eHE02-8-nqAYdaGz6mY4xO398pHyqpuz8CA"
-        },
-        "professeur": {
-            "Authorization": "Bearer nP9Er51iWYzb7-jAgf25sCxB-9akQwlE29gfkFz_XJc"
         }
     }
 }

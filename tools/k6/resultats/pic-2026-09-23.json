@@ -112,25 +112,19 @@
             "max": 6853.308
         }
     },
-    "setup_data": {
-        "debut": 1790203653540,
-        "h": {
-            "Authorization": "Bearer 6vYrwy0-mJ82t0cS-Kdc_1ldVUVSUzdK-OarfcGTWYs"
-        }
-    },
     "root_group": {
         "name": "",
         "path": "",
         "id": "d41d8cd98f00b204e9800998ecf8427e",
         "groups": {},
         "checks": {
-                "tableau de bord servi": {
-                    "name": "tableau de bord servi",
-                    "path": "::tableau de bord servi",
-                    "id": "f2fe9af296f035638cf5ad01f3ef43fe",
-                    "passes": 1081,
-                    "fails": 3
-                }
+            "tableau de bord servi": {
+                "name": "tableau de bord servi",
+                "path": "::tableau de bord servi",
+                "id": "f2fe9af296f035638cf5ad01f3ef43fe",
+                "passes": 1081,
+                "fails": 3
             }
+        }
     }
 }
