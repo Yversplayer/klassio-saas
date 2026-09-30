@@ -9,35 +9,15 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;1,500;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Archivo:wdth,wght@62..125,400..800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/style.css?v=1791100001" />
+<link rel="stylesheet" href="assets/css/cine.css?v=1791200001" />
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; base-uri 'self'; form-action 'self'">
 <script src="assets/js/theme.js?v=1790200001"></script>
 <noscript>
-  <!-- Sans JavaScript, l'écran d'entrée n'est jamais retiré (c'est le script
-       qui le fait) : la démonstration devient un panneau fixe que rien ne
-       lève. On le masque, on déplie l'ouverture cinématique sur son état
-       d'arrivée, et on révèle les sections. Tout reste lisible et défilable. -->
+  <!-- Sans JavaScript, les étapes de la visite apparaissent directement
+       (leur fondu d'entrée est posé par le script). L'ouverture, elle,
+       s'affiche déjà à plat : cine.css ne l'anime que si cine.js tourne. -->
   <style>
-    #demoIntro { display: none !important; }
     .reveal { opacity: 1 !important; transform: none !important; }
-    .demo-cinema { min-height: 0 !important; }
-    .cinema-viewport {
-      position: relative !important; height: auto !important; overflow: visible !important;
-      flex-direction: column; gap: 32px; padding: 56px 0 64px;
-    }
-    .cinema-intro, .cinema-stage, .cinema-outro {
-      position: relative !important; inset: auto !important;
-      opacity: 1 !important; transform: none !important;
-    }
-    .cinema-card { width: min(92vw, 1320px) !important; height: auto !important; }
-    .cinema-inner { height: auto; grid-template-columns: 1fr !important; gap: 28px; }
-    .cinema-col-left { order: 1 !important; text-align: center !important; }
-    .cinema-col-mid { order: 2 !important; }
-    .cinema-col-right { order: 3 !important; }
-    .cinema-col-left p { display: block !important; max-width: 620px; margin: 0 auto; }
-    .cinema-roles { flex-direction: row; flex-wrap: wrap; justify-content: center; }
-    .cinema-badge { position: static !important; display: inline-flex; margin: 10px 6px 0; }
-    .cinema-device-wrap { flex-direction: column; }
-    .cinema-sheen, .cinema-hint { display: none !important; }
   </style>
 </noscript>
 <link rel="icon" href="favicon.ico" sizes="any">
@@ -60,113 +40,54 @@
 </head>
 <body data-page="demo">
 
-<!-- INTRO — écran furtif, disparaît de lui-même (comme le splash de la landing) -->
-<div class="demo-intro" id="demoIntro">
-  <div class="demo-intro-card">
-    <img src="assets/logo.png?v=1789000492" class="brand-mark" alt="Klassio" style="width:44px;height:44px;margin-bottom:22px;" />
-    <h1>Découvrez Klassio.</h1>
-    <p>Une visite de l'espace de gestion d'un établissement — données fictives, aucune écriture réelle.</p>
-  </div>
-</div>
-
 <!-- =========================================================
-     OUVERTURE CINÉMATIQUE
-     Scène épinglée : le texte s'efface, la carte monte et occupe l'écran,
-     la fenêtre produit arrive en profondeur, les badges apparaissent, puis la
-     carte recule et rend la main à la visite guidée.
-     Les états d'ARRIVÉE sont décrits en CSS ; les états de départ sont posés
-     par page-demo.js — sans script, ou en mouvement réduit, tout s'affiche
-     déjà en place (voir les replis en fin du bloc CSS).
+     OUVERTURE — un bureau la nuit, un portable fermé.
+     Le défilement l'ouvre, le tableau de bord du Collège Horizon
+     s'allume, le téléphone du parent se lève à côté, puis la caméra
+     plonge vers l'écran et rend la main à la visite. Piloté par
+     cine.js ; sans script ou en mouvement réduit, les quatre temps
+     s'affichent l'un sous l'autre et l'accès à la visite reste là.
      ========================================================= -->
-<div class="demo-cinema" id="demoCinema">
-  <div class="cinema-viewport" id="cinemaViewport">
-    <div class="cinema-grid" aria-hidden="true"></div>
-
-    <!-- 1. Le texte d'ouverture -->
-    <div class="cinema-intro" id="cinemaIntro">
-      <span class="cinema-kicker"><span class="ck-dot" aria-hidden="true"></span>Démonstration · données fictives</span>
-      <h1 class="cinema-title">Toute la vie de l'établissement,<br><span class="ct-em">vue de l'intérieur</span>.</h1>
-      <p class="cinema-sub">Élèves, présences, résultats, frais, discipline — et quatre rôles qui ne voient chacun que ce qui les regarde.</p>
-      <p class="cinema-hint" aria-hidden="true"><span class="ch-rail"></span>Défilez pour entrer</p>
-    </div>
-
-    <!-- 2. La carte : l'espace de travail -->
-    <div class="cinema-stage" aria-hidden="false">
-      <div class="cinema-card" id="cinemaCard">
-        <div class="cinema-sheen" aria-hidden="true"></div>
-
-        <div class="cinema-inner">
-
-          <div class="cinema-col cinema-col-left" id="cinemaLeft">
-            <h3>Un seul espace, quatre regards.</h3>
-            <p>La direction voit l'établissement entier. Le directeur des disciplines voit la vie scolaire. L'enseignant voit ses classes. Le parent voit <span class="ccl-em">son enfant, et seulement le sien</span>.</p>
+<section class="kx-scene kx-dark kx-demo-open" id="demoOpen" data-kx-scene data-kx-beats="4" data-kx-track="420" aria-labelledby="demoTitle">
+  <div class="kx-sticky">
+    <div class="kx-plate" style="background-image:var(--kx-lqip-desk)"><img src="assets/cine/desk-1600.webp" srcset="assets/cine/desk-960.webp 960w, assets/cine/desk-1600.webp 1600w" sizes="100vw" alt="" decoding="async" fetchpriority="low"></div>
+    <div class="kx-demo-inner">
+      <div class="kx-beats">
+        <div class="kx-beat" data-b="0">
+          <span class="kx-kicker">Démonstration · données fictives</span>
+          <h1 class="kx-h" id="demoTitle">Toute la vie de l'établissement, <em>vue de l'intérieur</em>.</h1>
+          <p class="kx-p">Un établissement fictif, le Collège Horizon. Ouvrez-le, et visitez-le comme sa Direction. Rien de ce que vous ferez ici n'est enregistré.</p>
+        </div>
+        <div class="kx-beat" data-b="1">
+          <span class="kx-kicker">La Direction</span>
+          <h2 class="kx-h">2 340 élèves, <em>un seul écran</em>.</h2>
+          <p class="kx-p">Effectifs, montants attendus, encaissements, classes : à jour, sans rien recompter à la main.</p>
+        </div>
+        <div class="kx-beat" data-b="2">
+          <span class="kx-kicker">Le parent</span>
+          <h2 class="kx-h">Chaque paiement confirmé, <em>chaque reçu numéroté</em>.</h2>
+          <p class="kx-p">Et le parent ne voit que son enfant — jamais celui du voisin.</p>
+        </div>
+        <div class="kx-beat" data-b="3">
+          <span class="kx-kicker">Quatre regards</span>
+          <h2 class="kx-h">Entrons dans <em>l'espace</em>.</h2>
+          <div class="kx-demo-roles"><span><b>Direction</b> · tout l'établissement</span><span><b>Discipline</b> · la vie scolaire</span><span><b>Professeur</b> · ses classes</span><span><b>Parent</b> · son enfant</span></div>
+          <div class="kx-demo-actions">
+            <a href="#demoShell" class="btn btn-lime btn-sm">Commencer la visite</a>
+            <a href="app/inscription.html" class="btn btn-ghost btn-sm">Créer mon espace établissement</a>
           </div>
-
-          <div class="cinema-col cinema-col-mid">
-            <div class="cinema-device-wrap" id="cinemaDeviceWrap">
-              <div class="cinema-device" id="cinemaDevice">
-                <div class="cinema-device-bar" aria-hidden="true">
-                  <i></i><i></i><i></i>
-                  <span class="cdb-url">klassio · Accueil — Direction</span>
-                </div>
-                <div class="cinema-device-body">
-                  <div class="cinema-device-head">
-                    <b>Bienvenue, Mudeyi.</b>
-                    <span>Année 2026–2027</span>
-                  </div>
-                  <div class="cinema-kpis">
-                    <!-- La valeur d'ARRIVÉE est écrite ici, pas un zéro : sans script,
-                         ou en mouvement réduit, ces chiffres doivent être justes.
-                         Le défilement ne fait que les compter depuis 0. -->
-                    <div class="cinema-kpi"><div class="ck-k">Élèves</div><div class="ck-v" data-count="2340">2 340</div></div>
-                    <div class="cinema-kpi"><div class="ck-k">Attendu</div><div class="ck-v" data-count="1053000" data-suffix=" $">1 053 000 $</div></div>
-                    <div class="cinema-kpi"><div class="ck-k">Encaissé</div><div class="ck-v lime" data-count="874500" data-suffix=" $">874 500 $</div></div>
-                    <div class="cinema-kpi"><div class="ck-k">Classes</div><div class="ck-v" data-count="42">42</div></div>
-                  </div>
-                  <div class="cinema-rows">
-                    <div class="cinema-row"><span class="cr-ic" aria-hidden="true">🧾</span><span class="cr-main">Reçu REC-2027-00412 — Jean Kabeya</span><span class="cr-val">300 $</span></div>
-                    <div class="cinema-row"><span class="cr-ic" aria-hidden="true">✓</span><span class="cr-main">Appel fait — 38 classes sur 42</span><span class="cr-val">90 %</span></div>
-                    <div class="cinema-row"><span class="cr-ic" aria-hidden="true">📣</span><span class="cr-main">Période 1 proclamée — 4e Scientifique</span><span class="cr-val">58</span></div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="cinema-badge cinema-badge-a" id="cinemaBadgeA">
-                <span class="cb-ic" aria-hidden="true">🧾</span>
-                <div><div class="cb-t">Reçu émis</div><div class="cb-s">Numéroté, traçable</div></div>
-              </div>
-              <div class="cinema-badge cinema-badge-b" id="cinemaBadgeB">
-                <span class="cb-ic" aria-hidden="true">🔒</span>
-                <div><div class="cb-t">Parent notifié</div><div class="cb-s">Son enfant uniquement</div></div>
-              </div>
-            </div>
-          </div>
-
-          <div class="cinema-col cinema-col-right" id="cinemaRight">
-            <div class="cinema-roles">
-              <div class="cinema-role" data-role-dot="directeur"><span class="cr-dot" aria-hidden="true"></span>Direction</div>
-              <div class="cinema-role" data-role-dot="discipline"><span class="cr-dot" aria-hidden="true"></span>Discipline</div>
-              <div class="cinema-role" data-role-dot="professeur"><span class="cr-dot" aria-hidden="true"></span>Professeur</div>
-              <div class="cinema-role" data-role-dot="parent"><span class="cr-dot" aria-hidden="true"></span>Parent</div>
-            </div>
-          </div>
-
         </div>
       </div>
-    </div>
-
-    <!-- 3. Le relais vers la visite -->
-    <div class="cinema-outro" id="cinemaOutro">
-      <h2>Entrons dans <span class="ct-em">l'espace</span>.</h2>
-      <p>La suite est une visite guidée de l'application réelle, remplie de données fictives. Rien n'y est enregistré.</p>
-      <div class="cinema-outro-actions">
-        <a href="#demoShell" class="btn btn-lime btn-sm" id="cinemaGoTour">Commencer la visite</a>
-        <a href="app/inscription.html" class="btn btn-ghost btn-sm">Créer mon espace établissement</a>
+      <div class="kx-demo-stage kx-stage3d" aria-hidden="true">
+        <div class="kx-laptop"><div class="kx-lid"><div class="kx-lid-face"><div class="kx-screen"><div class="kx-scr is-on"><div class="kx-app"><div class="kx-app-side"><div class="kx-app-brand"><i></i>Klassio</div><div class="kx-app-nav on">Accueil</div><div class="kx-app-nav">Élèves</div><div class="kx-app-nav">Classes</div><div class="kx-app-nav">Résultats</div><div class="kx-app-nav">Finance</div><div class="kx-app-nav">Discipline</div><div class="kx-app-nav">Rapports</div></div><div class="kx-app-main"><div class="kx-app-head"><b>Collège Horizon</b><span>Année 2026–2027 · Période 1</span></div><div class="kx-kpis"><div class="kx-kpi"><small>Élèves</small><strong data-kx-count="2340">2 340</strong></div><div class="kx-kpi"><small>Attendu</small><strong data-kx-count="1053000" data-kx-suffix=" $">1 053 000 $</strong></div><div class="kx-kpi"><small>Encaissé</small><strong class="lime" data-kx-count="874500" data-kx-suffix=" $">874 500 $</strong></div><div class="kx-kpi"><small>Classes</small><strong data-kx-count="42">42</strong></div></div><div class="kx-app-row"><div class="kx-card"><h6>Encaissements par mois</h6><div class="kx-bars"><i style="--h:34%"></i><i style="--h:52%"></i><i style="--h:88%"></i><i style="--h:61%"></i><i style="--h:46%"></i><i style="--h:72%"></i><i style="--h:94%"></i><i style="--h:58%"></i></div></div><div class="kx-card"><h6>Aujourd'hui</h6><div class="kx-list"><div class="kx-li"><em>✓</em><span>Appel fait — 38 classes sur 42</span><b>90 %</b></div><div class="kx-li"><em>$</em><span>Reçu REC-2027-00412 · Kabeya J.</span><b>300 $</b></div><div class="kx-li"><em>P</em><span>Période 1 proclamée · 4e Sc.</span><b>58</b></div><div class="kx-li"><em>!</em><span>Soldes à relancer</span><b>37</b></div></div></div></div></div></div></div></div></div><div class="kx-lid-back"><img src="assets/logo.png?v=1789000492" alt=""></div></div><div class="kx-base"></div></div>
+        <div class="kx-phone-rig"><div class="kx-phone"><div class="kx-phone-screen"><span class="kx-island"></span><div class="kx-screen"><div class="kx-scr is-on"><div class="kx-m"><div class="kx-m-top"><b>Reçu</b><span>13:07</span></div><div class="kx-m-card kx-rcpt"><div class="kx-rcpt-ok">✓</div><small>Trimestre 1 · Kabeya Jean</small><strong>300 $</strong><code>REC-2027-00412</code></div><div class="kx-m-card"><div class="kx-kv"><span>Mode</span><b>Espèces</b></div><div class="kx-kv"><span>Confirmé par</span><b>la caisse</b></div><div class="kx-kv"><span>Reste dû</span><b>0 $</b></div></div><div class="kx-m-btn">Imprimer le reçu</div></div></div></div></div></div></div>
+        <div class="kx-badge kx-badge-a"><i>✓</i><div><b>Reçu émis</b><small>Numéroté, traçable</small></div></div>
+        <div class="kx-badge kx-badge-b"><i>●</i><div><b>Parent informé</b><small>Son enfant uniquement</small></div></div>
       </div>
+      <p class="kx-scroll-hint" aria-hidden="true">Défilez pour ouvrir</p>
     </div>
-
   </div>
-</div>
+</section>
 
 <div class="demo-shell" id="demoShell">
 
@@ -480,9 +401,10 @@
   </div>
 </div>
 
+<script src="assets/js/cine.js?v=1791200001"></script>
 <script src="assets/js/demo-data.js?v=1790000001"></script>
 <script src="assets/js/motion.js?v=1791100002"></script>
 <script src="assets/js/demo-recit.js?v=1791000001"></script>
-<script src="assets/js/page-demo.js?v=1790900004"></script>
+<script src="assets/js/page-demo.js?v=1791200001"></script>
 </body>
 </html>

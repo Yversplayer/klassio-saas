@@ -21,6 +21,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;1,500;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Archivo:wdth,wght@62..125,400..800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/style.css?v=1791100001" />
+<link rel="stylesheet" href="assets/css/cine.css?v=1791200001" />
 <script src="assets/js/theme.js?v=1790200001"></script>
 </head>
 <body class="pub-body">
@@ -28,6 +29,14 @@
 <div id="pubNav"></div>
 
 <main class="pub-page">
+  <!-- En-tête photographique commun (cine.css, « En-tête des pages publiques ») :
+       des cahiers au matin en thème clair, le bureau de nuit en sombre. Chargement
+       différé ; la version masquée n'est jamais téléchargée. -->
+  <div class="kx-pub-plate" aria-hidden="true">
+    <img class="kx-pp-light" src="assets/cine/pub-1600.webp" srcset="assets/cine/pub-960.webp 960w, assets/cine/pub-1600.webp 1600w" sizes="100vw" alt="" loading="lazy" decoding="async">
+    <img class="kx-pp-dark" src="assets/cine/desk-1600.webp" srcset="assets/cine/desk-960.webp 960w, assets/cine/desk-1600.webp 1600w" sizes="100vw" alt="" loading="lazy" decoding="async">
+  </div>
+
 
   <div class="container">
     <div class="pub-hero">
@@ -139,6 +148,7 @@
 
 <script src="assets/js/motion.js?v=1791100002"></script>
 <script src="assets/js/public-motion.js?v=1791000002"></script>
-<script src="assets/js/public.js?v=1791100001"></script>
+<script src="assets/js/cine.js?v=1791200001"></script>
+<script src="assets/js/public.js?v=1791200001"></script>
 </body>
 </html>

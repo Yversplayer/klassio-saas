@@ -74,3 +74,7 @@ tools/k6/resultats/**/*.txt
 # macOS
 .DS_Store
 exports_store/
+
+# Sources PNG des visuels générés (≈26 Mo). Seuls les WebP optimisés sont servis ;
+# les originaux restent dans le projet Higgsfield « Klassio — site cinématique ».
+assets/cine/_src/

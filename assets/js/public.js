@@ -45,6 +45,9 @@
         // ensuite au-dessus de l'onglet marqué `active`.
         '<div class="tubelight-lamp" id="tubelightLamp" aria-hidden="true"><div class="tubelight-glow"></div></div>' +
         '<a href="index.html#produit">Produit</a>' +
+        // La démonstration est la page qui convainc : elle a sa place dans la
+        // barre, comme sur la landing (30/09).
+        '<a href="demo.html">Démo</a>' +
         PAGES.map(function (p) {
           var cls = [];
           if (p.href === courante) cls.push("actif");

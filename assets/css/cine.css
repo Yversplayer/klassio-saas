@@ -1,0 +1,1225 @@
+/* ===========================================================================
+   KLASSIO — couche cinématique
+   Landing, démonstration, pages publiques. JAMAIS l'application.
+
+   POURQUOI UNE FEUILLE À PART
+   style.css sert 29 pages, dont tous les écrans de gestion. Une classe
+   renommée ou un sélecteur trop large y casse un écran métier à l'autre bout
+   du produit — `.chip` y a déjà été défini deux fois pour deux composants.
+   Tout ce qui suit est préfixé `kx-` et vit ici : l'application ne charge pas
+   ce fichier, donc rien de ce qui est écrit ici ne peut l'atteindre.
+
+   TROIS RÈGLES, HÉRITÉES DE LA LANDING ET TOUJOURS VRAIES
+   1. États d'ARRIVÉE en CSS, états de DÉPART posés par cine.js. Une scène
+      n'est pilotée que si cine.js lui ajoute `.kx-live` ; sans script, ou en
+      mouvement réduit, elle s'affiche à plat, tout en place, rien de caché.
+   2. Un mouvement en moins ne coûte jamais une information : chaque texte
+      d'une scène pilotée existe aussi dans sa version à plat.
+   3. Kinshasa, pas un MacBook. Aucune vidéo, aucune bibliothèque, aucun
+      WebGL : de la 3D CSS, des images WebP de 10 à 140 Ko chargées au fil du
+      défilement, et une miniature floue de ~1 Ko en attendant. Une connexion
+      en mode économie de données n'en charge aucune.
+   =========================================================================== */
+
+:root {
+  /* La scène de cinéma est sombre dans les DEUX thèmes : c'est un choix de
+     mise en scène, pas un oubli. Ses couleurs sont donc fixes, et leurs
+     contrastes calculés (WCAG) sur --kx-night / sur les cartes --kx-night-2 :
+     texte 16,6 / 15,6 · secondaire 10,3 / 9,6 · discret 5,1 / 4,8 ·
+     lime 14,0 / 13,2 · or 10,2 / 9,6. Tous au-dessus de 4,5:1 (AA). Le
+     « discret » porte la mention « données fictives » : il ne descend pas. */
+  --kx-night: #0A120E;
+  --kx-night-2: #0F1A14;
+  --kx-night-3: #16241C;
+  --kx-on-night: #F3F0E4;
+  --kx-on-night-soft: #B9C1B3;
+  --kx-on-night-faint: #7D877D;
+  --kx-rule-night: rgba(243, 240, 228, 0.12);
+  --kx-lime: #B8F000;
+  --kx-gold: #F0B429;
+
+  /* L'écran des appareils montre le produit tel qu'il est : le thème clair de
+     l'application. Il ne suit pas le thème de la page — c'est une image du
+     logiciel, pas un élément de la page. */
+  --kx-app-bg: #FAF8EF;
+  --kx-app-surface: #FFFFFF;
+  --kx-app-soft: #F4F1E4;
+  --kx-app-line: #E6E1CD;
+  --kx-app-ink: #16241C;
+  --kx-app-ink-soft: #4B5A4F;
+  --kx-app-ink-faint: #858E84;
+  --kx-app-forest: #16301F;
+  --kx-app-lime: #9FE300;
+  --kx-app-lime-deep: #4F8200;
+  --kx-app-warn: #B4531F;
+
+  --kx-font-label: "Archivo", "Plus Jakarta Sans", system-ui, sans-serif;
+  --kx-ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ===========================================================================
+   Images de fond
+   Toujours posées sur leur miniature floue : c'est elle qu'on voit tant que
+   l'image n'est pas arrivée, et c'est elle seule qu'on voit en économie de
+   données. Une ambiance juste, jamais un rectangle noir.
+   =========================================================================== */
+.kx-plate {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background-color: var(--kx-night-2);
+  background-size: cover;
+  background-position: center;
+}
+.kx-plate img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+/* Économie de données : les images sont en chargement différé ; masquées,
+   elles ne sont jamais demandées. La miniature floue reste. */
+.kx-lite .kx-plate img { display: none; }
+
+/* ===========================================================================
+   L'ordinateur portable — 3D CSS pure
+   Géométrie vérifiée sur prototype avant d'écrire la suite : clavier rabattu
+   à +90° vers le spectateur, couvercle fermé à -88°, ouvert à +12°.
+   =========================================================================== */
+.kx-stage3d {
+  perspective: 1700px;
+  perspective-origin: 50% 18%;
+}
+.kx-laptop {
+  --lw: 640px;
+  --kx-lid: 12deg;      /* ouvert : état d'arrivée */
+  /* NÉGATIVE : c'est ce qui place la caméra AU-DESSUS de la table. Avec une
+     valeur positive, les surfaces horizontales pointent à l'opposé de la
+     caméra — on regarde la table par en dessous. Le clavier restait visible
+     (la base n'a pas de masquage de face arrière), mais le dos du couvercle
+     fermé disparaissait : ordinateur fermé, on voyait le clavier. */
+  --kx-tilt: -14deg;
+  --kx-turn: 0deg;
+  position: relative;
+  width: var(--lw);
+  height: calc(var(--lw) * 0.625);
+  transform-style: preserve-3d;
+  transform: rotateX(var(--kx-tilt)) rotateY(var(--kx-turn));
+}
+.kx-lid {
+  position: absolute;
+  inset: 0;
+  transform-origin: 50% 100%;
+  transform-style: preserve-3d;
+  transform: rotateX(var(--kx-lid));
+}
+.kx-lid-face,
+.kx-lid-back {
+  position: absolute;
+  inset: 0;
+  border-radius: calc(var(--lw) * 0.022) calc(var(--lw) * 0.022) calc(var(--lw) * 0.006) calc(var(--lw) * 0.006);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.kx-lid-face {
+  background: #0B0D0C;
+  padding: calc(var(--lw) * 0.018) calc(var(--lw) * 0.018) calc(var(--lw) * 0.03);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07), inset 0 0 0 calc(var(--lw) * 0.004) #1B1E1C;
+}
+/* La caméra, au centre du bandeau supérieur. */
+.kx-lid-face::before {
+  content: "";
+  position: absolute;
+  top: calc(var(--lw) * 0.0075);
+  left: 50%;
+  width: calc(var(--lw) * 0.0065);
+  height: calc(var(--lw) * 0.0065);
+  margin-left: calc(var(--lw) * -0.00325);
+  border-radius: 50%;
+  background: #1D2621;
+  box-shadow: 0 0 0 1px #2A332D;
+}
+.kx-lid-back {
+  transform: rotateY(180deg);
+  background:
+    radial-gradient(120% 90% at 30% 10%, rgba(255, 255, 255, 0.16), transparent 55%),
+    linear-gradient(160deg, #3A413C, #232826 60%, #1A1E1C);
+  display: grid;
+  place-items: center;
+}
+.kx-lid-back img {
+  width: calc(var(--lw) * 0.1);
+  height: auto;
+  opacity: 0.9;
+  filter: drop-shadow(0 0 calc(var(--lw) * 0.02) rgba(184, 240, 0, 0.55));
+}
+.kx-base {
+  position: absolute;
+  left: -3.5%;
+  width: 107%;
+  top: 100%;
+  height: calc(var(--lw) * 0.64);
+  transform-origin: 50% 0;
+  transform: rotateX(90deg);
+  border-radius: 0 0 calc(var(--lw) * 0.028) calc(var(--lw) * 0.028);
+  background:
+    radial-gradient(90% 60% at 50% 0%, rgba(255, 255, 255, 0.12), transparent 70%),
+    linear-gradient(180deg, #4A524D 0%, #3A413D 30%, #30362F 100%);
+  box-shadow: inset 0 calc(var(--lw) * 0.004) 0 rgba(255, 255, 255, 0.14);
+}
+/* Le clavier : une grille, pas des touches dessinées une à une. */
+.kx-base::before {
+  content: "";
+  position: absolute;
+  left: 9%;
+  right: 9%;
+  top: 7%;
+  height: 46%;
+  border-radius: calc(var(--lw) * 0.006);
+  background:
+    repeating-linear-gradient(90deg, #1C201E 0 5.6%, transparent 5.6% 6.66%),
+    repeating-linear-gradient(0deg, transparent 0 1.2%, #1C201E 1.2% 16.4%, transparent 16.4% 17.6%);
+  background-color: #2A2F2C;
+  opacity: 0.92;
+}
+/* Le pavé tactile. */
+.kx-base::after {
+  content: "";
+  position: absolute;
+  left: 34%;
+  right: 34%;
+  top: 59%;
+  height: 31%;
+  border-radius: calc(var(--lw) * 0.01);
+  background: linear-gradient(180deg, #3F4642, #373D39);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+/* ===========================================================================
+   Le téléphone
+   =========================================================================== */
+.kx-phone-rig { transform-style: preserve-3d; }
+.kx-phone {
+  --pw: 210px;
+  position: relative;
+  width: var(--pw);
+  aspect-ratio: 9 / 19.5;
+  border-radius: calc(var(--pw) * 0.17);
+  padding: calc(var(--pw) * 0.034);
+  background: linear-gradient(145deg, #2E3430, #111412 45%, #1E2320);
+  box-shadow:
+    inset 0 0 0 calc(var(--pw) * 0.008) #454C47,
+    inset 0 0 0 calc(var(--pw) * 0.016) #0B0D0C,
+    0 calc(var(--pw) * 0.2) calc(var(--pw) * 0.3) calc(var(--pw) * -0.1) rgba(0, 0, 0, 0.65);
+  transform-style: preserve-3d;
+}
+/* L'épaisseur : une plaque arrière décalée en profondeur, visible dès que le
+   téléphone pivote. Sans elle, un téléphone qui tourne se lit comme une carte. */
+.kx-phone::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: #1A1E1C;
+  transform: translateZ(calc(var(--pw) * -0.04));
+}
+.kx-phone-screen {
+  position: relative;
+  height: 100%;
+  border-radius: calc(var(--pw) * 0.135);
+  overflow: hidden;
+  background: var(--kx-app-bg);
+  transform: translateZ(1px);
+}
+.kx-island {
+  position: absolute;
+  top: 1.9%;
+  left: 50%;
+  width: 31%;
+  height: 3.3%;
+  transform: translateX(-50%);
+  border-radius: 99px;
+  background: #050605;
+  z-index: 5;
+}
+
+/* ===========================================================================
+   Écrans : l'application, en miniature
+   Ce ne sont pas des captures : c'est du HTML, donc net à toutes les tailles,
+   quelques centaines d'octets, et fidèle au produit. Les tailles suivent la
+   largeur de l'écran (unités cqw) : la même maquette sert dans un portable de
+   720 px comme dans un téléphone de 150 px. La valeur en px qui précède
+   chaque cqw est le repli des navigateurs qui ne les connaissent pas.
+   Données fictives, annoncées comme telles à côté de chaque scène.
+   =========================================================================== */
+.kx-screen {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: calc(var(--lw, 640px) * 0.006);
+  background: var(--kx-app-bg);
+  container-type: inline-size;
+  color: var(--kx-app-ink);
+  font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+}
+.kx-phone-screen .kx-screen { border-radius: 0; }
+.kx-scr {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.55s var(--kx-ease);
+}
+.kx-scr.is-on { opacity: 1; }
+
+/* ---- Écran de portable : barre latérale + contenu ---- */
+.kx-app {
+  display: grid;
+  grid-template-columns: 19% 1fr;
+  height: 100%;
+  font-size: 9px;
+  font-size: 1.45cqw;
+}
+.kx-app-side {
+  background: var(--kx-app-forest);
+  color: rgba(231, 239, 227, 0.62);
+  padding: 1.4em 0.9em;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35em;
+}
+.kx-app-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.15em;
+  margin-bottom: 1.2em;
+  padding-left: 0.4em;
+}
+.kx-app-brand i {
+  width: 1.3em;
+  height: 1.3em;
+  border-radius: 0.35em;
+  background: var(--kx-app-lime);
+}
+.kx-app-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  padding: 0.55em 0.6em;
+  border-radius: 0.55em;
+}
+.kx-app-nav::before {
+  content: "";
+  width: 0.5em;
+  height: 0.5em;
+  border-radius: 0.15em;
+  background: currentColor;
+  opacity: 0.7;
+}
+.kx-app-nav.on { background: rgba(159, 227, 0, 0.16); color: var(--kx-app-lime); font-weight: 700; }
+.kx-app-main { padding: 1.6em 1.8em; display: flex; flex-direction: column; gap: 1.1em; min-width: 0; }
+.kx-app-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1em; }
+.kx-app-head b { font-size: 1.55em; letter-spacing: -0.01em; }
+.kx-app-head span { color: var(--kx-app-ink-faint); font-size: 0.95em; }
+.kx-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.8em; }
+.kx-kpi {
+  background: var(--kx-app-surface);
+  border: 1px solid var(--kx-app-line);
+  border-radius: 0.8em;
+  padding: 0.9em 1em;
+}
+.kx-kpi small { display: block; color: var(--kx-app-ink-faint); font-size: 0.85em; margin-bottom: 0.35em; }
+.kx-kpi strong { font-size: 1.45em; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.kx-kpi strong.lime { color: var(--kx-app-lime-deep); }
+.kx-app-row { display: grid; grid-template-columns: 1.35fr 1fr; gap: 0.9em; min-height: 0; flex: 1; }
+.kx-card {
+  background: var(--kx-app-surface);
+  border: 1px solid var(--kx-app-line);
+  border-radius: 0.8em;
+  padding: 1em 1.1em;
+  min-width: 0;
+}
+.kx-card h6 { margin: 0 0 0.8em; font-size: 0.95em; color: var(--kx-app-ink-soft); font-weight: 700; }
+.kx-bars { display: flex; align-items: flex-end; gap: 0.55em; height: 7.5em; }
+.kx-bars i {
+  flex: 1;
+  border-radius: 0.3em 0.3em 0 0;
+  background: linear-gradient(180deg, var(--kx-app-lime), #7BC400);
+  height: var(--h);
+}
+.kx-bars i:nth-child(odd) { opacity: 0.82; }
+.kx-list { display: flex; flex-direction: column; gap: 0.6em; }
+.kx-li { display: flex; align-items: center; gap: 0.6em; font-size: 0.92em; min-width: 0; }
+.kx-li em {
+  flex: none;
+  width: 1.7em;
+  height: 1.7em;
+  border-radius: 0.5em;
+  background: var(--kx-app-soft);
+  display: grid;
+  place-items: center;
+  font-style: normal;
+  font-size: 0.85em;
+  color: var(--kx-app-lime-deep);
+  font-weight: 800;
+}
+.kx-li span { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kx-li b { font-variant-numeric: tabular-nums; }
+
+/* Table de notes (professeur) */
+.kx-table { width: 100%; border-collapse: collapse; font-size: 0.95em; font-variant-numeric: tabular-nums; }
+.kx-table th {
+  text-align: left;
+  font-weight: 600;
+  color: var(--kx-app-ink-faint);
+  padding: 0.5em 0.6em;
+  border-bottom: 1px solid var(--kx-app-line);
+  font-size: 0.88em;
+}
+.kx-table td { padding: 0.55em 0.6em; border-bottom: 1px solid var(--kx-app-line); }
+.kx-table td.num, .kx-table th.num { text-align: right; }
+.kx-table .avg { font-weight: 800; color: var(--kx-app-lime-deep); background: rgba(159, 227, 0, 0.1); }
+.kx-note-foot {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  font-size: 0.9em;
+  color: var(--kx-app-ink-soft);
+}
+.kx-note-foot::before {
+  content: "";
+  width: 0.7em;
+  height: 0.7em;
+  border-radius: 50%;
+  background: var(--kx-app-lime);
+  box-shadow: 0 0 0 0.25em rgba(159, 227, 0, 0.25);
+}
+
+/* Discipline (DD) */
+.kx-tags { display: flex; flex-wrap: wrap; gap: 0.45em; }
+.kx-tag {
+  padding: 0.3em 0.7em;
+  border-radius: 99px;
+  font-size: 0.85em;
+  font-weight: 700;
+  background: var(--kx-app-soft);
+  color: var(--kx-app-ink-soft);
+}
+.kx-tag.warn { background: #FBE8DC; color: var(--kx-app-warn); }
+.kx-tag.ok { background: rgba(159, 227, 0, 0.18); color: var(--kx-app-lime-deep); }
+
+/* ---- Écrans de téléphone ---- */
+.kx-m {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  font-size: 12px;
+  font-size: 5.6cqw;
+  padding: 3.4em 1.1em 1.2em;
+  gap: 0.8em;
+}
+.kx-m-top { display: flex; align-items: center; justify-content: space-between; }
+.kx-m-top b { font-size: 1.2em; letter-spacing: -0.01em; }
+.kx-m-top span { font-size: 0.8em; color: var(--kx-app-ink-faint); }
+.kx-m-kicker {
+  font-family: var(--kx-font-label);
+  font-stretch: 115%;
+  font-size: 0.72em;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--kx-app-ink-faint);
+  font-weight: 700;
+}
+.kx-m-card {
+  background: var(--kx-app-surface);
+  border: 1px solid var(--kx-app-line);
+  border-radius: 1em;
+  padding: 0.9em 1em;
+}
+.kx-m-hero {
+  background: var(--kx-app-forest);
+  color: #F2F5EC;
+  border: 0;
+}
+.kx-m-hero small { display: block; opacity: 0.72; font-size: 0.8em; margin-bottom: 0.2em; }
+.kx-m-hero strong { font-size: 2.1em; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+.kx-m-hero strong sub { font-size: 0.45em; opacity: 0.7; vertical-align: baseline; margin-left: 0.15em; }
+.kx-m-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  margin-top: 0.55em;
+  padding: 0.25em 0.65em;
+  border-radius: 99px;
+  font-size: 0.72em;
+  font-weight: 700;
+  background: rgba(159, 227, 0, 0.2);
+  color: var(--kx-app-lime);
+}
+.kx-m-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6em; }
+.kx-m-grid .kx-m-card small { display: block; color: var(--kx-app-ink-faint); font-size: 0.75em; }
+.kx-m-grid .kx-m-card b { font-size: 1.25em; font-variant-numeric: tabular-nums; }
+.kx-m-rows { display: flex; flex-direction: column; }
+.kx-m-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  padding: 0.62em 0;
+  border-bottom: 1px solid var(--kx-app-line);
+  font-size: 0.88em;
+}
+.kx-m-row:last-child { border-bottom: 0; }
+.kx-m-row span { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kx-dot {
+  flex: none;
+  width: 1.55em;
+  height: 1.55em;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 0.72em;
+  font-weight: 800;
+  background: rgba(159, 227, 0, 0.22);
+  color: var(--kx-app-lime-deep);
+}
+.kx-dot.r { background: #FDF1D6; color: #9A6A00; }
+.kx-dot.a { background: #FBE8DC; color: var(--kx-app-warn); }
+.kx-m-btn {
+  margin-top: auto;
+  text-align: center;
+  padding: 0.8em;
+  border-radius: 0.9em;
+  background: var(--kx-app-forest);
+  color: #EEFBCB;
+  font-weight: 700;
+  font-size: 0.9em;
+}
+/* Le reçu */
+.kx-rcpt { text-align: center; padding: 1.3em 1em; }
+.kx-rcpt-ok {
+  width: 3em;
+  height: 3em;
+  margin: 0 auto 0.7em;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: rgba(159, 227, 0, 0.22);
+  color: var(--kx-app-lime-deep);
+  font-weight: 900;
+  font-size: 1.1em;
+}
+.kx-rcpt strong { display: block; font-size: 2em; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+.kx-rcpt code {
+  display: inline-block;
+  margin-top: 0.5em;
+  padding: 0.25em 0.6em;
+  border-radius: 0.4em;
+  background: var(--kx-app-soft);
+  font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+  font-size: 0.78em;
+  color: var(--kx-app-ink-soft);
+}
+.kx-kv { display: flex; justify-content: space-between; gap: 0.6em; font-size: 0.82em; padding: 0.4em 0; }
+.kx-kv span { color: var(--kx-app-ink-faint); }
+.kx-kv b { text-align: right; }
+
+/* ===========================================================================
+   Scènes pilotées par le défilement
+   À plat par défaut. `.kx-live` (posé par cine.js) les transforme en piste
+   haute avec un plateau épinglé. cine.js écrit --p (0 → 1 sur la piste) et
+   data-beat (l'étape courante) ; tout le reste se calcule ici.
+   =========================================================================== */
+.kx-scene { position: relative; }
+.kx-scene.kx-live { height: var(--kx-track, 420vh); }
+.kx-scene.kx-live > .kx-sticky {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100svh;
+  overflow: hidden;
+}
+
+/* Les étapes d'un récit : empilées à plat, superposées une fois pilotées. */
+.kx-live .kx-beats { position: relative; }
+.kx-live .kx-beat {
+  position: absolute;
+  inset: 0 0 auto 0;
+  opacity: 0;
+  transform: translateY(28px);
+  filter: blur(4px);
+  transition: opacity 0.6s var(--kx-ease), transform 0.9s var(--kx-ease), filter 0.6s var(--kx-ease);
+  pointer-events: none;
+}
+.kx-live[data-beat="0"] .kx-beat[data-b="0"],
+.kx-live[data-beat="1"] .kx-beat[data-b="1"],
+.kx-live[data-beat="2"] .kx-beat[data-b="2"],
+.kx-live[data-beat="3"] .kx-beat[data-b="3"] {
+  opacity: 1;
+  transform: none;
+  filter: none;
+  pointer-events: auto;
+}
+
+/* L'échelle de progression d'une scène : quatre repères, le courant allumé. */
+.kx-rail { display: none; }
+.kx-live .kx-rail {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.kx-rail i {
+  width: 28px;
+  height: 3px;
+  border-radius: 3px;
+  background: var(--kx-rule-night);
+  overflow: hidden;
+  position: relative;
+}
+.kx-rail i::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--kx-lime);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.5s var(--kx-ease);
+}
+.kx-live[data-beat="0"] .kx-rail i:nth-child(-n+1)::after,
+.kx-live[data-beat="1"] .kx-rail i:nth-child(-n+2)::after,
+.kx-live[data-beat="2"] .kx-rail i:nth-child(-n+3)::after,
+.kx-live[data-beat="3"] .kx-rail i:nth-child(-n+4)::after { transform: scaleX(1); }
+
+/* ---- Typographie de cinéma ---- */
+.kx-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--kx-font-label);
+  font-stretch: 120%;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--kx-lime);
+}
+.kx-kicker::before {
+  content: "";
+  width: 22px;
+  height: 1px;
+  background: currentColor;
+}
+.kx-h {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(30px, 4.4vw, 60px);
+  line-height: 1.04;
+  letter-spacing: -0.025em;
+  margin: 14px 0 0;
+  color: var(--kx-on-night);
+  text-wrap: balance;
+}
+.kx-h em { font-style: italic; font-weight: 500; color: var(--kx-lime); }
+.kx-p {
+  margin: 18px 0 0;
+  max-width: 44ch;
+  font-size: clamp(15px, 1.25vw, 18px);
+  line-height: 1.62;
+  color: var(--kx-on-night-soft);
+}
+.kx-fict {
+  font-family: var(--kx-font-label);
+  font-stretch: 110%;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--kx-on-night-faint);
+}
+
+/* ===========================================================================
+   1. L'intérieur du « O »
+   Ce qu'on trouve en entrant : l'école au crépuscule, et l'espace Klassio
+   ouvert dessus.
+
+   LA PHOTO NE DOIT PAS SE VOIR AU REPOS. Au repos, .portal-reveal EST le trou
+   du « O » (voir style.css) : une photo visible dès la première image ferait
+   lire « KLASSI » suivi d'un disque sombre — le défaut exact déjà corrigé une
+   fois avec un disque blanc. Le fond de la couche reste donc celui de la page,
+   opaque, et la photo n'apparaît qu'avec la plongée : main.js expose la
+   progression (--portal-p) et elle monte de 0 à 1 entre 12 % et 38 %.
+   La couche, elle, reste opaque de bout en bout : on ne lit jamais la page à
+   travers l'ouverture.
+   =========================================================================== */
+.kx-o-scene {
+  position: absolute;
+  inset: 0;
+  opacity: clamp(0, calc((var(--portal-p, 0) - 0.12) / 0.26), 1);
+}
+.kx-o-scene .kx-plate::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(70% 60% at 50% 62%, transparent 0%, rgba(10, 18, 14, 0.55) 70%),
+    linear-gradient(180deg, rgba(10, 18, 14, 0.78) 0%, rgba(10, 18, 14, 0.25) 38%, rgba(10, 18, 14, 0.7) 100%);
+}
+/* Le contenu du hublot repasse en couleurs de nuit : il est toujours posé sur
+   la photo, qui a fini d'apparaître bien avant lui (38 % contre 58 %). */
+.portal-reveal .telemetry-hud.kx-o-hud {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(14px, 2.4vh, 26px);
+  text-align: center;
+}
+.kx-o-hud .hud-pill {
+  background: rgba(184, 240, 0, 0.12);
+  border-color: rgba(184, 240, 0, 0.4);
+  color: var(--kx-lime);
+}
+.kx-o-hud .hud-headline { color: var(--kx-on-night); font-family: var(--font-display); font-weight: 600; letter-spacing: -0.02em; }
+.kx-o-hud .hud-headline .em { color: var(--kx-lime); }
+.kx-o-device {
+  --lw: min(60vw, 700px, calc((100svh - 300px) * 1.35));
+  margin-top: clamp(4px, 1vh, 14px);
+}
+.kx-o-device .kx-laptop { translate: 0 calc(var(--lw) * -0.06); }
+.kx-o-device .kx-laptop { --kx-tilt: -12deg; }
+
+/* ===========================================================================
+   2. « Chaque rôle, son écran »
+   =========================================================================== */
+.kx-dark {
+  background: var(--kx-night);
+  color: var(--kx-on-night);
+  position: relative;
+  isolation: isolate;
+}
+/* Une lumière qui vient d'en haut à droite, et un grain très léger : c'est ce
+   qui distingue une scène d'un aplat noir. Aucun des deux n'est une image. */
+.kx-dark::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(60% 55% at 78% 22%, rgba(184, 240, 0, 0.09), transparent 70%),
+    radial-gradient(50% 50% at 12% 88%, rgba(240, 180, 41, 0.06), transparent 70%);
+  pointer-events: none;
+}
+
+.kx-roles-grid {
+  max-width: var(--container, 1180px);
+  margin: 0 auto;
+  padding: clamp(80px, 10vw, 130px) 32px;
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.25fr);
+  gap: clamp(24px, 4vw, 64px);
+  align-items: center;
+}
+.kx-roles .kx-beat { padding-bottom: 36px; }
+.kx-roles .kx-beat + .kx-beat { border-top: 1px solid var(--kx-rule-night); padding-top: 36px; }
+.kx-beat-role {
+  display: inline-block;
+  font-family: var(--kx-font-label);
+  font-stretch: 118%;
+  font-weight: 800;
+  font-size: 13px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--kx-gold);
+}
+.kx-roles .kx-h { font-size: clamp(28px, 3.6vw, 50px); }
+
+.kx-devices {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 420px;
+}
+/* Le plateau s'étend vers le spectateur, donc sous le couvercle : le centre
+   visuel de l'objet est plus bas que celui de sa boîte. On le remonte d'autant,
+   sinon le clavier sort par le bas de l'écran. `translate` se compose avec la
+   transformation 3D sans la remplacer. */
+.kx-devices .kx-laptop { --lw: clamp(300px, 44vw, 660px); translate: 0 calc(var(--lw) * -0.2); }
+.kx-devices .kx-phone-rig {
+  position: absolute;
+  right: 0;
+  bottom: 4%;
+  transform: translate3d(0, 0, 60px) rotateY(-14deg) rotateX(6deg);
+}
+.kx-devices .kx-phone { --pw: clamp(130px, 13vw, 200px); }
+/* Sous le texte, jamais sur l'objet : posée sur les appareils, elle finissait
+   sur l'écran du portable dès qu'on le remontait. */
+.kx-devices-cap { display: block; margin: 20px 0 0; }
+
+/* Pilotée : l'ordinateur s'ouvre, pivote, et le téléphone entre à l'étape 3. */
+.kx-roles.kx-live .kx-roles-grid {
+  height: 100%;
+  padding-top: calc(var(--nav-h, 72px) + 20px);
+  padding-bottom: 40px;
+}
+.kx-roles.kx-live .kx-beats { min-height: 330px; }
+.kx-roles.kx-live .kx-beat { padding: 0; border: 0; }
+.kx-roles.kx-live .kx-laptop {
+  --lo: clamp(0, calc((var(--p) - 0.02) / 0.15), 1);
+  --loe: calc(var(--lo) * (2 - var(--lo)));
+  --pt: clamp(0, calc((var(--p) - 0.5) / 0.18), 1);
+  --kx-lid: calc(-88deg + var(--loe) * 100deg);
+  --kx-tilt: calc(-26deg + var(--loe) * 12deg);
+  --kx-turn: calc(-24deg + var(--loe) * 20deg + var(--pt) * 9deg);
+}
+.kx-roles.kx-live .kx-phone-rig {
+  --pe: clamp(0, calc((var(--p) - 0.47) / 0.15), 1);
+  --pee: calc(var(--pe) * (2 - var(--pe)));
+  opacity: var(--pe);
+  transform:
+    translate3d(calc((1 - var(--pee)) * 60%), calc((1 - var(--pee)) * 40px), calc(60px - (1 - var(--pee)) * 320px))
+    rotateY(calc(-14deg - (1 - var(--pee)) * 48deg))
+    rotateX(6deg);
+}
+
+/* ===========================================================================
+   3. « Une journée à l'école »
+   Quatre plans, un seul défilement : on glisse d'un moment de la journée au
+   suivant, l'heure court, le téléphone montre ce qui se passe à ce moment-là.
+   Le mouvement de caméra lent sur les photos (--p) donne la sensation d'un
+   plan filmé ; les fondus se font à chaque étape.
+   =========================================================================== */
+.kx-day .kx-plates { position: absolute; inset: 0; overflow: hidden; }
+/* `.kx-plates` et pas `.kx-day` : la même section porte aussi les images des
+   cartes à plat, sans numéro d'étape. Visées par cette règle, elles restaient
+   à opacité 0 — des cartes au cadre d'image vide, constaté en test. */
+.kx-day .kx-plates .kx-plate {
+  opacity: 0;
+  transition: opacity 1.1s var(--kx-ease);
+}
+.kx-day .kx-plates .kx-plate img {
+  transform: scale(calc(1.06 + var(--p, 0) * 0.1)) translate3d(calc(var(--p, 0) * -2%), 0, 0);
+  will-change: transform;
+}
+.kx-day[data-beat="0"] .kx-plates .kx-plate[data-b="0"],
+.kx-day[data-beat="1"] .kx-plates .kx-plate[data-b="1"],
+.kx-day[data-beat="2"] .kx-plates .kx-plate[data-b="2"],
+.kx-day[data-beat="3"] .kx-plates .kx-plate[data-b="3"] { opacity: 1; }
+.kx-day .kx-plates::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(10, 18, 14, 0.92) 0%, rgba(10, 18, 14, 0.7) 34%, rgba(10, 18, 14, 0.12) 68%, rgba(10, 18, 14, 0.35) 100%),
+    linear-gradient(0deg, rgba(10, 18, 14, 0.85) 0%, transparent 32%);
+}
+.kx-day-inner {
+  position: relative;
+  z-index: 2;
+  height: 100%;
+  max-width: var(--container, 1180px);
+  margin: 0 auto;
+  padding: calc(var(--nav-h, 72px) + 24px) 32px 34px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: auto 1fr auto;
+  gap: 20px 40px;
+}
+.kx-day-head { grid-column: 1 / -1; }
+.kx-day-title {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 500;
+  font-size: clamp(17px, 1.7vw, 23px);
+  color: var(--kx-on-night-soft);
+  margin: 12px 0 0;
+}
+.kx-clock {
+  font-family: var(--kx-font-label);
+  font-stretch: 125%;
+  font-weight: 800;
+  font-size: clamp(64px, 11vw, 168px);
+  line-height: 0.9;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--kx-on-night);
+  margin: 14px 0 0;
+}
+.kx-clock span { color: var(--kx-lime); }
+.kx-day .kx-beats { align-self: end; max-width: 520px; min-height: 190px; }
+.kx-day .kx-beat .kx-h { font-size: clamp(28px, 3.4vw, 46px); margin-top: 0; }
+.kx-day-phone { grid-column: 2; grid-row: 2 / 4; align-self: center; }
+.kx-day-phone .kx-phone { --pw: clamp(170px, 17vw, 240px); }
+.kx-day-phone .kx-phone-rig {
+  transform: rotateY(-10deg) rotateX(4deg) rotateZ(1.5deg);
+  animation: kx-float 7s ease-in-out infinite;
+}
+@keyframes kx-float {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -10px; }
+}
+.kx-timeline {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid var(--kx-rule-night);
+}
+.kx-timeline span {
+  font-family: var(--kx-font-label);
+  font-stretch: 115%;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--kx-on-night-faint);
+  transition: color 0.4s;
+  font-variant-numeric: tabular-nums;
+}
+.kx-day[data-beat="0"] .kx-timeline span:nth-child(1),
+.kx-day[data-beat="1"] .kx-timeline span:nth-child(2),
+.kx-day[data-beat="2"] .kx-timeline span:nth-child(3),
+.kx-day[data-beat="3"] .kx-timeline span:nth-child(4) { color: var(--kx-lime); }
+
+/* À plat (sans script, mouvement réduit) : quatre cartes, image au-dessus,
+   texte dessous. L'heure et le récit restent, le téléphone s'efface — il
+   illustre, il n'informe pas. */
+.kx-day:not(.kx-live) { padding: clamp(70px, 9vw, 120px) 0; }
+.kx-day:not(.kx-live) .kx-plates,
+.kx-day:not(.kx-live) .kx-day-phone,
+.kx-day:not(.kx-live) .kx-timeline,
+.kx-day:not(.kx-live) .kx-clock { display: none; }
+.kx-day:not(.kx-live) .kx-day-inner {
+  display: block;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+.kx-day:not(.kx-live) .kx-beats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 28px;
+  max-width: none;
+  margin-top: 36px;
+}
+.kx-day:not(.kx-live) .kx-beat {
+  background: var(--kx-night-2);
+  border: 1px solid var(--kx-rule-night);
+  border-radius: 20px;
+  overflow: hidden;
+}
+.kx-beat-flat { display: none; }
+.kx-day:not(.kx-live) .kx-beat-flat {
+  display: block;
+  position: relative;
+  aspect-ratio: 16 / 9;
+}
+.kx-day:not(.kx-live) .kx-beat-body { padding: 20px 22px 24px; }
+.kx-beat-time {
+  font-family: var(--kx-font-label);
+  font-stretch: 120%;
+  font-weight: 800;
+  font-size: 13px;
+  letter-spacing: 0.14em;
+  color: var(--kx-lime);
+}
+.kx-live .kx-beat-time { display: none; }
+
+/* ===========================================================================
+   4. L'appel final : le campus au soleil couchant
+   =========================================================================== */
+.kx-cta {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  padding: clamp(110px, 16vw, 200px) 32px;
+  text-align: center;
+  background: var(--kx-night);
+}
+.kx-cta .kx-plate { z-index: -2; }
+.kx-cta .kx-plate img { transform: scale(1.08); transition: transform 8s var(--kx-ease); }
+.kx-cta.in-view .kx-plate img { transform: scale(1); }
+.kx-cta::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(70% 70% at 50% 45%, rgba(10, 18, 14, 0.45), rgba(10, 18, 14, 0.88) 80%),
+    linear-gradient(180deg, rgba(10, 18, 14, 0.6), transparent 30%, transparent 70%, rgba(10, 18, 14, 0.9));
+}
+.kx-cta .kx-h { font-size: clamp(36px, 6vw, 84px); max-width: 16ch; margin-left: auto; margin-right: auto; }
+.kx-cta .kx-p { margin-left: auto; margin-right: auto; text-align: center; }
+.kx-cta .cta-actions { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 34px; }
+/* Le bouton « fantôme » est conçu pour un fond clair : sur la photo sombre,
+   son texte redevient crème, sinon il disparaît. */
+.kx-cta .btn-ghost,
+.kx-dark .btn-ghost {
+  color: var(--kx-on-night);
+  border-color: rgba(243, 240, 228, 0.35);
+}
+
+/* ===========================================================================
+   5. En-tête des pages publiques
+   La même photographie discrète pour toutes : des cahiers, une lumière du
+   matin. En thème sombre, le bureau de nuit — une photo claire éblouirait.
+   =========================================================================== */
+.kx-pub-plate {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: min(88vh, 720px);
+  z-index: 0;
+  pointer-events: none;
+  background-image: var(--kx-lqip-pub);
+  background-size: cover;
+  background-position: center;
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.75) 45%, transparent 100%);
+  mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.75) 45%, transparent 100%);
+}
+.kx-pub-plate img { width: 100%; height: 100%; object-fit: cover; object-position: 30% 50%; }
+.kx-pub-plate::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  /* Le texte de l'en-tête se pose à gauche, sur la partie la plus claire et
+     la plus vide de la photo — un voile du fond de page garantit le contraste
+     quel que soit le recadrage. */
+  background: linear-gradient(90deg, var(--bg) 0%, rgba(250, 248, 239, 0.86) 38%, rgba(250, 248, 239, 0.35) 75%, rgba(250, 248, 239, 0.1) 100%);
+}
+:root[data-theme="dark"] .kx-pub-plate { background-image: var(--kx-lqip-desk); }
+:root[data-theme="dark"] .kx-pub-plate::after {
+  background: linear-gradient(90deg, var(--bg) 0%, rgba(17, 17, 17, 0.88) 40%, rgba(17, 17, 17, 0.5) 80%, rgba(17, 17, 17, 0.3) 100%);
+}
+.kx-pub-plate .kx-pp-dark { display: none; }
+:root[data-theme="dark"] .kx-pub-plate .kx-pp-light { display: none; }
+:root[data-theme="dark"] .kx-pub-plate .kx-pp-dark { display: block; }
+.kx-lite .kx-pub-plate img { display: none; }
+.pub-body .pub-page { position: relative; }
+.pub-body .pub-page > .container { position: relative; z-index: 1; }
+
+/* ===========================================================================
+   6. Ouverture de la démonstration
+   Un bureau la nuit, un portable fermé. Le défilement l'ouvre, le tableau de
+   bord de l'établissement s'allume, le téléphone du parent se lève à côté,
+   puis la caméra plonge vers l'écran et rend la main à la visite.
+   =========================================================================== */
+.kx-demo-open .kx-plate::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(60% 50% at 50% 60%, rgba(10, 18, 14, 0.1), rgba(10, 18, 14, 0.82) 85%),
+    linear-gradient(180deg, rgba(10, 18, 14, 0.75), transparent 35%, transparent 70%, rgba(10, 18, 14, 0.95));
+}
+.kx-demo-inner {
+  position: relative;
+  z-index: 2;
+  height: 100%;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  justify-items: center;
+  padding: 88px 24px 28px;
+  text-align: center;
+}
+/* Le texte passe AU-DESSUS de l'objet : pendant l'ouverture, puis la plongée
+   finale, le portable grandit vers lui. Sans cela il recouvrait le titre
+   (« Deux mille trois… » coupé net, constaté en test). */
+/* Les étapes sont superposées en position absolue : elles ne réservent
+   aucune hauteur. La dernière (titre + rôles + boutons) est la plus haute ;
+   sans cette réserve elle débordait sur l'écran blanc du portable, et le
+   bouton « Créer mon espace », crème, y devenait invisible. */
+.kx-demo-open .kx-beats { position: relative; z-index: 3; max-width: 760px; width: 100%; min-height: 270px; }
+.kx-demo-open .kx-beat:not([data-b="0"]) .kx-h { font-size: clamp(28px, 3.6vw, 50px); }
+.kx-demo-open .kx-h { font-size: clamp(32px, 5vw, 70px); }
+.kx-demo-open .kx-p { margin-left: auto; margin-right: auto; }
+.kx-demo-stage {
+  position: relative;
+  align-self: center;
+  display: grid;
+  place-items: center;
+  width: 100%;
+}
+.kx-demo-stage .kx-laptop { --lw: min(50vw, 640px, calc((100svh - 470px) * 1.45)); }
+.kx-demo-stage .kx-phone-rig {
+  position: absolute;
+  left: calc(50% + min(25vw, 320px, calc((100svh - 470px) * 0.725)) - 30px);
+  bottom: 0;
+  transform: translate3d(0, 0, 80px) rotateY(-16deg) rotateX(6deg);
+}
+.kx-demo-stage .kx-phone { --pw: clamp(110px, 11vw, 170px); }
+.kx-badge {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: rgba(15, 26, 20, 0.78);
+  border: 1px solid var(--kx-rule-night);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  text-align: left;
+  color: var(--kx-on-night);
+  font-size: 13px;
+  box-shadow: 0 18px 40px -18px rgba(0, 0, 0, 0.7);
+}
+.kx-badge b { display: block; font-size: 13.5px; }
+.kx-badge small { display: block; color: var(--kx-on-night-soft); font-size: 12px; }
+.kx-badge i {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  background: rgba(184, 240, 0, 0.14);
+  color: var(--kx-lime);
+  font-style: normal;
+  font-weight: 800;
+}
+.kx-badge-a { left: 4%; top: 18%; }
+.kx-badge-b { right: 3%; top: 8%; }
+.kx-demo-roles { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 18px; }
+.kx-demo-roles span {
+  padding: 7px 14px;
+  border-radius: 99px;
+  border: 1px solid var(--kx-rule-night);
+  font-size: 13px;
+  color: var(--kx-on-night-soft);
+  background: rgba(15, 26, 20, 0.6);
+}
+.kx-demo-roles span b { color: var(--kx-lime); font-weight: 700; }
+.kx-demo-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 26px; }
+.kx-scroll-hint {
+  font-family: var(--kx-font-label);
+  font-stretch: 115%;
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--kx-on-night-faint);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.kx-scroll-hint::after {
+  content: "";
+  width: 1px;
+  height: 34px;
+  background: linear-gradient(var(--kx-lime), transparent);
+  animation: kx-hint 2.2s var(--kx-ease) infinite;
+}
+@keyframes kx-hint {
+  0% { transform: scaleY(0); transform-origin: top; }
+  45% { transform: scaleY(1); transform-origin: top; }
+  55% { transform: scaleY(1); transform-origin: bottom; }
+  100% { transform: scaleY(0); transform-origin: bottom; }
+}
+.kx-scroll-hint { display: none; }
+.kx-live .kx-scroll-hint { display: flex; }
+/* L'invitation à défiler n'a de sens qu'au premier temps : une fois la scène
+   engagée, elle se retire. */
+.kx-scroll-hint { transition: opacity 0.4s; }
+.kx-live:not([data-beat="0"]) .kx-scroll-hint { opacity: 0; }
+
+/* Pilotée */
+.kx-demo-open.kx-live .kx-laptop {
+  --lo: clamp(0, calc((var(--p) - 0.14) / 0.18), 1);
+  --loe: calc(var(--lo) * (2 - var(--lo)));
+  --zo: clamp(0, calc((var(--p) - 0.78) / 0.2), 1);
+  --kx-lid: calc(-88deg + var(--loe) * 100deg);
+  --kx-tilt: calc(-32deg + var(--loe) * 18deg + var(--zo) * 2deg);
+  --kx-turn: calc(-18deg + var(--loe) * 18deg);
+}
+.kx-demo-open.kx-live .kx-demo-stage {
+  --zo: clamp(0, calc((var(--p) - 0.78) / 0.2), 1);
+  transform: scale(calc(1 + var(--zo) * var(--zo) * 0.22)) translateY(calc(var(--zo) * 10%));
+}
+.kx-demo-open.kx-live .kx-phone-rig {
+  --pe: clamp(0, calc((var(--p) - 0.4) / 0.16), 1);
+  --pee: calc(var(--pe) * (2 - var(--pe)));
+  opacity: calc(var(--pe) * (1 - clamp(0, calc((var(--p) - 0.8) / 0.1), 1)));
+  transform:
+    translate3d(calc((1 - var(--pee)) * 90%), calc((1 - var(--pee)) * 60px), calc(80px - (1 - var(--pee)) * 260px))
+    rotateY(calc(-16deg - (1 - var(--pee)) * 40deg))
+    rotateX(6deg);
+}
+.kx-demo-open.kx-live .kx-badge {
+  opacity: 0;
+  transform: translateY(12px) scale(0.96);
+  transition: opacity 0.5s var(--kx-ease), transform 0.7s var(--kx-ease);
+}
+.kx-demo-open.kx-live[data-beat="2"] .kx-badge { opacity: 1; transform: none; }
+
+/* À plat : titre, appareils posés, et l'accès à la visite. */
+.kx-demo-open:not(.kx-live) .kx-demo-inner { padding-top: 120px; padding-bottom: 80px; gap: 40px; }
+.kx-demo-open:not(.kx-live) .kx-demo-stage { min-height: 420px; }
+
+/* ===========================================================================
+   Mouvement réduit : aucune 3D animée, aucun flottement, aucun fondu.
+   cine.js ne pose pas `.kx-live` dans ce cas ; ces règles couvrent ce qui
+   bouge sans lui (flottement, indice de défilement, lumière de l'appel final).
+   =========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  .kx-day-phone .kx-phone-rig,
+  .kx-scroll-hint::after { animation: none; }
+  .kx-cta .kx-plate img { transition: none; transform: none; }
+  .kx-scr { transition: none; }
+}
+
+/* ===========================================================================
+   Tablette et téléphone
+   =========================================================================== */
+@media (max-width: 960px) {
+  .kx-roles-grid { grid-template-columns: 1fr; padding-left: 20px; padding-right: 20px; }
+  .kx-devices { min-height: 340px; }
+  .kx-devices .kx-laptop { --lw: min(84vw, 560px); }
+  .kx-devices .kx-phone-rig { right: 2%; }
+  .kx-devices .kx-phone { --pw: min(28vw, 150px); }
+
+  /* Piloté sur petit écran : les appareils en haut, le texte en bas, pour
+     que le récit reste lisible sans que l'objet ne le recouvre. */
+  .kx-roles.kx-live .kx-roles-grid {
+    grid-template-rows: auto 1fr;
+    align-content: start;
+    gap: 8px;
+    padding-top: calc(var(--nav-h, 72px) + 6px);
+  }
+  .kx-roles.kx-live .kx-devices { order: -1; min-height: 44svh; }
+  .kx-roles.kx-live .kx-devices .kx-laptop { --lw: min(80vw, 480px, calc(40svh * 1.3)); }
+  .kx-roles.kx-live .kx-beats { min-height: 250px; }
+
+  .kx-day-inner { grid-template-columns: 1fr; padding-left: 20px; padding-right: 20px; }
+  .kx-day-phone { grid-column: 1; grid-row: 2; justify-self: end; align-self: start; margin-top: -6px; }
+  .kx-day-phone .kx-phone { --pw: min(34vw, 160px); }
+  .kx-day .kx-beats { grid-row: 3; min-height: 200px; }
+  .kx-timeline { grid-row: 4; }
+  .kx-day:not(.kx-live) .kx-beats { grid-template-columns: 1fr; }
+
+  .kx-demo-stage .kx-laptop { --lw: min(86vw, 520px, calc((100svh - 360px) * 1.3)); }
+  .kx-demo-stage .kx-phone-rig { left: auto; right: 2%; }
+  .kx-badge { display: none; }
+}
+
+@media (max-width: 560px) {
+  .kx-kicker { letter-spacing: 0.12em; font-size: 11px; font-stretch: 105%; }
+  .kx-h { font-size: clamp(28px, 8.4vw, 40px); }
+  .kx-roles .kx-h, .kx-day .kx-beat .kx-h { font-size: clamp(24px, 7.2vw, 34px); }
+  .kx-p { font-size: 15px; }
+  .kx-clock { font-size: clamp(56px, 20vw, 88px); }
+  .kx-timeline { gap: 6px; }
+  .kx-timeline span { font-size: 10.5px; letter-spacing: 0.06em; }
+  .kx-cta { padding-left: 20px; padding-right: 20px; }
+  .kx-demo-open .kx-h { font-size: clamp(28px, 8.4vw, 40px); }
+}
+
+/* LQIP-START — généré depuis assets/cine/_src/lqip.json ; ne pas éditer à la main. */
+:root {
+  --kx-lqip-dusk: url("data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAA4KCw0LCQ4NDA0QDw4RFiQXFhQUFiwgIRokNC43NjMuMjI6QVNGOj1OPjIySGJJTlZYXV5dOEVmbWVabFNbXVn/2wBDAQ8QEBYTFioXFypZOzI7WVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVn/wAARCAASACADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwDlrEpKdpwGrZgsw3TBrCha1VWzC7E9OanE0AYFIZVHs+KzdVgqKNgWl19vSMRZgK5LVPPFbwttlkjRsZwWArnpLiTccefjt+8NV5TuyfKct6sc0lUbK9kl0IoutWx2oorKR1Q2HZPrTGJ9aKKhFs//2Q==");
+  --kx-lqip-d0730: url("data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAA4KCw0LCQ4NDA0QDw4RFiQXFhQUFiwgIRokNC43NjMuMjI6QVNGOj1OPjIySGJJTlZYXV5dOEVmbWVabFNbXVn/2wBDAQ8QEBYTFioXFypZOzI7WVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVn/wAARCAASACADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwDOsdanhkVm+Yg066gXWNQe4nkMQcdAtc/DJLuGMtW7aRTsoY/J25Nc7djRRcuhuRW+n2lgtuGbygd0g/v1Tvb63UkWZ8lM5C9qoXayhMtLgdOKy5QTgCXp0oTTG4NdCbTwPLzgZq+CeOe9FFYy3OmOxXuSfLPPass9qKKuGxEz/9k=");
+  --kx-lqip-d1000: url("data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAA4KCw0LCQ4NDA0QDw4RFiQXFhQUFiwgIRokNC43NjMuMjI6QVNGOj1OPjIySGJJTlZYXV5dOEVmbWVabFNbXVn/2wBDAQ8QEBYTFioXFypZOzI7WVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVn/wAARCAASACADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwDQ1aSGO/l2yKkpiyOec1z0t7qCpkXBI9cCpDZ+TKd0OXA6u4JP61E7s7mPywMdgM/yrBON7FOM7XRRl1W+/wCex/IV1/h8W91Z7pmR5Nozz3rlJ4h8xICj3OMH0p9kY0B3SRL7+cB/SneLewcs0jGm4JxxzW7oSK7PuUN8o6jNFFDNCrq4AjnwMfvF/rVGVQIkwB0FFFSUf//Z");
+  --kx-lqip-d1300: url("data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAA4KCw0LCQ4NDA0QDw4RFiQXFhQUFiwgIRokNC43NjMuMjI6QVNGOj1OPjIySGJJTlZYXV5dOEVmbWVabFNbXVn/2wBDAQ8QEBYTFioXFypZOzI7WVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVn/wAARCAASACADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwDkJpVkxjtXTeFtUt7O2kSSUox6fLmqNrokM7AfaAjf7fFag8PNaoWhuoSx/vDFZXTVgcHzXZci1hftkhW4TynXlicc1ztvIPKOSMljV+4kubOAmaK0aMeqjn+Vc7c3iStlYkQ/7AwKSXQq1tTdXmtHTflsLhxw4Bww6iiis4m0zirqWSWd2kdnOerHNQd6KK6DE//Z");
+  --kx-lqip-d1630: url("data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAA4KCw0LCQ4NDA0QDw4RFiQXFhQUFiwgIRokNC43NjMuMjI6QVNGOj1OPjIySGJJTlZYXV5dOEVmbWVabFNbXVn/2wBDAQ8QEBYTFioXFypZOzI7WVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVn/wAARCAASACADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwCLStXvNPlVL1swOMjzGwVqnr91aXVzmybfv67R1NVb27F9JGTG67BgVDA80M8bIoKqwJBx61iWrrYqyxOnmB0kGRjG2obUSPIV3KmBwX4rpZ9UuHXEdrE315rOldyC5hiVz2WoVRmjpiRAelX4lG3oKKKTLiV52OepquaKKENn/9k=");
+  --kx-lqip-campus: url("data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAA4KCw0LCQ4NDA0QDw4RFiQXFhQUFiwgIRokNC43NjMuMjI6QVNGOj1OPjIySGJJTlZYXV5dOEVmbWVabFNbXVn/2wBDAQ8QEBYTFioXFypZOzI7WVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVn/wAARCAASACADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwCqnjCdtqoibj2bip/+ErvpWXyIlwOSCOtYcFhPAu6MB1I/iGMVI6TP1k2eoArlbSN4wkzdbxddxgmS3VR04OTVebxtMEyiIT7gisy3DBsG4GPpzUd1cwxSbH2tn1FCsDVjZhqO6RfLb5R09KKKdQVM5m8Jz1qi5Jbk55ooqqewqvxH/9k=");
+  --kx-lqip-desk: url("data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAA4KCw0LCQ4NDA0QDw4RFiQXFhQUFiwgIRokNC43NjMuMjI6QVNGOj1OPjIySGJJTlZYXV5dOEVmbWVabFNbXVn/2wBDAQ8QEBYTFioXFypZOzI7WVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVn/wAARCAASACADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwDz9QW7UpgduimnwTqvDCtqyUyj5F49qzcmjWMUzA8iVDkKacNzoFkJwvQV0d3H5S/MorHmZSTSUmxuCWzM1vvn610vhMktKCSQO1FFVPYzjuWNZPzGudm+9RRURNGf/9k=");
+  --kx-lqip-pub: url("data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAA4KCw0LCQ4NDA0QDw4RFiQXFhQUFiwgIRokNC43NjMuMjI6QVNGOj1OPjIySGJJTlZYXV5dOEVmbWVabFNbXVn/2wBDAQ8QEBYTFioXFypZOzI7WVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVn/wAARCAASACADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwDuZLkMpVXww7AZrOmhV/3bzYeQ8LjBqCae8SJgCc444zVXTtOuZ5xNM7Kc5yTzWHM2aWSL0dmYBhWJ+tOO4VplBtAcbveoJLbdyjfnVWENk+8amh/1RoopgTjoKil4YYoooEf/2Q==");
+}
+/* LQIP-END */

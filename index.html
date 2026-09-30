@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;1,500;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Archivo:wdth,wght@62..125,400..800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/style.css?v=1791100001" />
+<link rel="stylesheet" href="assets/css/cine.css?v=1791200001" />
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' http://localhost:5001; base-uri 'self'; form-action 'self'">
 <script src="assets/js/theme.js?v=1790200001"></script>
 <noscript>
@@ -77,6 +78,7 @@
         <div class="tubelight-glow"></div>
       </div>
       <a href="#produit" class="active">Produit</a>
+      <a href="demo.html">Démo</a>
       <a href="a-propos.html">À propos</a>
       <a href="aide.html">Centre d'aide</a>
       <a href="contact.html">Contact</a>
@@ -155,34 +157,16 @@
            qui s'élargit, pas le contenu. C'est ce qui le garde net, et ce qui
            garantit qu'on ne voit jamais la page à travers l'ouverture. -->
       <div class="portal-reveal" id="portalReveal" aria-hidden="true">
-        <div class="telemetry-grid"></div>
-        <div class="portal-core-glow"></div>
-        <div class="telemetry-hud" id="telemetryHud">
+        <!-- L'école au crépuscule. Invisible au repos : elle n'apparaît
+             qu'avec la plongée (voir cine.css, « L'intérieur du O »). -->
+        <div class="kx-o-scene">
+          <div class="kx-plate" style="background-image:var(--kx-lqip-dusk)"><img src="assets/cine/dusk-1600.webp" srcset="assets/cine/dusk-960.webp 960w, assets/cine/dusk-1600.webp 1600w" sizes="100vw" alt="" decoding="async" fetchpriority="low" loading="lazy"></div>
+        </div>
+        <div class="telemetry-hud kx-o-hud" id="telemetryHud">
           <div class="hud-pill"><span class="hud-dot"></span> L'espace Klassio</div>
-          <h2 class="hud-headline" data-mo="words">Une fois dedans, <span class="em">tout est au même endroit</span></h2>
-          <div class="preview-frame portal-preview">
-            <div class="preview-topbar"><span></span><span></span><span></span></div>
-            <div class="preview-body">
-              <div class="preview-side">
-                <div class="p-logo">Klassio</div>
-                <div class="p-item active"><span class="ic"></span>Accueil</div>
-                <div class="p-item"><span class="ic"></span>Établissement</div>
-                <div class="p-item"><span class="ic"></span>Élèves</div>
-                <div class="p-item"><span class="ic"></span>Finance</div>
-                <div class="p-item"><span class="ic"></span>Paiements</div>
-                <div class="p-item"><span class="ic"></span>Rapports</div>
-                <div class="p-item"><span class="ic"></span>IA</div>
-              </div>
-              <div class="preview-main">
-                <div class="preview-search">🔍&nbsp; Rechercher ou demander à Klassio…</div>
-                <div class="preview-cards">
-                  <div class="preview-card"><div class="k">Encaissé ce mois</div><div class="v lime">18 420 $</div></div>
-                  <div class="preview-card"><div class="k">Impayés</div><div class="v">3 260 $</div></div>
-                  <div class="preview-card"><div class="k">Élèves actifs</div><div class="v">1 284</div></div>
-                </div>
-                <div class="preview-row"></div>
-              </div>
-            </div>
+          <h2 class="hud-headline">Une fois dedans, <span class="em">tout est au même endroit</span></h2>
+          <div class="kx-o-device kx-stage3d">
+            <div class="kx-laptop"><div class="kx-lid"><div class="kx-lid-face"><div class="kx-screen" data-kx-clone="#kxScrDash"></div></div></div><div class="kx-base"></div></div>
           </div>
         </div>
       </div>
@@ -202,7 +186,8 @@
   </section>
 
   <!-- STORYTELLING -->
-  <main class="story" id="produit">
+  <main id="produit">
+  <div class="story">
 
     <section class="story-section">
       <div class="story-copy reveal">
@@ -256,11 +241,101 @@
       </div>
     </section>
 
+  </div>
+
+  <!-- 03 — CHAQUE RÔLE, SON ÉCRAN
+       Scène pilotée par cine.js : l'ordinateur s'ouvre, pivote, et le
+       téléphone entre à l'étape du parent. Sans script ou en mouvement
+       réduit, les quatre rôles s'affichent l'un sous l'autre, appareils
+       posés — rien n'est caché. -->
+  <section class="kx-scene kx-dark kx-roles" id="roles" data-kx-scene data-kx-beats="4" data-kx-track="440" aria-labelledby="rolesKicker">
+    <div class="kx-sticky">
+      <div class="kx-roles-grid">
+        <div class="kx-roles-copy">
+          <span class="kx-kicker" id="rolesKicker">03 — Chaque rôle, son écran</span>
+          <div class="kx-beats">
+            <article class="kx-beat" data-b="0"><span class="kx-beat-role">Direction</span>
+              <h3 class="kx-h">L'établissement entier, <em>sur un seul écran</em>.</h3>
+              <p class="kx-p">Effectifs, encaissements, présences, résultats : la Direction voit tout, à jour, sans rien recompter à la main.</p></article>
+            <article class="kx-beat" data-b="1"><span class="kx-beat-role">Professeur</span>
+              <h3 class="kx-h">Il saisit ses notes. <em>Le serveur calcule.</em></h3>
+              <p class="kx-p">Moyennes et rangs sont recalculés côté serveur, jamais dans le navigateur. Chaque correction crée une version : l'ancienne n'est jamais effacée.</p></article>
+            <article class="kx-beat" data-b="2"><span class="kx-beat-role">Parent</span>
+              <h3 class="kx-h">Son enfant, <em>et seulement le sien</em>.</h3>
+              <p class="kx-p">Résultats, présences, frais et reçus, depuis son téléphone. Une période n'apparaît qu'une fois proclamée par l'école.</p></article>
+            <article class="kx-beat" data-b="3"><span class="kx-beat-role">Directeur des disciplines</span>
+              <h3 class="kx-h">Les retards pointés <em>dès le portail</em>.</h3>
+              <p class="kx-p">Retards, absences et incidents consignés en quelques touches. Klassio signale les seuils atteints ; la décision reste à l'école.</p></article>
+          </div>
+          <div class="kx-rail" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+          <p class="kx-fict kx-devices-cap">Écrans du logiciel · données fictives</p>
+        </div>
+        <div class="kx-devices kx-stage3d" aria-hidden="true">
+          <div class="kx-laptop"><div class="kx-lid"><div class="kx-lid-face"><div class="kx-screen"><div class="kx-scr is-on" id="kxScrDash" data-on="0,2"><div class="kx-app"><div class="kx-app-side"><div class="kx-app-brand"><i></i>Klassio</div><div class="kx-app-nav on">Accueil</div><div class="kx-app-nav">Élèves</div><div class="kx-app-nav">Classes</div><div class="kx-app-nav">Résultats</div><div class="kx-app-nav">Finance</div><div class="kx-app-nav">Discipline</div><div class="kx-app-nav">Rapports</div></div><div class="kx-app-main"><div class="kx-app-head"><b>Collège Horizon</b><span>Année 2026–2027 · Période 1</span></div><div class="kx-kpis"><div class="kx-kpi"><small>Élèves</small><strong>2 340</strong></div><div class="kx-kpi"><small>Attendu</small><strong>1 053 000 $</strong></div><div class="kx-kpi"><small>Encaissé</small><strong class="lime">874 500 $</strong></div><div class="kx-kpi"><small>Classes</small><strong>42</strong></div></div><div class="kx-app-row"><div class="kx-card"><h6>Encaissements par mois</h6><div class="kx-bars"><i style="--h:34%"></i><i style="--h:52%"></i><i style="--h:88%"></i><i style="--h:61%"></i><i style="--h:46%"></i><i style="--h:72%"></i><i style="--h:94%"></i><i style="--h:58%"></i></div></div><div class="kx-card"><h6>Aujourd'hui</h6><div class="kx-list"><div class="kx-li"><em>✓</em><span>Appel fait — 38 classes sur 42</span><b>90 %</b></div><div class="kx-li"><em>$</em><span>Reçu REC-2026-00412 · Kabeya G.</span><b>150 $</b></div><div class="kx-li"><em>P</em><span>Période 1 proclamée · 4e Sc.</span><b>58</b></div><div class="kx-li"><em>!</em><span>Soldes à relancer</span><b>37</b></div></div></div></div></div></div></div><div class="kx-scr" data-on="1"><div class="kx-app"><div class="kx-app-side"><div class="kx-app-brand"><i></i>Klassio</div><div class="kx-app-nav">Accueil</div><div class="kx-app-nav">Élèves</div><div class="kx-app-nav">Classes</div><div class="kx-app-nav on">Résultats</div><div class="kx-app-nav">Finance</div><div class="kx-app-nav">Discipline</div><div class="kx-app-nav">Rapports</div></div><div class="kx-app-main"><div class="kx-app-head"><b>6e A · Mathématiques</b><span>Période 1 · M. Ilunga</span></div><div class="kx-card" style="padding:.4em .7em"><table class="kx-table"><thead><tr><th>Élève</th><th class="num">Interro</th><th class="num">Devoir</th><th class="num">Examen</th><th class="num">Moyenne</th></tr></thead><tbody><tr><td>Kabeya Grâce</td><td class="num">16</td><td class="num">14</td><td class="num">15</td><td class="num avg">15,1</td></tr><tr><td>Mbuyi Daniel</td><td class="num">12</td><td class="num">13</td><td class="num">11</td><td class="num avg">11,8</td></tr><tr><td>Ilunga Sarah</td><td class="num">18</td><td class="num">17</td><td class="num">17</td><td class="num avg">17,3</td></tr><tr><td>Tshibanda Joël</td><td class="num">9</td><td class="num">11</td><td class="num">12</td><td class="num avg">10,9</td></tr><tr><td>Nzuzi Esther</td><td class="num">14</td><td class="num">15</td><td class="num">16</td><td class="num avg">15,2</td></tr></tbody></table></div><div class="kx-note-foot">Moyennes recalculées par le serveur · version 2 enregistrée, la 1 conservée</div></div></div></div><div class="kx-scr" data-on="3"><div class="kx-app"><div class="kx-app-side"><div class="kx-app-brand"><i></i>Klassio</div><div class="kx-app-nav">Accueil</div><div class="kx-app-nav">Élèves</div><div class="kx-app-nav">Classes</div><div class="kx-app-nav">Résultats</div><div class="kx-app-nav">Finance</div><div class="kx-app-nav on">Discipline</div><div class="kx-app-nav">Rapports</div></div><div class="kx-app-main"><div class="kx-app-head"><b>Vie scolaire</b><span>Lundi 17 novembre</span></div><div class="kx-kpis"><div class="kx-kpi"><small>Retards</small><strong>12</strong></div><div class="kx-kpi"><small>Absences</small><strong>7</strong></div><div class="kx-kpi"><small>Incidents</small><strong>2</strong></div><div class="kx-kpi"><small>Seuils atteints</small><strong class="lime">3</strong></div></div><div class="kx-app-row"><div class="kx-card"><h6>Retards au portail</h6><div class="kx-list"><div class="kx-li"><em>R</em><span>Mutombo Kevin · 5e B</span><b>07:41</b></div><div class="kx-li"><em>R</em><span>Lusamba Ruth · 6e A</span><b>07:44</b></div><div class="kx-li"><em>R</em><span>Kasongo Paul · 4e Sc.</span><b>07:52</b></div><div class="kx-li"><em>R</em><span>Makiese Divine · 3e B</span><b>07:58</b></div></div></div><div class="kx-card"><h6>À examiner</h6><div class="kx-tags"><span class="kx-tag warn">3 élèves au-delà du seuil</span><span class="kx-tag">2 incidents qualifiés</span><span class="kx-tag ok">Décision : la Direction</span></div></div></div></div></div></div></div></div><div class="kx-lid-back"><img src="assets/logo.png?v=1789000492" alt=""></div></div><div class="kx-base"></div></div>
+          <div class="kx-phone-rig"><div class="kx-phone"><div class="kx-phone-screen"><span class="kx-island"></span><div class="kx-screen"><div class="kx-scr is-on" data-on="0,1,2"><div class="kx-m"><div class="kx-m-top"><b>Bonjour</b><span>6e A</span></div><div class="kx-m-card kx-m-hero"><small>Grâce · moyenne Période 1</small><strong>15,1<sub>/20</sub></strong><div class="kx-m-pill">● Période proclamée</div></div><div class="kx-m-grid"><div class="kx-m-card"><small>Présence</small><b>96 %</b></div><div class="kx-m-card"><small>Rang</small><b>4 / 40</b></div></div><div class="kx-m-kicker">Frais scolaires</div><div class="kx-m-card"><div class="kx-kv"><span>Tranche 2</span><b>150 $</b></div><div class="kx-kv"><span>Échéance</span><b>15 déc.</b></div><div class="kx-kv"><span>Dernier reçu</span><b>REC-2026-00412</b></div></div><div class="kx-m-btn">Voir le bulletin</div></div></div><div class="kx-scr" data-on="3"><div class="kx-m"><div class="kx-m-top"><b>Portail</b><span>07:58</span></div><div class="kx-m-kicker">Retards du jour · 12</div><div class="kx-m-card kx-m-rows"><div class="kx-m-row"><i class="kx-dot r">R</i><span>Mutombo Kevin · 5e B</span><b>07:41</b></div><div class="kx-m-row"><i class="kx-dot r">R</i><span>Lusamba Ruth · 6e A</span><b>07:44</b></div><div class="kx-m-row"><i class="kx-dot r">R</i><span>Kasongo Paul · 4e Sc.</span><b>07:52</b></div><div class="kx-m-row"><i class="kx-dot r">R</i><span>Makiese Divine · 3e B</span><b>07:58</b></div></div><div class="kx-m-btn">Pointer un retard</div></div></div></div></div></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 04 — UNE JOURNÉE À L'ÉCOLE
+       Quatre plans, un défilement. L'heure court de 07:30 à 17:30, le
+       téléphone montre ce qui se passe à ce moment-là. À plat : quatre
+       cartes, image, heure et récit. -->
+  <section class="kx-scene kx-dark kx-day" id="journee" data-kx-scene data-kx-beats="4" data-kx-track="460" data-kx-times="450,600,780,990,1050" aria-labelledby="dayTitle">
+    <div class="kx-sticky">
+      <div class="kx-plates" aria-hidden="true">
+        <div class="kx-plate" data-b="0" style="background-image:var(--kx-lqip-d0730)"><img src="assets/cine/d0730-1600.webp" srcset="assets/cine/d0730-960.webp 960w, assets/cine/d0730-1600.webp 1600w" sizes="100vw" alt="" decoding="async" loading="lazy"></div>
+        <div class="kx-plate" data-b="1" style="background-image:var(--kx-lqip-d1000)"><img src="assets/cine/d1000-1600.webp" srcset="assets/cine/d1000-960.webp 960w, assets/cine/d1000-1600.webp 1600w" sizes="100vw" alt="" decoding="async" loading="lazy"></div>
+        <div class="kx-plate" data-b="2" style="background-image:var(--kx-lqip-d1300)"><img src="assets/cine/d1300-1600.webp" srcset="assets/cine/d1300-960.webp 960w, assets/cine/d1300-1600.webp 1600w" sizes="100vw" alt="" decoding="async" loading="lazy"></div>
+        <div class="kx-plate" data-b="3" style="background-image:var(--kx-lqip-d1630)"><img src="assets/cine/d1630-1600.webp" srcset="assets/cine/d1630-960.webp 960w, assets/cine/d1630-1600.webp 1600w" sizes="100vw" alt="" decoding="async" loading="lazy"></div>
+      </div>
+      <div class="kx-day-inner">
+        <div class="kx-day-head">
+          <span class="kx-kicker">04 — Une journée à l'école</span>
+          <h2 class="kx-day-title" id="dayTitle">Du premier appel au dernier bulletin.</h2>
+          <p class="kx-clock" data-kx-clock aria-hidden="true">07<span>:</span>30</p>
+        </div>
+        <div class="kx-beats">
+            <article class="kx-beat" data-b="0">
+              <div class="kx-beat-flat"><div class="kx-plate" style="background-image:var(--kx-lqip-d0730)"><img src="assets/cine/d0730-1600.webp" srcset="assets/cine/d0730-960.webp 960w, assets/cine/d0730-1600.webp 1600w" sizes="100vw" alt="" decoding="async" loading="lazy"></div></div>
+              <div class="kx-beat-body"><span class="kx-beat-time">07:30</span>
+                <h3 class="kx-h">L'appel</h3>
+                <p class="kx-p">L'appel se fait en quelques touches, classe par classe. Avant huit heures, la Direction sait qui est là.</p></div>
+            </article>
+            <article class="kx-beat" data-b="1">
+              <div class="kx-beat-flat"><div class="kx-plate" style="background-image:var(--kx-lqip-d1000)"><img src="assets/cine/d1000-1600.webp" srcset="assets/cine/d1000-960.webp 960w, assets/cine/d1000-1600.webp 1600w" sizes="100vw" alt="" decoding="async" loading="lazy"></div></div>
+              <div class="kx-beat-body"><span class="kx-beat-time">10:00</span>
+                <h3 class="kx-h">Les notes</h3>
+                <p class="kx-p">Le professeur saisit ses notes. La moyenne est calculée par le serveur, et chaque correction garde l'ancienne version.</p></div>
+            </article>
+            <article class="kx-beat" data-b="2">
+              <div class="kx-beat-flat"><div class="kx-plate" style="background-image:var(--kx-lqip-d1300)"><img src="assets/cine/d1300-1600.webp" srcset="assets/cine/d1300-960.webp 960w, assets/cine/d1300-1600.webp 1600w" sizes="100vw" alt="" decoding="async" loading="lazy"></div></div>
+              <div class="kx-beat-body"><span class="kx-beat-time">13:00</span>
+                <h3 class="kx-h">Les frais</h3>
+                <p class="kx-p">Chaque paiement est enregistré par la caisse, chaque reçu numéroté. Le parent voit ce qu'il a payé, et ce qui reste.</p></div>
+            </article>
+            <article class="kx-beat" data-b="3">
+              <div class="kx-beat-flat"><div class="kx-plate" style="background-image:var(--kx-lqip-d1630)"><img src="assets/cine/d1630-1600.webp" srcset="assets/cine/d1630-960.webp 960w, assets/cine/d1630-1600.webp 1600w" sizes="100vw" alt="" decoding="async" loading="lazy"></div></div>
+              <div class="kx-beat-body"><span class="kx-beat-time">16:30</span>
+                <h3 class="kx-h">Le bulletin</h3>
+                <p class="kx-p">Prêt à imprimer. Il n'est publié aux parents qu'au moment où l'école décide de proclamer.</p></div>
+            </article>
+        </div>
+        <div class="kx-day-phone kx-stage3d" aria-hidden="true">
+          <div class="kx-phone-rig"><div class="kx-phone"><div class="kx-phone-screen"><span class="kx-island"></span><div class="kx-screen"><div class="kx-scr is-on" data-on="0"><div class="kx-m"><div class="kx-m-top"><b>Appel · 6e A</b><span>07:32</span></div><div class="kx-m-card kx-m-hero"><small>Présents</small><strong>38<sub>/40</sub></strong></div><div class="kx-m-card kx-m-rows"><div class="kx-m-row"><i class="kx-dot">P</i><span>Kabeya Grâce</span></div><div class="kx-m-row"><i class="kx-dot">P</i><span>Mbuyi Daniel</span></div><div class="kx-m-row"><i class="kx-dot r">R</i><span>Lusamba Ruth</span></div><div class="kx-m-row"><i class="kx-dot a">A</i><span>Kasongo Paul</span></div><div class="kx-m-row"><i class="kx-dot">P</i><span>Ilunga Sarah</span></div></div><div class="kx-m-btn">Valider l'appel</div></div></div><div class="kx-scr" data-on="1"><div class="kx-m"><div class="kx-m-top"><b>Interrogation</b><span>6e A · Maths</span></div><div class="kx-m-card kx-m-rows"><div class="kx-m-row"><span>Kabeya Grâce</span><b>16</b></div><div class="kx-m-row"><span>Mbuyi Daniel</span><b>12</b></div><div class="kx-m-row"><span>Ilunga Sarah</span><b>18</b></div><div class="kx-m-row"><span>Tshibanda Joël</span><b>9</b></div></div><div class="kx-m-card kx-m-hero"><small>Moyenne de la classe</small><strong>13,4<sub>/20</sub></strong><div class="kx-m-pill">● Calculée par le serveur</div></div><div class="kx-m-btn">Enregistrer</div></div></div><div class="kx-scr" data-on="2"><div class="kx-m"><div class="kx-m-top"><b>Reçu</b><span>13:07</span></div><div class="kx-m-card kx-rcpt"><div class="kx-rcpt-ok">✓</div><small>Tranche 2 · Kabeya Grâce</small><strong>150 $</strong><code>REC-2026-00413</code></div><div class="kx-m-card"><div class="kx-kv"><span>Mode</span><b>Mobile money</b></div><div class="kx-kv"><span>Confirmé par</span><b>la caisse</b></div><div class="kx-kv"><span>Reste dû</span><b>0 $</b></div></div><div class="kx-m-btn">Imprimer le reçu</div></div></div><div class="kx-scr" data-on="3"><div class="kx-m"><div class="kx-m-top"><b>Bulletin</b><span>Période 1</span></div><div class="kx-m-card kx-m-hero"><small>Kabeya Grâce · 6e A</small><strong>15,1<sub>/20</sub></strong><div class="kx-m-pill">● Proclamé · publié</div></div><div class="kx-m-card kx-m-rows"><div class="kx-m-row"><span>Mathématiques</span><b>15,1</b></div><div class="kx-m-row"><span>Français</span><b>14,6</b></div><div class="kx-m-row"><span>Sciences</span><b>16,0</b></div><div class="kx-m-row"><span>Conduite</span><b>A</b></div></div><div class="kx-m-btn">Télécharger le PDF</div></div></div></div></div></div></div>
+        </div>
+        <div class="kx-timeline" aria-hidden="true"><span>07:30 · Appel</span><span>10:00 · Notes</span><span>13:00 · Frais</span><span>16:30 · Bulletin</span></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="story">
     <section class="story-section">
       <div class="story-copy reveal">
-        <span class="story-index">03 — Pensé pour Kinshasa</span>
+        <span class="story-index">05 — Pensé pour Kinshasa</span>
         <h2 data-mo="words" class="mo-kinetic">Conçu pour les établissements scolaires d'ici</h2>
-        <p>Mobile Money, WhatsApp, espèces au comptoir : Klassio est pensé pour la réalité quotidienne des écoles et universités de Kinshasa, pas pour un marché générique.</p>
+        <p>Espèces au comptoir, mobile money, virement : l'école enregistre chaque paiement, Klassio en tient le registre et numérote chaque reçu. Pensé pour la réalité quotidienne des écoles de Kinshasa, pas pour un marché générique.</p>
       </div>
       <div class="story-visual reveal">
         <!-- Chaque carte entre par un côté, en alternance, au rythme du
@@ -277,7 +352,7 @@
 
     <section class="story-section reverse">
       <div class="story-copy reveal">
-        <span class="story-index">04 — L'intelligence</span>
+        <span class="story-index">06 — L'intelligence</span>
         <h2 data-mo="words" class="mo-kinetic">Une recherche qui comprend ce que vous voulez</h2>
         <p>Pas de chatbot à ouvrir : une seule barre pour chercher, naviguer ou demander, avec une réponse immédiate. Klassio comprend le rôle, l'établissement et le contexte de chaque utilisateur.</p>
       </div>
@@ -297,7 +372,7 @@
          donne au défilement de quoi égrener les quatre étapes. -->
     <section class="story-section trust-section" id="confiance">
       <div class="story-copy reveal">
-        <span class="story-index">05 — La confiance</span>
+        <span class="story-index">07 — La confiance</span>
         <h2 data-mo="words" class="mo-kinetic">Sécurisé, traçable, sous contrôle</h2>
         <p>Permissions granulaires, historique complet, isolation totale entre établissements. La confiance se construit sur des faits, pas des promesses.</p>
         <p class="trust-progress" aria-hidden="true"><span class="tp-current" id="trustCurrent">1</span><span class="tp-sep">/</span><span class="tp-total">4</span></p>
@@ -312,13 +387,14 @@
       </div>
     </section>
 
+  </div>
   </main>
 
   <!-- NAPPE — feature unroll -->
   <section class="nappe-section">
     <div class="container">
       <div class="nappe-heading reveal">
-        <span class="story-index">06 — Le produit</span>
+        <span class="story-index">08 — Le produit</span>
         <h2 data-mo="words" class="mo-kinetic">Un seul système, plusieurs moteurs</h2>
         <p>Derrière l'interface simple de Klassio, chaque module travaille ensemble.</p>
       </div>
@@ -330,7 +406,7 @@
             <div class="feature-grid">
               <div class="feature-chip"><div class="ic">🎓</div><h5>Élèves & classes</h5><p>Dossiers, effectifs, historique.</p></div>
               <div class="feature-chip"><div class="ic">💳</div><h5>Finance & facturation</h5><p>Obligations, échéances, soldes.</p></div>
-              <div class="feature-chip"><div class="ic">📲</div><h5>Paiements & Mobile Money</h5><p>Cash, banque, mobile, en un flux.</p></div>
+              <div class="feature-chip"><div class="ic">📲</div><h5>Paiements & reçus</h5><p>Espèces, banque, mobile money : enregistrés, numérotés.</p></div>
               <div class="feature-chip"><div class="ic">🏦</div><h5>Trésorerie</h5><p>Caisse, banque, comptes réunis.</p></div>
               <div class="feature-chip"><div class="ic">📥</div><h5>Import Excel intelligent</h5><p>Vos fichiers, structurés en minutes.</p></div>
               <div class="feature-chip"><div class="ic">✨</div><h5>IA proactive</h5><p>Observe, explique, jamais seule décideuse.</p></div>
@@ -343,23 +419,23 @@
     </div>
   </section>
 
-  <!-- FINAL CTA -->
-  <section class="final-cta" id="commencer">
-    <div class="cta-box reveal">
-      <h2 data-mo="words" class="mo-kinetic">Prêt à simplifier votre établissement ?</h2>
-      <p>Créez votre espace en quelques minutes, ou demandez une démonstration personnalisée.</p>
-      <div class="cta-actions">
-        <a href="app/inscription.html" class="btn btn-lime">
-          <svg class="btn-arr btn-arr-left" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-          <span class="btn-label">Créer mon espace</span>
-          <svg class="btn-arr btn-arr-right" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-        </a>
-        <a href="demo.html" class="btn btn-ghost">
-          <svg class="btn-arr btn-arr-left" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-          <span class="btn-label">Voir la démonstration</span>
-          <svg class="btn-arr btn-arr-right" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-        </a>
-      </div>
+  <!-- APPEL FINAL — le campus au soleil couchant -->
+  <section class="kx-cta" id="commencer" data-kx-inview aria-labelledby="ctaTitle">
+    <div class="kx-plate" style="background-image:var(--kx-lqip-campus)"><img src="assets/cine/campus-1600.webp" srcset="assets/cine/campus-960.webp 960w, assets/cine/campus-1600.webp 1600w" sizes="100vw" alt="" decoding="async" loading="lazy"></div>
+    <span class="kx-kicker">Votre établissement</span>
+    <h2 class="kx-h" id="ctaTitle">Donnez à votre école <em>un seul espace clair</em>.</h2>
+    <p class="kx-p">Créez votre espace en quelques minutes, ou visitez d'abord l'établissement de démonstration — données fictives, rien n'y est enregistré.</p>
+    <div class="cta-actions">
+      <a href="app/inscription.html" class="btn btn-lime">
+        <svg class="btn-arr btn-arr-left" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        <span class="btn-label">Créer mon espace</span>
+        <svg class="btn-arr btn-arr-right" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </a>
+      <a href="demo.html" class="btn btn-ghost">
+        <svg class="btn-arr btn-arr-left" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        <span class="btn-label">Visiter la démonstration</span>
+        <svg class="btn-arr btn-arr-right" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </a>
     </div>
   </section>
 
@@ -405,9 +481,10 @@
     </div>
   </footer>
 
+  <script src="assets/js/cine.js?v=1791200001"></script>
   <script src="assets/js/motion.js?v=1791100002"></script>
   <script src="assets/js/orbite.js?v=1791000003"></script>
-  <script src="assets/js/main.js?v=1791100001"></script>
+  <script src="assets/js/main.js?v=1791200001"></script>
   <script src="assets/js/cookie-consent.js?v=1790800001"></script>
 </body>
 </html>

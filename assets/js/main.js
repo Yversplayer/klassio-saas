@@ -448,6 +448,12 @@
       reveal.style.setProperty("--portal-cx", (geo.cx + geo.dx * pMove).toFixed(1) + "px");
       reveal.style.setProperty("--portal-cy", (geo.cy + geo.dy * pMove).toFixed(1) + "px");
 
+      //    La progression elle-même, pour la photo du crépuscule (cine.css) :
+      //    au repos cette couche EST le trou du « O », et une photo visible dès
+      //    la première image ferait lire « KLASSI » suivi d'un disque sombre.
+      //    Elle ne monte donc qu'avec la plongée. La couche reste opaque.
+      reveal.style.setProperty("--portal-p", progress.toFixed(4));
+
       // 5. Le contenu ne se révèle que lorsque l'ouverture est assez large
       //    pour en montrer autre chose qu'un fragment.
       hud.style.opacity = clamp((progress - 0.58) / 0.20, 0, 1).toFixed(3);

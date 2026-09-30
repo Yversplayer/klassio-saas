@@ -298,6 +298,8 @@ mêmes routes, mêmes permissions, même schéma, mêmes tests.
 `index.html` · `demo.html` · `assets/js/main.js` · `assets/js/page-demo.js` ·
 `assets/js/demo-data.js` · les blocs landing/démo de `assets/css/style.css` ·
 la barre latérale de l'application (`assets/js/admin.js`, `assets/css/style.css`).
+La barre latérale révélée au survol **est faite** (`admin.js`), `aria-expanded`
+compris : ne la refais pas, vérifie-la.
 
 ### Ce qui reste interdit
 
@@ -352,9 +354,39 @@ réel — pas un écran noir — et respecte `prefers-reduced-motion`, le mobile
 `sitemap.xml` **existent**. Une demande de « créer une page CGU » est déjà
 satisfaite : relis-la, améliore-la, ne la duplique pas.
 
-Manquent réellement : **favicon** (aucun fichier, aucune déclaration `rel="icon"`
-dans les pages), **Open Graph et Twitter Card** (zéro balise), **page 404
-personnalisée**.
+Existent aussi, depuis : **favicon** (`favicon.ico`, déclaré dans toutes les
+pages), **Open Graph et Twitter Card** (`assets/og-klassio.png`, 1200×630), et
+**page 404** (`404.html`). Ne les refais pas — vérifié le 30/09.
+
+### La couche cinématique (30/09) — où elle vit, et ses trois règles
+
+La landing, la démo et les pages publiques portent désormais une couche
+cinématique : scènes pilotées par le défilement, ordinateur et téléphone en
+3D CSS, photographies d'écoles de Kinshasa. **Elle ne vit pas dans
+`style.css`** :
+
+| Fichier | Rôle |
+|---|---|
+| `assets/css/cine.css` | tout le visuel, classes préfixées `kx-`. L'application ne charge pas ce fichier : rien ici ne peut l'atteindre. |
+| `assets/js/cine.js` | le moteur : écrit `--p` (progression) et `data-beat` (étape) sur chaque `[data-kx-scene]`. Chargé AVANT `main.js`. |
+| `assets/cine/*.webp` | 8 photos générées (Higgsfield, projet « Klassio — site cinématique »), 960 et 1600 px. Sources PNG hors dépôt (`.gitignore`). |
+
+1. **Une scène n'est animée que si `cine.js` lui ajoute `.kx-live`.** Sans
+   script ou en mouvement réduit, elle s'affiche à plat, tout en place.
+   N'écris jamais d'état caché hors de `.kx-live`.
+2. **Les écrans des appareils sont du HTML, pas des captures**, avec des
+   données fictives annoncées comme telles à côté de chaque scène. Un écran
+   ne montre jamais une fonction qui n'existe pas (§9) — le reçu dit
+   « confirmé par la caisse », pas « payé en ligne ».
+3. **Aucune vidéo.** Le plan gratuit Higgsfield ne la permet pas, et le
+   piège 5 l'aurait interdite de toute façon. Le mouvement vient du
+   défilement ; les photos sont en chargement différé, posées sur une
+   miniature floue de ~1 Ko, et masquées en économie de données.
+
+Pour l'intérieur du « O » : la photo du crépuscule est à opacité 0 au repos
+et ne monte qu'avec la plongée (`--portal-p`, exposé par `main.js`). Au
+repos, `.portal-reveal` EST le trou de la lettre — une photo visible dès la
+première image ferait lire « KLASSI » suivi d'un disque sombre.
 
 ### Analytics et cookies — ne décide pas seul
 
