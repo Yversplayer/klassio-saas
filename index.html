@@ -4,37 +4,39 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Klassio — La clarté derrière chaque établissement</title>
-<meta name="description" content="Klassio centralise élèves, finances, paiements et trésorerie de votre établissement scolaire dans un seul espace simple et intelligent.">
+<meta name="description" content="Klassio réunit élèves, présences, résultats, frais et discipline autour d'un dossier par élève. Quatre rôles, chacun son périmètre. Pensé pour les écoles de Kinshasa.">
+<!-- Avant TOUT le reste : décide si l'accueil animé doit jouer (entree.js). -->
+<script src="assets/js/entree.js?v=1791300003"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;1,500;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Archivo:wdth,wght@62..125,400..800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;1,500;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Archivo:wdth,wght@62..125,400..800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/style.css?v=1791100001" />
-<link rel="stylesheet" href="assets/css/cine.css?v=1791200001" />
+<link rel="stylesheet" href="assets/css/cine.css?v=1791300003" />
+<link rel="stylesheet" href="assets/css/vitrine.css?v=1791300003" />
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' http://localhost:5001; base-uri 'self'; form-action 'self'">
 <script src="assets/js/theme.js?v=1790200001"></script>
+<style>
+  /* Accueil sauté (lien direct vers une section, ou déjà vu dans la session) :
+     décidé par entree.js AVANT le premier rendu, donc aucun clignotement. */
+  .kx-nosplash #splash { display: none !important; }
+  .kx-nosplash body.no-scroll { overflow: auto; height: auto; }
+</style>
 <noscript>
-  <!-- Sans JavaScript, cette page était un écran verrouillé : <body class="no-scroll">
-       (overflow:hidden) et #splash en position fixe ne sont retirés que par main.js,
-       et .reveal laissait tout le contenu sous la ligne de flottaison invisible.
-       Ce repli rend la page lisible et défilable sans une ligne de script. -->
+  <!-- Sans JavaScript : le splash n'est jamais retiré, le fond de barre jamais
+       posé, et le portail n'est jamais piloté. On rend tout lisible et en
+       place : le héros qui vit d'ordinaire dans le « O » devient une section
+       ordinaire sous le mot-marque. -->
   <style>
     body.no-scroll { overflow: auto !important; height: auto !important; }
     #splash { display: none !important; }
-    /* Le fond de la barre n'est posé qu'au défilement, par le script : sans
-       lui elle reste transparente et le texte de la page passe dessous. */
-    .navbar { background: var(--bg) !important; box-shadow: 0 1px 0 var(--line) !important; }
+    .kx-head .navbar.kx-nav { background: var(--bg) !important; box-shadow: 0 1px 0 var(--line) !important; }
     .reveal { opacity: 1 !important; transform: none !important; }
-    .nappe { transform: none !important; opacity: 1 !important; }
-    .nappe-content { opacity: 1 !important; }
     .portal-container { min-height: auto !important; }
     .portal-viewport { position: static !important; height: auto !important; overflow: visible !important; }
-    .hero-stage { position: static !important; padding: 150px 0 80px !important; }
-    .portal-reveal { display: none !important; }
+    .hero-stage { position: static !important; padding: 170px 0 80px !important; }
+    .portal-reveal.kx-reveal-hero { display: block !important; position: relative !important; clip-path: none !important; min-height: 88vh; }
+    .kx-reveal-hero .kx-o-scene, .kx-reveal-hero .telemetry-hud { opacity: 1 !important; }
     .glyph-o-interior { background: var(--surface-soft) !important; }
-    /* Les trois effets du récit sont pilotés par le défilement : sans script,
-       on affiche directement leur état d'arrivée. Rien n'est perdu. */
-    .hub-line { stroke-dashoffset: 0 !important; }
-    .hub-pulse { display: none !important; }
     .trust-runway { min-height: 0 !important; }
     .trust-grid, .trust-section .story-copy { position: static !important; }
     .trust-progress { display: none !important; }
@@ -46,7 +48,7 @@
 <meta property="og:site_name" content="Klassio">
 <meta property="og:locale" content="fr_CD">
 <meta property="og:title" content="Klassio — La clarté derrière chaque établissement">
-<meta property="og:description" content="Klassio centralise élèves, finances, paiements et trésorerie de votre établissement scolaire dans un seul espace simple et intelligent.">
+<meta property="og:description" content="Élèves, présences, résultats, frais et discipline autour d'un dossier par élève. Pensé pour les écoles de Kinshasa.">
 <meta property="og:url" content="https://klassio.app/">
 <meta property="og:image" content="https://klassio.app/assets/og-klassio.png">
 <meta property="og:image:width" content="1200">
@@ -54,7 +56,7 @@
 <meta property="og:image:alt" content="Klassio — toute la gestion de votre école dans un seul espace clair">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Klassio — La clarté derrière chaque établissement">
-<meta name="twitter:description" content="Klassio centralise élèves, finances, paiements et trésorerie de votre établissement scolaire dans un seul espace simple et intelligent.">
+<meta name="twitter:description" content="Élèves, présences, résultats, frais et discipline autour d'un dossier par élève. Pensé pour les écoles de Kinshasa.">
 <meta name="twitter:image" content="https://klassio.app/assets/og-klassio.png">
 <link rel="canonical" href="https://klassio.app/">
 </head>
@@ -70,36 +72,46 @@
     </div>
   </div>
 
-  <!-- NAVBAR -->
-  <nav class="navbar" id="navbar">
-    <a href="#" class="brand"><img src="assets/logo.png?v=1789000492" class="brand-mark" alt="Klassio">Klassio</a>
-    <div class="nav-links" id="tubelightNav">
-      <div class="tubelight-lamp" id="tubelightLamp" aria-hidden="true">
-        <div class="tubelight-glow"></div>
+  <!-- EN-TÊTE — barre utilitaire, puis navigation. Une seule entrée vers la
+       démonstration : le bouton de droite. Le propriétaire l'a demandé ainsi —
+       pas d'onglet « Démo » dans la barre. -->
+  <header class="kx-head">
+    <div class="kx-topbar">
+      <div class="kx-wrap kx-topbar-in">
+        <span class="kx-tb-lieu"><svg class="kx-ic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20.6s-6-5.4-6-10.4a6 6 0 0 1 12 0c0 5-6 10.4-6 10.4z"/><circle cx="12" cy="10.2" r="2.2"/></svg><span>Kinshasa · République démocratique du Congo</span></span>
+        <nav class="kx-tb-links" aria-label="Accès rapides">
+          <a href="#roles">Direction</a>
+          <a href="#roles">Professeurs</a>
+          <a href="#roles">Discipline</a>
+          <a href="#roles">Parents</a>
+          <span class="kx-tb-sep" aria-hidden="true"></span>
+          <a href="aide.html">Centre d'aide</a>
+          <a href="app/connexion.html" class="kx-tb-keep">Connexion</a>
+        </nav>
       </div>
-      <a href="#produit" class="active">Produit</a>
-      <a href="demo.html">Démo</a>
-      <a href="a-propos.html">À propos</a>
-      <a href="aide.html">Centre d'aide</a>
-      <a href="contact.html">Contact</a>
     </div>
-    <div class="nav-actions">
-      <a href="app/connexion.html" class="btn btn-ghost btn-sm">Connexion</a>
-      <a href="app/inscription.html" class="btn btn-primary btn-sm">
-        <svg class="btn-arr btn-arr-left" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-        <span class="btn-label">Commencer</span>
-        <svg class="btn-arr btn-arr-right" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-      </a>
-    </div>
-  </nav>
+    <nav class="navbar kx-nav" id="navbar" aria-label="Navigation principale">
+      <a href="#" class="kx-brand" aria-label="Klassio, retour en haut de page"><img src="assets/logo.png?v=1789000492" alt="" width="40" height="40"><span><b>KLASSIO</b><small>La clarté derrière chaque établissement</small></span></a>
+      <div class="nav-links" id="tubelightNav">
+        <div class="tubelight-lamp" id="tubelightLamp" aria-hidden="true"><div class="tubelight-glow"></div></div>
+        <a href="#produit" data-kx-spy="produit">Le logiciel</a>
+        <a href="#vision" data-kx-spy="vision">Fonctionnement</a>
+        <a href="#a-propos" data-kx-spy="a-propos">À propos</a>
+        <a href="#faq" data-kx-spy="faq">FAQ</a>
+        <a href="#contact" data-kx-spy="contact">Contact</a>
+      </div>
+      <div class="nav-actions">
+        <a href="demo.html" class="btn btn-lime btn-sm"><svg class="btn-arr btn-arr-left" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg><span class="btn-label">Voir la démo</span><svg class="btn-arr btn-arr-right" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>
+      </div>
+    </nav>
+  </header>
 
-  <!-- HERO — la question, puis Klassio comme RÉPONSE, puis l'entrée dans le « O »
-
-       Composition demandée, à ne pas défaire : au repos, avant tout défilement,
-       l'écran montre la phrase ET Klassio juste en dessous. Le mot-marque ne
-       doit jamais « apparaître » en cours de défilement ; défiler ne fait
-       qu'une chose, entrer dans le O. Voir le bloc de commentaires du même nom
-       dans style.css et dans main.js. -->
+  <!-- HÉROS — la question, KLASSIO comme RÉPONSE, puis l'entrée dans le « O ».
+       Mécanique inchangée (voir style.css et main.js). Deux évolutions :
+       le mot-marque est en relief (architecture), et ce qu'on trouve dans le
+       « O » est désormais le héros du site — l'école en pleine lumière, et ce
+       que Klassio y apporte. En mouvement réduit ou sans script, ce héros
+       s'affiche à plat sous le mot-marque : rien n'est perdu. -->
   <div class="portal-container" id="portalContainer">
     <div class="portal-viewport" id="portalViewport">
 
@@ -115,7 +127,7 @@
           <span class="answer-cue" id="answerCue" aria-hidden="true"></span>
 
           <!-- LA RÉPONSE -->
-          <div class="glyph-wordmark-wrap" id="glyphWordmarkWrap" role="img" aria-label="Klassio">
+          <div class="glyph-wordmark-wrap kx-archi" id="glyphWordmarkWrap" role="img" aria-label="Klassio">
             <span class="glyph-char" aria-hidden="true">K</span>
             <span class="glyph-char" aria-hidden="true">L</span>
             <span class="glyph-char" aria-hidden="true">A</span>
@@ -136,15 +148,14 @@
           <div class="hero-support" id="heroSupport">
             <p class="hero-sub" data-mo="words" data-mo-delay="260">Élèves, finances, paiements et trésorerie — centralisés, automatisés et sécurisés.</p>
             <div class="hero-ctas">
-              <a href="app/inscription.html" class="btn btn-lime mo-magnet">
+              <a href="app/inscription.html" class="btn btn-lime">
                 <svg class="btn-arr btn-arr-left" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                 <span class="btn-label">Créer mon espace</span>
                 <svg class="btn-arr btn-arr-right" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
               </a>
-              <a href="demo.html" class="btn btn-ghost mo-magnet">
-                <svg class="btn-arr btn-arr-left" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                <span class="btn-label">Voir la démonstration</span>
-                <svg class="btn-arr btn-arr-right" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              <a href="#produit" class="btn btn-ghost">
+                <span class="btn-label">Découvrir le logiciel</span>
+                <svg class="btn-arr btn-arr-right" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
               </a>
             </div>
           </div>
@@ -152,21 +163,36 @@
         </div>
       </header>
 
+
       <!-- CE QU'ON DÉCOUVRE EN ENTRANT DANS LE « O ».
            Plein écran et jamais mis à l'échelle : c'est la découpe circulaire
-           qui s'élargit, pas le contenu. C'est ce qui le garde net, et ce qui
-           garantit qu'on ne voit jamais la page à travers l'ouverture. -->
-      <div class="portal-reveal" id="portalReveal" aria-hidden="true">
-        <!-- L'école au crépuscule. Invisible au repos : elle n'apparaît
-             qu'avec la plongée (voir cine.css, « L'intérieur du O »). -->
-        <div class="kx-o-scene">
-          <div class="kx-plate" style="background-image:var(--kx-lqip-dusk)"><img src="assets/cine/dusk-1600.webp" srcset="assets/cine/dusk-960.webp 960w, assets/cine/dusk-1600.webp 1600w" sizes="100vw" alt="" decoding="async" fetchpriority="low" loading="lazy"></div>
+           qui s'élargit, pas le contenu. La photo reste invisible au repos
+           (voir cine.css) ; le texte n'apparaît qu'une fois l'ouverture
+           large, et ses liens ne sont actifs qu'à ce moment-là (main.js). -->
+      <div class="portal-reveal kx-reveal-hero" id="portalReveal">
+        <div class="kx-o-scene" aria-hidden="true">
+          <div class="kx-plate" style="background-image:var(--kx-lqip-campus2)"><img src="assets/cine/campus2-1600.webp" srcset="assets/cine/campus2-960.webp 960w, assets/cine/campus2-1600.webp 1600w" sizes="100vw" alt="" decoding="async" fetchpriority="low"></div>
         </div>
-        <div class="telemetry-hud kx-o-hud" id="telemetryHud">
-          <div class="hud-pill"><span class="hud-dot"></span> L'espace Klassio</div>
-          <h2 class="hud-headline">Une fois dedans, <span class="em">tout est au même endroit</span></h2>
-          <div class="kx-o-device kx-stage3d">
-            <div class="kx-laptop"><div class="kx-lid"><div class="kx-lid-face"><div class="kx-screen" data-kx-clone="#kxScrDash"></div></div></div><div class="kx-base"></div></div>
+        <div class="telemetry-hud kx-o-hud kx-hero" id="telemetryHud">
+          <div class="kx-hero-copy">
+            <span class="kx-eyebrow">Gestion scolaire · pensée à Kinshasa</span>
+            <h2 class="kx-hero-title">Une école mieux tenue. <em>Des familles mieux informées.</em></h2>
+            <span class="kx-rule" aria-hidden="true"></span>
+            <p class="kx-lead">Élèves, présences, résultats, frais et discipline, réunis autour d'un dossier par élève — et quatre rôles qui ne voient chacun que ce qui les regarde.</p>
+            <div class="kx-hero-ctas">
+              <a href="app/inscription.html" class="btn btn-lime"><svg class="btn-arr btn-arr-left" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg><span class="btn-label">Créer mon espace</span><svg class="btn-arr btn-arr-right" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>
+              <a href="#vision" class="btn btn-ghost"><svg class="btn-arr btn-arr-left" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg><span class="btn-label">Comment ça marche</span><svg class="btn-arr btn-arr-right" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>
+            </div>
+            <div class="kx-hero-trust">
+              <span class="kx-avatars" aria-hidden="true"><span><svg class="kx-ic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 9.5 12 4.5l8.5 5"/><path d="M5.5 9.5v9h13v-9"/><path d="M10 18.5v-4.5h4v4.5"/></svg></span><span><svg class="kx-ic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.4"/><path d="M5.2 19.5c.9-3.3 3.6-5.2 6.8-5.2s5.9 1.9 6.8 5.2"/></svg></span><span><svg class="kx-ic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.6 5.4 6.2v5.1c0 4.2 2.8 7.4 6.6 9.1 3.8-1.7 6.6-4.9 6.6-9.1V6.2z"/><path d="M12 9v3.6M12 15.4v.2"/></svg></span><span><svg class="kx-ic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8.6" cy="7.6" r="2.8"/><path d="M3.8 18.8c.6-3 2.4-4.8 4.8-4.8s4.2 1.8 4.8 4.8"/><circle cx="16.8" cy="11.4" r="2"/><path d="M13.9 19.4c.4-2 1.5-3.2 2.9-3.2s2.5 1.2 2.9 3.2"/></svg></span></span>
+              <span><b>Direction, professeurs, discipline, parents</b><br>un seul espace, quatre regards.</span>
+            </div>
+          </div>
+          <div class="kx-hero-badge">
+            <svg class="kx-ic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.8 7.2V18a1.5 1.5 0 0 0 1.5 1.5h13.4a1.5 1.5 0 0 0 1.5-1.5V9.4a1.5 1.5 0 0 0-1.5-1.5h-6.6L10 5.7H5.3a1.5 1.5 0 0 0-1.5 1.5z"/></svg>
+            <small>Un principe, tenu partout</small>
+            <b>Un élève,<br>un dossier.</b>
+            <span>De la maternelle au secondaire.</span>
           </div>
         </div>
       </div>
@@ -174,74 +200,105 @@
     </div>
   </div>
 
-  <!-- BANDE DE CAPACITÉS — pleine largeur, seule sur sa ligne. -->
-  <section class="capability-band" aria-labelledby="bandLabel">
-    <p class="band-label" id="bandLabel">Ce que Klassio tient pour vous</p>
-    <div class="logo-marquee">
-      <div class="logo-track">
-        <span class="band-word">Élèves</span><span class="band-word">Classes &amp; effectifs</span><span class="band-word">Inscriptions</span><span class="band-word">Frais &amp; obligations</span><span class="band-word">Encaissements</span><span class="band-word">Trésorerie</span><span class="band-word">Présences</span><span class="band-word">Discipline</span><span class="band-word">Résultats</span><span class="band-word">Import Excel</span><span class="band-word">Proclamation</span><span class="band-word">Parents</span><span class="band-word">Professeurs</span><span class="band-word">Direction</span><span class="band-word">Rapports</span><span class="band-word">Historique versionné</span>
-        <span class="band-word" aria-hidden="true">Élèves</span><span class="band-word" aria-hidden="true">Classes &amp; effectifs</span><span class="band-word" aria-hidden="true">Inscriptions</span><span class="band-word" aria-hidden="true">Frais &amp; obligations</span><span class="band-word" aria-hidden="true">Encaissements</span><span class="band-word" aria-hidden="true">Trésorerie</span><span class="band-word" aria-hidden="true">Présences</span><span class="band-word" aria-hidden="true">Discipline</span><span class="band-word" aria-hidden="true">Résultats</span><span class="band-word" aria-hidden="true">Import Excel</span><span class="band-word" aria-hidden="true">Proclamation</span><span class="band-word" aria-hidden="true">Parents</span><span class="band-word" aria-hidden="true">Professeurs</span><span class="band-word" aria-hidden="true">Direction</span><span class="band-word" aria-hidden="true">Rapports</span><span class="band-word" aria-hidden="true">Historique versionné</span>
+  <main id="contenu">
+
+  <!-- ATOUTS — le bandeau qui chevauche le bas du héros -->
+  <section class="kx-strip" aria-label="Ce qui distingue Klassio">
+    <div class="kx-wrap">
+      <div class="kx-strip-card">
+        <div class="kx-strip-item"><span class="kx-dot-ic " aria-hidden="true"><svg class="kx-ic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.8 7.2V18a1.5 1.5 0 0 0 1.5 1.5h13.4a1.5 1.5 0 0 0 1.5-1.5V9.4a1.5 1.5 0 0 0-1.5-1.5h-6.6L10 5.7H5.3a1.5 1.5 0 0 0-1.5 1.5z"/></svg></span><div><h3>Un dossier par élève</h3><p>Identité, classe, notes, présences, frais : tout le suit, d'année en année.</p></div></div>
+        <div class="kx-strip-item"><span class="kx-dot-ic gold" aria-hidden="true"><svg class="kx-ic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8.4" r="2.9"/><path d="M3.8 18.6c.7-2.8 2.7-4.4 5.2-4.4s4.5 1.6 5.2 4.4"/><circle cx="16.6" cy="9.6" r="2.3"/><path d="M15.4 14.4c2.3-.2 4.2 1.1 4.8 3.6"/></svg></span><div><h3>Quatre rôles, quatre périmètres</h3><p>Chacun ne voit que ce qui le regarde. Le serveur en décide, jamais le navigateur.</p></div></div>
+        <div class="kx-strip-item"><span class="kx-dot-ic " aria-hidden="true"><svg class="kx-ic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.2 12a7.8 7.8 0 1 0 2.3-5.5"/><path d="M4 4.5v3.9h3.9"/><path d="M12 8v4.3l2.8 1.8"/></svg></span><div><h3>Rien n'est écrasé</h3><p>Corriger une note crée une version. L'ancienne reste, datée.</p></div></div>
+        <div class="kx-strip-item"><span class="kx-dot-ic gold" aria-hidden="true"><svg class="kx-ic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.8 13.6 9l5.2 1.6-5.2 1.6L12 17.4l-1.6-5.2-5.2-1.6L10.4 9z"/><path d="M18.3 15.6l.6 1.8 1.8.6-1.8.6-.6 1.8-.6-1.8-1.8-.6 1.8-.6z"/></svg></span><div><h3>Un assistant qui lit, sans écrire</h3><p>Il compte, cherche et explique. Il ne peut rien modifier.</p></div></div>
       </div>
     </div>
   </section>
 
-  <!-- STORYTELLING -->
-  <main id="produit">
-  <div class="story">
+  <!-- LE LOGICIEL — les cinq modules, en cartes photographiques -->
+  <section class="kx-sec kx-modules" id="produit" aria-labelledby="modulesTitle">
+    <div class="kx-wrap kx-modules-grid">
+      <div class="kx-modules-intro">
+        <span class="kx-eyebrow">01 — Le logiciel</span>
+        <h2 class="kx-title" id="modulesTitle">Ce que votre école tient déjà, <em>enfin relié</em>.</h2>
+        <span class="kx-rule" aria-hidden="true"></span>
+        <p class="kx-lead">Ce que la secrétaire, le professeur, la caisse et le directeur des disciplines notent chacun de leur côté se retrouve au même endroit — dans le dossier de l'élève.</p>
+        <a href="#vision" class="btn btn-primary"><svg class="btn-arr btn-arr-left" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg><span class="btn-label">Voir comment ça marche</span><svg class="btn-arr btn-arr-right" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>
+      </div>
+      <div class="kx-cards" data-kx-arrive>
+        <article class="kx-card" style="--dx:-60px;--dy:140px;--rot:-5deg;--dl:0.00s">
+          <div class="kx-card-img" style="background-image:var(--kx-lqip-mod-eleves)"><img src="assets/cine/mod-eleves-1600.webp" srcset="assets/cine/mod-eleves-960.webp 960w, assets/cine/mod-eleves-1600.webp 1600w" sizes="(max-width: 760px) 50vw, 22vw" alt="Une secrétaire range des dossiers d&#x27;élèves dans un bureau d&#x27;école" decoding="async" loading="lazy"></div>
+          <span class="kx-dot-ic " aria-hidden="true"><svg class="kx-ic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.4"/><path d="M5.2 19.5c.9-3.3 3.6-5.2 6.8-5.2s5.9 1.9 6.8 5.2"/></svg></span>
+          <div class="kx-card-body"><h3>Élèves & classes</h3><p>Un dossier par élève qui le suit d'une année à l'autre. Classes, cycles, titulaires, responsables.</p><a class="kx-arrow-link" href="#vision">En savoir plus <svg class="kx-ic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div>
+        </article>
+        <article class="kx-card" style="--dx:40px;--dy:170px;--rot:4deg;--dl:0.08s">
+          <div class="kx-card-img" style="background-image:var(--kx-lqip-mod-presences)"><img src="assets/cine/mod-presences-1600.webp" srcset="assets/cine/mod-presences-960.webp 960w, assets/cine/mod-presences-1600.webp 1600w" sizes="(max-width: 760px) 50vw, 22vw" alt="Un professeur fait l&#x27;appel sur son téléphone, les élèves lèvent la main" decoding="async" loading="lazy"></div>
+          <span class="kx-dot-ic gold" aria-hidden="true"><svg class="kx-ic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.2"/><path d="m8.4 12.2 2.4 2.4 4.9-5"/></svg></span>
+          <div class="kx-card-body"><h3>Présences</h3><p>L'appel en quelques touches, classe par classe. Retards pointés au portail, absences justifiées.</p><a class="kx-arrow-link" href="#journee">En savoir plus <svg class="kx-ic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div>
+        </article>
+        <article class="kx-card" style="--dx:-30px;--dy:120px;--rot:3deg;--dl:0.16s">
+          <div class="kx-card-img" style="background-image:var(--kx-lqip-mod-resultats)"><img src="assets/cine/mod-resultats-1600.webp" srcset="assets/cine/mod-resultats-960.webp 960w, assets/cine/mod-resultats-1600.webp 1600w" sizes="(max-width: 760px) 50vw, 22vw" alt="Les mains d&#x27;un professeur corrigent des copies au stylo rouge" decoding="async" loading="lazy"></div>
+          <span class="kx-dot-ic " aria-hidden="true"><svg class="kx-ic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 3.8h8l3 3v13.4h-11z"/><path d="M14.5 3.8v3h3"/><path d="M9 12.5h6M9 15.8h4.2"/></svg></span>
+          <div class="kx-card-body"><h3>Résultats & bulletins</h3><p>Moyennes et rangs calculés par le serveur. Bulletins PDF, publiés seulement à la proclamation.</p><a class="kx-arrow-link" href="#roles">En savoir plus <svg class="kx-ic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div>
+        </article>
+        <article class="kx-card" style="--dx:70px;--dy:160px;--rot:-4deg;--dl:0.24s">
+          <div class="kx-card-img" style="background-image:var(--kx-lqip-mod-frais)"><img src="assets/cine/mod-frais-1600.webp" srcset="assets/cine/mod-frais-960.webp 960w, assets/cine/mod-frais-1600.webp 1600w" sizes="(max-width: 760px) 50vw, 22vw" alt="Une mère remet un paiement à la caisse de l&#x27;école" decoding="async" loading="lazy"></div>
+          <span class="kx-dot-ic gold" aria-hidden="true"><svg class="kx-ic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 3.8h11v16.6l-2.2-1.5-2.2 1.5-2.1-1.5-2.2 1.5-2.3-1.5z"/><path d="M9.3 8.8h5.4M9.3 12h5.4"/></svg></span>
+          <div class="kx-card-body"><h3>Frais & reçus</h3><p>Échéanciers en tranches, paiements confirmés par la caisse, un reçu numéroté pour chacun.</p><a class="kx-arrow-link" href="#journee">En savoir plus <svg class="kx-ic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div>
+        </article>
+        <article class="kx-card" style="--dx:-50px;--dy:150px;--rot:5deg;--dl:0.32s">
+          <div class="kx-card-img" style="background-image:var(--kx-lqip-mod-discipline)"><img src="assets/cine/mod-discipline-1600.webp" srcset="assets/cine/mod-discipline-960.webp 960w, assets/cine/mod-discipline-1600.webp 1600w" sizes="(max-width: 760px) 50vw, 22vw" alt="Le directeur des disciplines accueille les élèves au portail, téléphone en main" decoding="async" loading="lazy"></div>
+          <span class="kx-dot-ic " aria-hidden="true"><svg class="kx-ic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.6 5.4 6.2v5.1c0 4.2 2.8 7.4 6.6 9.1 3.8-1.7 6.6-4.9 6.6-9.1V6.2z"/><path d="M12 9v3.6M12 15.4v.2"/></svg></span>
+          <div class="kx-card-body"><h3>Discipline</h3><p>Retards, absences, incidents, capital de points. Klassio signale ; l'école décide.</p><a class="kx-arrow-link" href="#roles">En savoir plus <svg class="kx-ic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div>
+        </article>
+      </div>
+    </div>
+  </section>
 
-    <section class="story-section">
-      <div class="story-copy reveal">
-        <span class="story-index">01 — Le problème</span>
-        <h2 data-mo="words" class="mo-kinetic">Trop d'outils, trop de fichiers, trop de temps perdu</h2>
-        <p>Excel dispersé, cahiers, WhatsApp, relevés bancaires, cash à compter à la main. Chaque établissement jongle avec des processus séparés qui ne se parlent pas entre eux.</p>
-      </div>
-      <div class="story-visual reveal">
-        <div class="tools-chaos">
-          <div class="chip c1"><span class="c-ic">📊</span><span class="c-label">Excel élèves.xlsx</span></div>
-          <div class="chip c2"><span class="c-ic">💬</span><span class="c-label">WhatsApp parents</span></div>
-          <div class="chip c3"><span class="c-ic">📒</span><span class="c-label">Cahier de caisse</span></div>
-          <div class="chip c4"><span class="c-ic">🏦</span><span class="c-label">Relevé bancaire</span></div>
-          <div class="chip c5"><span class="c-ic">🧾</span><span class="c-label">Reçus papier</span></div>
-          <div class="chip c6"><span class="c-ic">📋</span><span class="c-label">Registre classes</span></div>
-        </div>
-      </div>
-    </section>
+  <!-- CHIFFRES — des faits du produit, pas des métriques d'usage inventées -->
+  <section class="kx-stats" aria-label="Klassio en faits">
+    <div class="kx-wrap kx-stats-row">
+      <div class="kx-stat"><svg class="kx-ic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8.4" r="2.9"/><path d="M3.8 18.6c.7-2.8 2.7-4.4 5.2-4.4s4.5 1.6 5.2 4.4"/><circle cx="16.6" cy="9.6" r="2.3"/><path d="M15.4 14.4c2.3-.2 4.2 1.1 4.8 3.6"/></svg><div><b data-kx-countup="4">4</b><span>rôles, chacun son périmètre</span></div></div>
+      <div class="kx-stat"><svg class="kx-ic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.8 7.2V18a1.5 1.5 0 0 0 1.5 1.5h13.4a1.5 1.5 0 0 0 1.5-1.5V9.4a1.5 1.5 0 0 0-1.5-1.5h-6.6L10 5.7H5.3a1.5 1.5 0 0 0-1.5 1.5z"/></svg><div><b data-kx-countup="1">1</b><span>dossier par élève, qui le suit d'année en année</span></div></div>
+      <div class="kx-stat"><svg class="kx-ic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 9.5 12 4.5l8.5 5"/><path d="M5.5 9.5v9h13v-9"/><path d="M10 18.5v-4.5h4v4.5"/></svg><div><b data-kx-countup="3">3</b><span>niveaux : maternelle, primaire, secondaire</span></div></div>
+      <div class="kx-stat"><svg class="kx-ic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.2 12a7.8 7.8 0 1 0 2.3-5.5"/><path d="M4 4.5v3.9h3.9"/><path d="M12 8v4.3l2.8 1.8"/></svg><div><b data-kx-countup="0">0</b><span>note écrasée — chaque correction crée une version</span></div></div>
+      <div class="kx-stat"><svg class="kx-ic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4.2" y="4.6" width="15.6" height="6" rx="1.5"/><rect x="4.2" y="13.4" width="15.6" height="6" rx="1.5"/><path d="M7.6 7.6h.1M7.6 16.4h.1"/></svg><div><b data-kx-countup="100">100</b><span>% des moyennes calculées par le serveur</span></div></div>
+    </div>
+  </section>
 
-    <section class="story-section reverse">
-      <div class="story-copy reveal">
-        <span class="story-index">02 — La vision</span>
-        <h2 data-mo="words" class="mo-kinetic">Un seul système. Un seul accès. Un contrôle total.</h2>
-        <p>Établissement, classes, élèves, finances, paiements — une seule source de vérité, reliée et toujours à jour, plutôt qu'une collection d'outils qui ne se parlent pas.</p>
-      </div>
-      <div class="story-visual reveal">
-        <!-- Les six satellites SORTENT du noyau au défilement, un par un, et
-             rejoignent leur place en étoile. Géométrie mesurée par main.js :
-             ici on ne décrit que l'état d'arrivée, jamais l'état de départ. -->
-        <div class="orbite" id="orbite" data-orbite>
-          <!-- Un vrai volume : perspective, profondeur, tri par Z.
-               Chaque module tourne autour du logo sur une orbite inclinée ;
-               ceux qui passent derrière rapetissent et s'estompent. Le JS ne
-               pose qu'un angle — la profondeur est calculée en CSS. -->
-          <div class="orb-scene" id="orbScene">
-            <div class="orb-anneau" aria-hidden="true"></div>
-            <div class="orb-anneau orb-anneau-2" aria-hidden="true"></div>
-            <div class="orb-noyau" id="orbNoyau">
-              <span class="orb-halo" aria-hidden="true"></span>
-              <img src="assets/logo.png?v=1789000492" class="orb-logo" alt="Klassio" width="96" height="96" />
-            </div>
-            <button type="button" class="orb-node" data-i="0"><span>Élèves</span></button>
-            <button type="button" class="orb-node" data-i="1"><span>Classes</span></button>
-            <button type="button" class="orb-node" data-i="2"><span>Paiements</span></button>
-            <button type="button" class="orb-node" data-i="3"><span>Trésorerie</span></button>
-            <button type="button" class="orb-node" data-i="4"><span>Dépenses</span></button>
-            <button type="button" class="orb-node" data-i="5"><span>Rapports</span></button>
+  <!-- 02 — LA VISION, en 3D et au défilement.
+       Premier temps : six outils épars qui ne se parlent pas. Puis le logo
+       monte au centre et les aspire ; la caméra bascule, et six modules
+       prennent place en orbite, reliés au noyau. L'orbite tourne avec le
+       défilement — c'est le lecteur qui fait tourner la mécanique.
+       À plat (sans script, mouvement réduit) : l'orbite posée, et les quatre
+       temps du récit l'un sous l'autre. -->
+  <section class="kx-scene kx-vision" id="vision" data-kx-scene data-kx-beats="4" data-kx-track="420" aria-labelledby="visionKicker">
+    <div class="kx-sticky">
+      <div class="kx-wrap kx-vision-grid">
+        <div class="kx-vision-copy">
+          <span class="kx-eyebrow" id="visionKicker">02 — La vision</span>
+          <div class="kx-beats">
+            <article class="kx-beat" data-b="0"><h3 class="kx-title">Six outils <em>qui ne se parlent pas</em>.</h3>
+              <p class="kx-lead">Excel, cahiers, WhatsApp, reçus papier, registres, relevés bancaires. Chaque établissement jongle avec des processus séparés, et recopie les mêmes noms d'un endroit à l'autre.</p></article>
+            <article class="kx-beat" data-b="1"><h3 class="kx-title">Klassio <em>les rassemble</em>.</h3>
+              <p class="kx-lead">Le même élève, un seul dossier. Ce qui était dispersé entre six supports converge vers une seule source.</p></article>
+            <article class="kx-beat" data-b="2"><h3 class="kx-title">Six modules, <em>un seul noyau</em>.</h3>
+              <p class="kx-lead">Élèves, classes, présences, résultats, frais, discipline : reliés entre eux, toujours à jour, sans qu'on ait à les synchroniser.</p></article>
+            <article class="kx-beat" data-b="3"><h3 class="kx-title">Une seule <em>source de vérité</em>.</h3>
+              <p class="kx-lead">Chaque rôle lit la même donnée, dans son périmètre. Personne ne travaille sur une copie — donc personne ne travaille sur une copie périmée.</p></article>
           </div>
-          <p class="orb-legende" id="orbLegende" role="status" aria-live="polite">Tout converge vers une source unique.</p>
+          <div class="kx-rail kx-rail-ink" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+        </div>
+        <div class="kx-vision-stage" aria-hidden="true">
+          <div class="kx-v-world"><div class="kx-v-ring" style="--r:1"></div><div class="kx-v-ring" style="--r:.68"></div><div class="kx-v-ring" style="--r:.36"></div><div class="kx-v-beam" style="--a:0deg;--i:0"></div><div class="kx-v-beam" style="--a:60deg;--i:1"></div><div class="kx-v-beam" style="--a:120deg;--i:2"></div><div class="kx-v-beam" style="--a:180deg;--i:3"></div><div class="kx-v-beam" style="--a:240deg;--i:4"></div><div class="kx-v-beam" style="--a:300deg;--i:5"></div>
+            <div class="kx-v-core"><span class="kx-v-halo"></span><img src="assets/logo.png?v=1789000492" alt="" width="88" height="88"></div>
+            <div class="kx-v-mod" style="--a:0deg;--i:0"><span><svg class="kx-ic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.4"/><path d="M5.2 19.5c.9-3.3 3.6-5.2 6.8-5.2s5.9 1.9 6.8 5.2"/></svg><b>Élèves</b></span></div><div class="kx-v-mod" style="--a:60deg;--i:1"><span><svg class="kx-ic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 9.5 12 4.5l8.5 5"/><path d="M5.5 9.5v9h13v-9"/><path d="M10 18.5v-4.5h4v4.5"/></svg><b>Classes</b></span></div><div class="kx-v-mod" style="--a:120deg;--i:2"><span><svg class="kx-ic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.2"/><path d="m8.4 12.2 2.4 2.4 4.9-5"/></svg><b>Présences</b></span></div><div class="kx-v-mod" style="--a:180deg;--i:3"><span><svg class="kx-ic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 3.8h8l3 3v13.4h-11z"/><path d="M14.5 3.8v3h3"/><path d="M9 12.5h6M9 15.8h4.2"/></svg><b>Résultats</b></span></div><div class="kx-v-mod" style="--a:240deg;--i:4"><span><svg class="kx-ic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 3.8h11v16.6l-2.2-1.5-2.2 1.5-2.1-1.5-2.2 1.5-2.3-1.5z"/><path d="M9.3 8.8h5.4M9.3 12h5.4"/></svg><b>Frais</b></span></div><div class="kx-v-mod" style="--a:300deg;--i:5"><span><svg class="kx-ic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.6 5.4 6.2v5.1c0 4.2 2.8 7.4 6.6 9.1 3.8-1.7 6.6-4.9 6.6-9.1V6.2z"/><path d="M12 9v3.6M12 15.4v.2"/></svg><b>Discipline</b></span></div>
+          </div>
+          <div class="kx-v-chaos"><span class="kx-v-tool" style="--x:-32;--y:-30;--rot:-8deg;--i:0"><svg class="kx-ic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4.6" y="3.8" width="14.8" height="16.4" rx="2"/><path d="m9 9 6 6M15 9l-6 6"/></svg>Excel élèves.xlsx</span><span class="kx-v-tool" style="--x:28;--y:-34;--rot:6deg;--i:1"><svg class="kx-ic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 17.4 3.8 20.2l3.6-1.2A8.2 8.2 0 1 0 5 17.4z"/></svg>WhatsApp parents</span><span class="kx-v-tool" style="--x:-38;--y:6;--rot:5deg;--i:2"><svg class="kx-ic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.4 3.8h11.2v16.4H6.4z"/><path d="M9.2 3.8v16.4"/><path d="M12 8h3M12 11h3"/></svg>Cahier de caisse</span><span class="kx-v-tool" style="--x:34;--y:2;--rot:-6deg;--i:3"><svg class="kx-ic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.8 9.4 12 4.6l8.2 4.8"/><path d="M5.6 9.8v7.4M9.8 9.8v7.4M14.2 9.8v7.4M18.4 9.8v7.4"/><path d="M3.8 19.6h16.4"/></svg>Relevé bancaire</span><span class="kx-v-tool" style="--x:-20;--y:34;--rot:7deg;--i:4"><svg class="kx-ic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 3.8h11v16.6l-2.2-1.5-2.2 1.5-2.1-1.5-2.2 1.5-2.3-1.5z"/><path d="M9.3 8.8h5.4M9.3 12h5.4"/></svg>Reçus papier</span><span class="kx-v-tool" style="--x:22;--y:36;--rot:-5deg;--i:5"><svg class="kx-ic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3.8" width="14" height="16.4" rx="1.6"/><path d="M8.4 8.2h7.2M8.4 11.4h7.2M8.4 14.6h4.4"/></svg>Registre des classes</span></div>
         </div>
       </div>
-    </section>
-
-  </div>
+    </div>
+  </section>
 
   <!-- 03 — CHAQUE RÔLE, SON ÉCRAN
        Scène pilotée par cine.js : l'ordinateur s'ouvre, pivote, et le
@@ -330,41 +387,48 @@
     </div>
   </section>
 
-  <div class="story">
-    <section class="story-section">
-      <div class="story-copy reveal">
-        <span class="story-index">05 — Pensé pour Kinshasa</span>
-        <h2 data-mo="words" class="mo-kinetic">Conçu pour les établissements scolaires d'ici</h2>
-        <p>Espèces au comptoir, mobile money, virement : l'école enregistre chaque paiement, Klassio en tient le registre et numérote chaque reçu. Pensé pour la réalité quotidienne des écoles de Kinshasa, pas pour un marché générique.</p>
+  <!-- MANIFESTE — le texte s'encre caractère par caractère au défilement, et
+       un ovale tracé à la main vient entourer deux mots quand l'encre les
+       atteint (d'après le moteur « Site Immersif »). À plat : texte encré,
+       ovale dessiné. -->
+  <section class="kx-scene kx-manif" id="manifeste" data-kx-scene data-kx-beats="1" data-kx-track="230" aria-label="Notre conviction">
+    <div class="kx-sticky">
+      <div class="kx-wrap kx-manif-in">
+        <span class="kx-eyebrow">Notre conviction</span>
+        <p class="kx-manif-text" data-kx-ink>Klassio ne remplace pas votre école. Il met de <span class="kx-oval">l'ordre<svg viewBox="0 0 200 80" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M18 44C16 22 64 10 110 11c46 1 78 13 76 33-2 22-50 31-96 29C44 71 12 62 18 38c3-12 20-21 44-25"/></svg></span> dans ce qu'elle fait déjà — et rend à chacun le temps qu'il passait à recopier.</p>
       </div>
-      <div class="story-visual reveal">
-        <!-- Chaque carte entre par un côté, en alternance, au rythme du
-             défilement, puis se fixe. data-from donne le côté. -->
-        <div class="local-reality" id="localReality">
-          <div class="reality-card" data-from="left"><span class="rc-ic">📶</span><span class="rc-label">Pages légères, sans framework : pensées pour une connexion irrégulière.</span></div>
-          <div class="reality-card" data-from="right"><span class="rc-ic">🗓️</span><span class="rc-label">Année scolaire, périodes, proclamation — le vocabulaire des écoles d'ici.</span></div>
-          <div class="reality-card" data-from="left"><span class="rc-ic">👪</span><span class="rc-label">Le parent suit son enfant, et seulement le sien.</span></div>
-          <div class="reality-card" data-from="right"><span class="rc-ic">🏫</span><span class="rc-label">Direction, discipline, professeur, parent : quatre rôles, quatre périmètres.</span></div>
+    </div>
+  </section>
+
+  <!-- À PROPOS — repris de la page « À propos », désormais fusionnée ici -->
+  <section class="kx-sec kx-about" id="a-propos" aria-labelledby="aproposTitle">
+    <div class="kx-wrap">
+      <div class="kx-about-grid">
+        <figure class="kx-about-img" style="background-image:var(--kx-lqip-campus1)"><img src="assets/cine/campus1-1600.webp" srcset="assets/cine/campus1-960.webp 960w, assets/cine/campus1-1600.webp 1600w" sizes="(max-width: 760px) 100vw, 36vw" alt="Des élèves en uniforme traversent la cour d&#x27;une école de Kinshasa" decoding="async" loading="lazy"><figcaption>Une école de Kinshasa, un matin de rentrée</figcaption></figure>
+        <div class="kx-about-copy">
+          <span class="kx-eyebrow">À propos</span>
+          <h2 class="kx-title" id="aproposTitle">Pensé à Kinshasa, <em>pour les écoles d'ici</em>.</h2>
+          <span class="kx-rule" aria-hidden="true"></span>
+          <p class="kx-lead">Klassio réunit ce qui est aujourd'hui dispersé — registres papier, cahiers de notes, carnets de reçus, messages WhatsApp — autour d'un dossier numérique cohérent pour chaque élève.</p>
+          <a href="#faq" class="btn btn-ghost"><svg class="btn-arr btn-arr-left" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg><span class="btn-label">Questions fréquentes</span><svg class="btn-arr btn-arr-right" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>
+        </div>
+        <div class="kx-feats">
+          <div class="kx-feat"><svg class="kx-ic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.6 9.6a12.4 12.4 0 0 1 16.8 0"/><path d="M6.6 12.9a8 8 0 0 1 10.8 0"/><path d="M9.6 16.1a3.6 3.6 0 0 1 4.8 0"/><path d="M12 19.2h.1"/></svg><h3>Pages légères</h3><p>Sans framework lourd : pensées pour une connexion irrégulière.</p></div>
+          <div class="kx-feat"><svg class="kx-ic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5.4" width="16" height="14.6" rx="2"/><path d="M4 9.8h16M8.4 3.6v3.4M15.6 3.6v3.4"/></svg><h3>Le vocabulaire d'ici</h3><p>Année scolaire, périodes, proclamation, minerval.</p></div>
+          <div class="kx-feat"><svg class="kx-ic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8.6" cy="7.6" r="2.8"/><path d="M3.8 18.8c.6-3 2.4-4.8 4.8-4.8s4.2 1.8 4.8 4.8"/><circle cx="16.8" cy="11.4" r="2"/><path d="M13.9 19.4c.4-2 1.5-3.2 2.9-3.2s2.5 1.2 2.9 3.2"/></svg><h3>Le parent voit son enfant</h3><p>Et seulement le sien — le serveur le vérifie à chaque requête.</p></div>
+          <div class="kx-feat"><svg class="kx-ic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 9.5 12 4.5l8.5 5"/><path d="M5.5 9.5v9h13v-9"/><path d="M10 18.5v-4.5h4v4.5"/></svg><h3>Trois niveaux</h3><p>La maternelle a ses appréciations, le primaire et le secondaire leurs notes.</p></div>
         </div>
       </div>
+      <div class="kx-steps" data-kx-steps>
+        <div class="kx-step"><span class="kx-dot-ic" aria-hidden="true">1</span><h3>L'établissement crée son espace</h3><p>La Direction s'inscrit. L'espace est isolé : aucune autre école n'y accède, jamais.</p></div>
+        <div class="kx-step"><span class="kx-dot-ic" aria-hidden="true">2</span><h3>Les élèves et les classes entrent</h3><p>Un par un, ou par import Excel. Klassio signale les anomalies et n'écrit rien avant votre confirmation.</p></div>
+        <div class="kx-step"><span class="kx-dot-ic" aria-hidden="true">3</span><h3>La Direction invite son équipe</h3><p>Professeurs, discipline, parents. Chaque accès vient d'une invitation, et se révoque.</p></div>
+        <div class="kx-step"><span class="kx-dot-ic" aria-hidden="true">4</span><h3>Chacun travaille dans son périmètre</h3><p>L'enseignant fait l'appel et saisit ses notes. Le DD suit les retards. La Direction voit l'ensemble.</p></div>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <section class="story-section reverse">
-      <div class="story-copy reveal">
-        <span class="story-index">06 — L'intelligence</span>
-        <h2 data-mo="words" class="mo-kinetic">Une recherche qui comprend ce que vous voulez</h2>
-        <p>Pas de chatbot à ouvrir : une seule barre pour chercher, naviguer ou demander, avec une réponse immédiate. Klassio comprend le rôle, l'établissement et le contexte de chaque utilisateur.</p>
-      </div>
-      <div class="story-visual reveal">
-        <div class="ai-visual">
-          <div class="ai-bar">🔍&nbsp; Montre-moi les impayés de la 6e A</div>
-          <div class="ai-answer">12 élèves de 6e A ont un solde impayé, pour un total de <strong>940 $</strong>.</div>
-          <div class="ai-insight-preview"><span>✨</span>5 paiements attendent un rapprochement depuis 3 jours.</div>
-        </div>
-      </div>
-    </section>
-
+  <div class="story kx-trust-wrap">
     <!-- 05 — LE DÉCOMPTE.
          Les quatre garanties se présentent UNE À UNE au défilement : celle du
          moment est nette et numérotée, les autres restent en retrait, floues.
@@ -372,119 +436,188 @@
          donne au défilement de quoi égrener les quatre étapes. -->
     <section class="story-section trust-section" id="confiance">
       <div class="story-copy reveal">
-        <span class="story-index">07 — La confiance</span>
+        <span class="story-index">05 — La confiance</span>
         <h2 data-mo="words" class="mo-kinetic">Sécurisé, traçable, sous contrôle</h2>
         <p>Permissions granulaires, historique complet, isolation totale entre établissements. La confiance se construit sur des faits, pas des promesses.</p>
         <p class="trust-progress" aria-hidden="true"><span class="tp-current" id="trustCurrent">1</span><span class="tp-sep">/</span><span class="tp-total">4</span></p>
       </div>
       <div class="story-visual trust-runway">
         <div class="trust-grid reveal" id="trustGrid">
-          <div class="trust-card"><span class="tc-num" aria-hidden="true">1</span><div class="ic">🔒</div><h4>Permissions</h4><p>Chaque rôle ne voit que ce qui lui est autorisé.</p></div>
-          <div class="trust-card"><span class="tc-num" aria-hidden="true">2</span><div class="ic">🕓</div><h4>Historique</h4><p>Chaque action importante reste traçable dans le temps.</p></div>
-          <div class="trust-card"><span class="tc-num" aria-hidden="true">3</span><div class="ic">🏫</div><h4>Isolation</h4><p>Les données d'un établissement restent les siennes.</p></div>
-          <div class="trust-card"><span class="tc-num" aria-hidden="true">4</span><div class="ic">🛡️</div><h4>Contrôle serveur</h4><p>Les opérations sensibles sont vérifiées côté serveur.</p></div>
+          <div class="trust-card"><span class="tc-num" aria-hidden="true">1</span><div class="ic kx-trust-ic"><svg class="kx-ic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5.5" y="10.4" width="13" height="9.6" rx="2"/><path d="M8.4 10.4V7.8a3.6 3.6 0 0 1 7.2 0v2.6"/></svg></div><h4>Permissions</h4><p>Chaque rôle ne voit que ce qui lui est autorisé.</p></div>
+          <div class="trust-card"><span class="tc-num" aria-hidden="true">2</span><div class="ic kx-trust-ic"><svg class="kx-ic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.2 12a7.8 7.8 0 1 0 2.3-5.5"/><path d="M4 4.5v3.9h3.9"/><path d="M12 8v4.3l2.8 1.8"/></svg></div><h4>Historique</h4><p>Chaque action importante reste traçable dans le temps.</p></div>
+          <div class="trust-card"><span class="tc-num" aria-hidden="true">3</span><div class="ic kx-trust-ic"><svg class="kx-ic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.8" y="3.8" width="7" height="7" rx="1.4"/><rect x="13.2" y="3.8" width="7" height="7" rx="1.4"/><rect x="3.8" y="13.2" width="7" height="7" rx="1.4"/><rect x="13.2" y="13.2" width="7" height="7" rx="1.4"/></svg></div><h4>Isolation</h4><p>Les données d'un établissement restent les siennes.</p></div>
+          <div class="trust-card"><span class="tc-num" aria-hidden="true">4</span><div class="ic kx-trust-ic"><svg class="kx-ic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4.2" y="4.6" width="15.6" height="6" rx="1.5"/><rect x="4.2" y="13.4" width="15.6" height="6" rx="1.5"/><path d="M7.6 7.6h.1M7.6 16.4h.1"/></svg></div><h4>Contrôle serveur</h4><p>Les opérations sensibles sont vérifiées côté serveur.</p></div>
         </div>
       </div>
     </section>
 
   </div>
-  </main>
 
-  <!-- NAPPE — feature unroll -->
-  <section class="nappe-section">
-    <div class="container">
-      <div class="nappe-heading reveal">
-        <span class="story-index">08 — Le produit</span>
-        <h2 data-mo="words" class="mo-kinetic">Un seul système, plusieurs moteurs</h2>
-        <p>Derrière l'interface simple de Klassio, chaque module travaille ensemble.</p>
+  <!-- DEVISE — un train de mots sur la bande lime : chaque mot passe au
+       centre, ses lettres se posent, la phrase qui l'explique change sous lui.
+       À plat : les trois mots et leurs phrases, lisibles d'un coup. -->
+  <section class="kx-scene kx-motto" data-kx-scene data-kx-beats="3" data-kx-track="260" aria-label="Trois mots">
+    <div class="kx-sticky">
+      <div class="kx-motto-track" data-kx-motto>
+        <div class="kx-motto-word" data-b="0"><span class="kx-mw">Clarté</span><p>Chaque chiffre a une source, chaque décision laisse une trace.</p></div>
+        <div class="kx-motto-word" data-b="1"><span class="kx-mw">Confiance</span><p>Le parent voit son enfant, et seulement le sien.</p></div>
+        <div class="kx-motto-word" data-b="2"><span class="kx-mw">Continuité</span><p>Rien n'est écrasé : l'histoire d'un élève le suit d'année en année.</p></div>
       </div>
-      <div class="nappe-wrap">
-        <div class="nappe" id="nappe">
-          <div class="nappe-fold"></div>
-          <div class="nappe-content">
-            <p class="lead">Ce que Klassio centralise pour vous</p>
-            <div class="feature-grid">
-              <div class="feature-chip"><div class="ic">🎓</div><h5>Élèves & classes</h5><p>Dossiers, effectifs, historique.</p></div>
-              <div class="feature-chip"><div class="ic">💳</div><h5>Finance & facturation</h5><p>Obligations, échéances, soldes.</p></div>
-              <div class="feature-chip"><div class="ic">📲</div><h5>Paiements & reçus</h5><p>Espèces, banque, mobile money : enregistrés, numérotés.</p></div>
-              <div class="feature-chip"><div class="ic">🏦</div><h5>Trésorerie</h5><p>Caisse, banque, comptes réunis.</p></div>
-              <div class="feature-chip"><div class="ic">📥</div><h5>Import Excel intelligent</h5><p>Vos fichiers, structurés en minutes.</p></div>
-              <div class="feature-chip"><div class="ic">✨</div><h5>IA proactive</h5><p>Observe, explique, jamais seule décideuse.</p></div>
-              <div class="feature-chip"><div class="ic">🛡️</div><h5>Sécurité & audit</h5><p>Traçabilité de chaque opération.</p></div>
-              <div class="feature-chip"><div class="ic">📊</div><h5>Rapports en temps réel</h5><p>La bonne information, au bon moment.</p></div>
+    </div>
+  </section>
+
+  <!-- GALERIE — la vie d'une école, en trois colonnes qui défilent à des
+       vitesses différentes -->
+  <section class="kx-sec kx-gallery" id="vie" aria-labelledby="vieTitle">
+    <div class="kx-wrap">
+      <div class="kx-gal-head">
+        <div><span class="kx-eyebrow">La vie d'une école</span>
+        <h2 class="kx-title" id="vieTitle">Ce que Klassio <em>tient pour vous</em>, jour après jour.</h2></div>
+        <p class="kx-lead">L'appel, la leçon, la caisse, la proclamation : les moments d'une année scolaire, chacun à sa place dans le dossier de l'élève.</p>
+      </div>
+      <div class="kx-gal">
+        <div class="kx-gal-col" data-kx-speed="-0.06">
+          <figure style="background-image:var(--kx-lqip-gal-mains)"><img src="assets/cine/gal-mains-1600.webp" srcset="assets/cine/gal-mains-960.webp 960w, assets/cine/gal-mains-1600.webp 1600w" sizes="(max-width: 760px) 50vw, 32vw" alt="Des élèves de dos lèvent la main en classe" decoding="async" loading="lazy"><figcaption><small>Présences</small>L'appel du matin</figcaption></figure>
+          <figure style="background-image:var(--kx-lqip-gal-tampon)"><img src="assets/cine/gal-tampon-1600.webp" srcset="assets/cine/gal-tampon-960.webp 960w, assets/cine/gal-tampon-1600.webp 1600w" sizes="(max-width: 760px) 50vw, 32vw" alt="Une main tamponne un reçu scolaire" decoding="async" loading="lazy"><figcaption><small>Frais</small>Un reçu, un numéro</figcaption></figure>
+          <figure style="background-image:var(--kx-lqip-gal-craie)"><img src="assets/cine/gal-craie-1600.webp" srcset="assets/cine/gal-craie-960.webp 960w, assets/cine/gal-craie-1600.webp 1600w" sizes="(max-width: 760px) 50vw, 32vw" alt="Une enseignante écrit au tableau vert" decoding="async" loading="lazy"><figcaption><small>Classe</small>La leçon du jour</figcaption></figure>
+        </div>
+        <div class="kx-gal-col" data-kx-speed="0.08">
+          <figure style="background-image:var(--kx-lqip-gal-recre)"><img src="assets/cine/gal-recre-1600.webp" srcset="assets/cine/gal-recre-960.webp 960w, assets/cine/gal-recre-1600.webp 1600w" sizes="(max-width: 760px) 50vw, 32vw" alt="La cour d&#x27;une école pendant la récréation, vue d&#x27;en haut" decoding="async" loading="lazy"><figcaption><small>Vie scolaire</small>La récréation</figcaption></figure>
+          <figure style="background-image:var(--kx-lqip-gal-parent)"><img src="assets/cine/gal-parent-1600.webp" srcset="assets/cine/gal-parent-960.webp 960w, assets/cine/gal-parent-1600.webp 1600w" sizes="(max-width: 760px) 50vw, 32vw" alt="Un père consulte son téléphone le soir" decoding="async" loading="lazy"><figcaption><small>Parents</small>Le soir, à la maison</figcaption></figure>
+          <figure style="background-image:var(--kx-lqip-mod-direction)"><img src="assets/cine/mod-direction-1600.webp" srcset="assets/cine/mod-direction-960.webp 960w, assets/cine/mod-direction-1600.webp 1600w" sizes="(max-width: 760px) 50vw, 32vw" alt="Un directeur d&#x27;école dans l&#x27;encadrement d&#x27;une porte de classe" decoding="async" loading="lazy"><figcaption><small>Direction</small>La Direction</figcaption></figure>
+        </div>
+        <div class="kx-gal-col" data-kx-speed="-0.03">
+          <figure style="background-image:var(--kx-lqip-gal-proclamation)"><img src="assets/cine/gal-proclamation-1600.webp" srcset="assets/cine/gal-proclamation-960.webp 960w, assets/cine/gal-proclamation-1600.webp 1600w" sizes="(max-width: 760px) 50vw, 32vw" alt="Parents et élèves réunis sous un manguier, vus de dos" decoding="async" loading="lazy"><figcaption><small>Résultats</small>Le jour de la proclamation</figcaption></figure>
+          <figure style="background-image:var(--kx-lqip-gal-sacs)"><img src="assets/cine/gal-sacs-1600.webp" srcset="assets/cine/gal-sacs-960.webp 960w, assets/cine/gal-sacs-1600.webp 1600w" sizes="(max-width: 760px) 50vw, 32vw" alt="Des sacs d&#x27;école accrochés dans un couloir" decoding="async" loading="lazy"><figcaption><small>Vie scolaire</small>Avant la sonnerie</figcaption></figure>
+          <figure style="background-image:var(--kx-lqip-d1000)"><img src="assets/cine/d1000-1600.webp" srcset="assets/cine/d1000-960.webp 960w, assets/cine/d1000-1600.webp 1600w" sizes="(max-width: 760px) 50vw, 32vw" alt="Une salle de classe vide baignée de soleil" decoding="async" loading="lazy"><figcaption><small>Classe</small>Une classe qui attend</figcaption></figure>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ — les quatorze questions de l'ancienne page, fusionnées ici, mot
+       pour mot. faq.html redirige vers cette section. -->
+  <section class="kx-sec kx-faq" id="faq" aria-labelledby="faqTitle">
+    <div class="kx-wrap kx-faq-grid">
+      <div class="kx-faq-intro">
+        <span class="kx-eyebrow">Questions fréquentes</span>
+        <h2 class="kx-title" id="faqTitle">Tout ce qu'on nous <em>demande</em>.</h2>
+        <span class="kx-rule" aria-hidden="true"></span>
+        <p class="kx-lead">Les réponses courtes. Pour les guides pas à pas — créer son espace, importer ses élèves, publier les résultats — le centre d'aide.</p>
+        <a class="kx-arrow-link" href="aide.html">Ouvrir le centre d'aide <svg class="kx-ic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      </div>
+      <div class="kx-faq-list">
+          <details class="kx-acc"><summary>Qu'est-ce que Klassio ?</summary><div class="kx-acc-body"><p>Une plateforme de gestion scolaire qui réunit les informations et les opérations d'un établissement autour d'un dossier numérique par élève : identité, classe, responsables, résultats, présence, discipline, documents, paiements et reçus.</p></div></details>
+          <details class="kx-acc"><summary>À qui s'adresse Klassio ?</summary><div class="kx-acc-body"><p>Aux établissements scolaires — maternelle, primaire, secondaire — et à leurs quatre publics : la Direction, les enseignants, le Directeur des disciplines et les parents. Il n'existe pas de compte élève : l'élève est au centre du système, pas un utilisateur.</p></div></details>
+          <details class="kx-acc"><summary>Comment commencer ?</summary><div class="kx-acc-body"><p>La Direction crée l'espace de l'établissement, ajoute ses classes et ses élèves — un par un ou par import d'un fichier — puis invite son équipe et les familles. Comptez une après-midi pour une école de taille moyenne.</p></div></details>
+          <details class="kx-acc"><summary>Comment fonctionnent les invitations ?</summary><div class="kx-acc-body"><p>Personne ne crée de compte librement. La Direction génère un lien unique, valable 7 jours, utilisable une seule fois, et qui porte déjà le périmètre : les classes d'un enseignant, les enfants d'un parent.</p><p>Une invitation se révoque à tout moment — y compris après avoir été acceptée. La personne perd alors l'accès, sans qu'aucune donnée ne soit supprimée.</p></div></details>
+          <details class="kx-acc"><summary>Les parents peuvent-ils voir les autres élèves ?</summary><div class="kx-acc-body"><p>Non. Un parent ne voit que les enfants auxquels l'établissement l'a rattaché. Le lien est résolu par le serveur à chaque requête : envoyer l'identifiant d'un autre élève depuis le navigateur ne donne rien.</p></div></details>
+          <details class="kx-acc"><summary>Comment les données sont-elles protégées ?</summary><div class="kx-acc-body"><p>Chaque établissement est isolé des autres : une ressource qui ne lui appartient pas répond « introuvable », jamais une liste vide. Le rôle, l'établissement et le périmètre viennent toujours de la session serveur, jamais du navigateur.</p><p>Le détail des principes est sur la page <a href="securite.html">Sécurité</a>.</p></div></details>
+          <details class="kx-acc"><summary>Comment fonctionne l'import Excel ?</summary><div class="kx-acc-body"><p>Vous déposez votre fichier. Klassio détecte les colonnes, vous montre ce qu'il a compris et signale les anomalies — un montant payé supérieur au montant dû, par exemple. <strong>Rien n'est écrit avant votre confirmation.</strong></p></div></details>
+          <details class="kx-acc"><summary>Comment fonctionnent les résultats ?</summary><div class="kx-acc-body"><p>Les enseignants saisissent quand ils veulent. Les familles ne voient une période <strong>qu'une fois proclamée</strong> par la Direction. Importer n'est pas publier : ce sont deux décisions distinctes.</p><p>Corriger un résultat crée une version : l'ancienne est conservée, datée. Rien n'est écrasé.</p></div></details>
+          <details class="kx-acc"><summary>Comment fonctionnent les paiements ?</summary><div class="kx-acc-body"><p>L'établissement définit ses frais, éventuellement répartis en tranches avec leurs échéances. Le parent voit ce qui est dû, ce qui est payé et ce qui vient.</p><p><strong>Aucune intégration Mobile Money ou bancaire n'est active à ce jour.</strong> Une demande de paiement est transmise à l'établissement, qui la confirme après vérification réelle de la transaction. Klassio n'affiche jamais « paiement réussi » sans cette confirmation.</p></div></details>
+          <details class="kx-acc"><summary>Comment retrouver un reçu ?</summary><div class="kx-acc-body"><p>Un reçu numéroté est émis à chaque paiement confirmé. La Direction les retrouve dans Finance → Paiements ; le parent dans Frais &amp; reçus. L'assistant peut aussi le retrouver pour vous.</p></div></details>
+          <details class="kx-acc"><summary>Comment fonctionne l'assistant ?</summary><div class="kx-acc-body"><p>Il lit vos données et répond dans les limites de votre rôle : compter, chercher, résumer, expliquer, retrouver un reçu.</p><p><strong>Il est en lecture seule.</strong> Il ne peut ni créer, ni modifier, ni supprimer, ni payer, ni inviter, ni sanctionner. Ce n'est pas un réglage : le module n'a aucune capacité d'écriture.</p></div></details>
+          <details class="kx-acc"><summary>Comment gérer mon abonnement ?</summary><div class="kx-acc-body"><p>Paramètres → Abonnement Klassio. Vous y voyez le statut, la période d'essai, la formule et l'estimation mensuelle.</p><p>L'abonnement Klassio est payé par l'établissement. Il n'a rien à voir avec les frais scolaires réglés par les familles.</p></div></details>
+          <details class="kx-acc"><summary>Comment supprimer mon compte ?</summary><div class="kx-acc-body"><p>Paramètres → Supprimer mon compte. Votre mot de passe vous est redemandé.</p><p>Vos données personnelles sont supprimées. Les données scolaires — dossiers des élèves, résultats, pièces comptables — appartiennent à l'établissement et sont conservées.</p></div></details>
+          <details class="kx-acc"><summary>Comment contacter le support ?</summary><div class="kx-acc-body"><p>Par le <a href="#contact">formulaire de contact</a>. Précisez votre établissement et le type de demande : nous répondons par email.</p></div></details>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTACT — le formulaire de l'ancienne page, fusionné ici. Même route
+       serveur (/api/public/contact), mêmes états réels : jamais « envoyé »
+       avant la réponse. Le script vit dans contact.js (plus de script en
+       ligne : cette page interdit 'unsafe-inline'). -->
+  <section class="kx-sec kx-contact" id="contact" aria-labelledby="contactTitle">
+    <div class="kx-wrap kx-contact-grid">
+      <div class="kx-contact-intro">
+        <span class="kx-eyebrow">Contact</span>
+        <h2 class="kx-title" id="contactTitle">Parlons de <em>votre établissement</em>.</h2>
+        <span class="kx-rule" aria-hidden="true"></span>
+        <p class="kx-lead">Une question sur Klassio, un problème rencontré, une suggestion ? Dites-nous de quoi il s'agit : nous revenons vers vous par e-mail.</p>
+        <ul class="kx-contact-points">
+          <li><span class="kx-dot-ic" aria-hidden="true"><svg class="kx-ic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.6" y="5.6" width="16.8" height="12.8" rx="2"/><path d="m4.4 7 7.6 6 7.6-6"/></svg></span><span><b>Réponse par e-mail</b>À l'adresse que vous indiquez dans le formulaire.</span></li>
+          <li><span class="kx-dot-ic gold" aria-hidden="true"><svg class="kx-ic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.2"/><path d="M9.6 9.6a2.5 2.5 0 0 1 4.8 1c0 1.7-2.4 2-2.4 3.4"/><path d="M12 17h.1"/></svg></span><span><b>Un problème ?</b>Précisez l'écran concerné et ce que vous attendiez.</span></li>
+          <li><span class="kx-dot-ic" aria-hidden="true"><svg class="kx-ic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5.5" y="10.4" width="13" height="9.6" rx="2"/><path d="M8.4 10.4V7.8a3.6 3.6 0 0 1 7.2 0v2.6"/></svg></span><span><b>Déjà un espace ?</b>Votre établissement peut vous renvoyer un lien de connexion depuis Établissement → Équipe &amp; accès.</span></li>
+        </ul>
+      </div>
+      <div class="kx-form-card">
+        <h3>Écrivez-nous</h3>
+          <form id="contactForm" class="form-grid">
+            <div class="field"><label for="cNom">Votre nom</label>
+              <input id="cNom" name="name" required maxlength="120" autocomplete="name" /></div>
+            <div class="field"><label for="cEmail">Votre email</label>
+              <input id="cEmail" name="email" type="email" required maxlength="200" autocomplete="email" />
+              <span class="hint">C'est à cette adresse que nous répondrons.</span></div>
+            <div class="field"><label for="cType">Type de demande</label>
+              <select id="cType" name="kind">
+                <option value="question">Une question sur Klassio</option>
+                <option value="probleme">Signaler un problème</option>
+                <option value="suggestion">Suggérer une amélioration</option>
+                <option value="commercial">Demande commerciale</option>
+              </select></div>
+            <div class="field"><label for="cEcole">Votre établissement <span class="muted">(facultatif)</span></label>
+              <input id="cEcole" name="school" maxlength="200" /></div>
+            <div class="field full"><label for="cSujet">Sujet</label>
+              <input id="cSujet" name="subject" required maxlength="200" /></div>
+            <div class="field full"><label for="cMsg">Votre message</label>
+              <textarea id="cMsg" name="message" rows="6" required maxlength="5000"></textarea>
+              <span class="hint">Décrivez votre situation. Pour un problème, précisez l'écran concerné et ce que vous attendiez.</span></div>
+            <p class="form-error full" id="cErr" hidden></p>
+            <div class="full"><button type="submit" class="btn btn-lime" id="cGo">Envoyer le message</button></div>
+          </form>
+          <div id="cOk" hidden>
+            <div class="pub-carte" style="text-align:center;border-color:var(--lime-deep)">
+              <h3>Message reçu</h3>
+              <p id="cOkTexte">Merci. Nous revenons vers vous par email.</p>
             </div>
           </div>
         </div>
+
       </div>
     </div>
   </section>
 
-  <!-- APPEL FINAL — le campus au soleil couchant -->
-  <section class="kx-cta" id="commencer" data-kx-inview aria-labelledby="ctaTitle">
-    <div class="kx-plate" style="background-image:var(--kx-lqip-campus)"><img src="assets/cine/campus-1600.webp" srcset="assets/cine/campus-960.webp 960w, assets/cine/campus-1600.webp 1600w" sizes="100vw" alt="" decoding="async" loading="lazy"></div>
-    <span class="kx-kicker">Votre établissement</span>
-    <h2 class="kx-h" id="ctaTitle">Donnez à votre école <em>un seul espace clair</em>.</h2>
-    <p class="kx-p">Créez votre espace en quelques minutes, ou visitez d'abord l'établissement de démonstration — données fictives, rien n'y est enregistré.</p>
-    <div class="cta-actions">
-      <a href="app/inscription.html" class="btn btn-lime">
-        <svg class="btn-arr btn-arr-left" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-        <span class="btn-label">Créer mon espace</span>
-        <svg class="btn-arr btn-arr-right" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-      </a>
-      <a href="demo.html" class="btn btn-ghost">
-        <svg class="btn-arr btn-arr-left" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-        <span class="btn-label">Visiter la démonstration</span>
-        <svg class="btn-arr btn-arr-right" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-      </a>
-    </div>
-  </section>
+  </main>
 
-  <footer>
-    <div class="container">
-      <div class="footer-top">
-        <div>
-          <a href="#" class="brand"><img src="assets/logo.png?v=1789000492" class="brand-mark" alt="Klassio">Klassio</a>
-          <p class="footer-tag">La clarté derrière chaque établissement. Klassio centralise élèves, finances et paiements dans un seul espace simple et intelligent.</p>
+  <!-- PIED DE PAGE EN RIDEAU — la page se lève et le découvre. Le nom géant
+       monte et se pose, l'appel à commencer apparaît (cine.js écrit --fp).
+       Sur petit écran il redevient un bloc ordinaire (vitrine.css). -->
+  <div class="kx-foot-curtain" id="kxFoot" data-kx-footer>
+    <footer class="kx-foot">
+      <div class="kx-foot-aurora" aria-hidden="true"></div>
+      <div class="kx-foot-grid" aria-hidden="true"></div>
+      <div class="kx-foot-giant" aria-hidden="true">KLASSIO</div>
+      <div class="kx-foot-marquee" aria-hidden="true"><div class="kx-foot-track"><span>Élèves<i>✦</i>Classes<i>✦</i>Présences<i>✦</i>Résultats<i>✦</i>Bulletins<i>✦</i>Proclamation<i>✦</i>Frais<i>✦</i>Reçus numérotés<i>✦</i>Discipline<i>✦</i>Parents<i>✦</i>Import Excel<i>✦</i>Historique versionné<i>✦</i></span><span>Élèves<i>✦</i>Classes<i>✦</i>Présences<i>✦</i>Résultats<i>✦</i>Bulletins<i>✦</i>Proclamation<i>✦</i>Frais<i>✦</i>Reçus numérotés<i>✦</i>Discipline<i>✦</i>Parents<i>✦</i>Import Excel<i>✦</i>Historique versionné<i>✦</i></span></div></div>
+      <div class="kx-foot-center">
+        <h2>Prêt à <em>commencer</em> ?</h2>
+        <p>Créez l'espace de votre établissement en quelques minutes, ou visitez d'abord le Collège Horizon — une école fictive, rien n'y est enregistré.</p>
+        <div class="kx-pills">
+          <a class="kx-pill lime" href="app/inscription.html"><svg class="kx-ic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg> Créer mon espace</a>
+          <a class="kx-pill" href="demo.html"><svg class="kx-ic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 9.5 12 4.5l8.5 5"/><path d="M5.5 9.5v9h13v-9"/><path d="M10 18.5v-4.5h4v4.5"/></svg> Voir la démo</a>
         </div>
-        <div class="footer-cols">
-          <div class="footer-col">
-            <h5>Produit</h5>
-            <a href="#produit">Fonctionnalités</a>
-            <a href="a-propos.html#comment">Comment ça marche</a>
-            <a href="demo.html">Démonstration</a>
-            <a href="securite.html">Sécurité</a>
-          </div>
-          <div class="footer-col">
-            <h5>Espace</h5>
-            <a href="app/inscription.html">Créer un compte</a>
-            <a href="app/connexion.html">Connexion</a>
-          </div>
-          <div class="footer-col">
-            <h5>Ressources</h5>
-            <a href="aide.html">Centre d'aide</a>
-            <a href="faq.html">FAQ</a>
-            <a href="a-propos.html">À propos</a>
-            <a href="contact.html">Contact</a>
-          </div>
-          <div class="footer-col">
-            <h5>Légal</h5>
-            <a href="confidentialite.html">Confidentialité</a>
-            <a href="cgu.html">Conditions générales</a>
-            <a href="mentions.html">Mentions légales</a>
-          </div>
+        <div class="kx-pills small">
+          <a class="kx-pill" href="aide.html">Centre d'aide</a>
+          <a class="kx-pill" href="securite.html">Sécurité</a>
+          <a class="kx-pill" href="confidentialite.html">Confidentialité</a>
+          <a class="kx-pill" href="cgu.html">Conditions générales</a>
+          <a class="kx-pill" href="mentions.html">Mentions légales</a>
+          <a class="kx-pill" href="app/connexion.html">Connexion</a>
         </div>
       </div>
-      <div class="footer-bottom">
-        <span>© 2026 Klassio. Tous droits réservés.</span>
-        <span>V1 — en construction</span>
+      <div class="kx-foot-bar">
+        <span>© 2026 Klassio · Photographies d'illustration</span>
+        <span class="kx-foot-badge"><i aria-hidden="true"></i>Conçu à <b>Kinshasa</b></span>
+        <a href="#" class="kx-top-btn" aria-label="Revenir en haut de la page"><svg class="kx-ic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg></a>
       </div>
-    </div>
-  </footer>
+    </footer>
+  </div>
 
-  <script src="assets/js/cine.js?v=1791200001"></script>
-  <script src="assets/js/motion.js?v=1791100002"></script>
-  <script src="assets/js/orbite.js?v=1791000003"></script>
-  <script src="assets/js/main.js?v=1791200001"></script>
+  <script src="assets/js/cine.js?v=1791300003"></script>
+  <script src="assets/js/motion.js?v=1791300003"></script>
+  <script src="assets/js/main.js?v=1791300003"></script>
+  <script src="assets/js/contact.js?v=1791300003"></script>
   <script src="assets/js/cookie-consent.js?v=1790800001"></script>
 </body>
 </html>

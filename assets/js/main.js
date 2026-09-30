@@ -9,6 +9,18 @@
   // Il portait 2 s fixes sans rien indiquer au visiteur — c'est long pour un
   // écran qui ne dit rien, et un visiteur qui revient le subit à chaque fois.
   var splash = document.getElementById("splash");
+  // PAS DE SPLASH QUAND ON ARRIVE PAR UN LIEN, NI DEUX FOIS DANS LA SESSION.
+  //
+  // Cliquer « Le logiciel » depuis le centre d'aide ouvrait index.html#produit
+  // et rejouait tout l'accueil — « Bonjour », « Bienvenue » — avant de laisser
+  // défiler. Le propriétaire : « on ne devrait pas avoir à se taper toute
+  // l'intro une seconde fois ». entree.js, chargé dans <head>, pose
+  // `kx-nosplash` sur <html> dans ces deux cas, AVANT le premier rendu : le
+  // splash n'apparaît donc même pas une frame. Ici, on le retire du DOM.
+  if (splash && document.documentElement.classList.contains("kx-nosplash")) {
+    splash.remove();
+    splash = null;
+  }
   if (splash) {
     var splashTimer = null;
     var hideSplash = function () {
@@ -69,8 +81,7 @@
     if (Mo) {
       Mo.observer(document);
       Mo.typographieCinetique();
-      Mo.curseur();
-      Mo.aimants(document);
+      // Curseur et aimantation retirés le 30/09 (voir motion.js).
     }
 
     // LA LAMPE DE NAVIGATION — désormais dans motion.js.
@@ -457,6 +468,12 @@
       // 5. Le contenu ne se révèle que lorsque l'ouverture est assez large
       //    pour en montrer autre chose qu'un fragment.
       hud.style.opacity = clamp((progress - 0.58) / 0.20, 0, 1).toFixed(3);
+      // Le héros du site vit dans cette couche. Tant qu'il est invisible, il
+      // est INERTE : ni clic ni tabulation. Un lien fantôme sous le pointeur,
+      // ou un focus clavier posé sur un bouton qu'on ne voit pas, dans le
+      // trou du « O », serait un piège. En mouvement réduit ce code ne tourne
+      // pas, et le héros, posé à plat, reste pleinement utilisable.
+      hud.inert = progress <= 0.7;
     }
 
     // Le défilement est lu ICI, jamais dans la frame : lire scrollY après avoir

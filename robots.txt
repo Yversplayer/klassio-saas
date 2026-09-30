@@ -2,6 +2,8 @@
 User-agent: *
 Allow: /$
 Allow: /index.html
+# a-propos, faq et contact redirigent vers la page d'accueil (30/09) : on les
+# laisse ouverts pour que les robots suivent la redirection.
 Allow: /a-propos.html
 Allow: /aide.html
 Allow: /faq.html

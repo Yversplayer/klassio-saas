@@ -1,29 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- À propos, FAQ et Contact sont des sections de la page d'accueil depuis
+     le 30/09 : leurs anciennes adresses redirigent et ne sont plus listées. -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://klassio.app/</loc>
-    <lastmod>2026-09-17</lastmod>
+    <lastmod>2026-09-30</lastmod>
     <priority>1.0</priority>
-  </url>
-  <url>
-    <loc>https://klassio.app/a-propos.html</loc>
-    <lastmod>2026-09-17</lastmod>
-    <priority>0.9</priority>
   </url>
   <url>
     <loc>https://klassio.app/aide.html</loc>
     <lastmod>2026-09-17</lastmod>
     <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://klassio.app/faq.html</loc>
-    <lastmod>2026-09-17</lastmod>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://klassio.app/contact.html</loc>
-    <lastmod>2026-09-17</lastmod>
-    <priority>0.5</priority>
   </url>
   <url>
     <loc>https://klassio.app/securite.html</loc>

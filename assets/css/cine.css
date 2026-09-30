@@ -682,12 +682,6 @@
 }
 .kx-o-hud .hud-headline { color: var(--kx-on-night); font-family: var(--font-display); font-weight: 600; letter-spacing: -0.02em; }
 .kx-o-hud .hud-headline .em { color: var(--kx-lime); }
-.kx-o-device {
-  --lw: min(60vw, 700px, calc((100svh - 300px) * 1.35));
-  margin-top: clamp(4px, 1vh, 14px);
-}
-.kx-o-device .kx-laptop { translate: 0 calc(var(--lw) * -0.06); }
-.kx-o-device .kx-laptop { --kx-tilt: -12deg; }
 
 /* ===========================================================================
    2. « Chaque rôle, son écran »
@@ -1221,5 +1215,377 @@
   --kx-lqip-campus: url("data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAA4KCw0LCQ4NDA0QDw4RFiQXFhQUFiwgIRokNC43NjMuMjI6QVNGOj1OPjIySGJJTlZYXV5dOEVmbWVabFNbXVn/2wBDAQ8QEBYTFioXFypZOzI7WVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVn/wAARCAASACADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwCqnjCdtqoibj2bip/+ErvpWXyIlwOSCOtYcFhPAu6MB1I/iGMVI6TP1k2eoArlbSN4wkzdbxddxgmS3VR04OTVebxtMEyiIT7gisy3DBsG4GPpzUd1cwxSbH2tn1FCsDVjZhqO6RfLb5R09KKKdQVM5m8Jz1qi5Jbk55ooqqewqvxH/9k=");
   --kx-lqip-desk: url("data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAA4KCw0LCQ4NDA0QDw4RFiQXFhQUFiwgIRokNC43NjMuMjI6QVNGOj1OPjIySGJJTlZYXV5dOEVmbWVabFNbXVn/2wBDAQ8QEBYTFioXFypZOzI7WVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVn/wAARCAASACADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwDz9QW7UpgduimnwTqvDCtqyUyj5F49qzcmjWMUzA8iVDkKacNzoFkJwvQV0d3H5S/MorHmZSTSUmxuCWzM1vvn610vhMktKCSQO1FFVPYzjuWNZPzGudm+9RRURNGf/9k=");
   --kx-lqip-pub: url("data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAA4KCw0LCQ4NDA0QDw4RFiQXFhQUFiwgIRokNC43NjMuMjI6QVNGOj1OPjIySGJJTlZYXV5dOEVmbWVabFNbXVn/2wBDAQ8QEBYTFioXFypZOzI7WVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVn/wAARCAASACADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwDuZLkMpVXww7AZrOmhV/3bzYeQ8LjBqCae8SJgCc444zVXTtOuZ5xNM7Kc5yTzWHM2aWSL0dmYBhWJ+tOO4VplBtAcbveoJLbdyjfnVWENk+8amh/1RoopgTjoKil4YYoooEf/2Q==");
+  --kx-lqip-campus1: url("data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAA4KCw0LCQ4NDA0QDw4RFiQXFhQUFiwgIRokNC43NjMuMjI6QVNGOj1OPjIySGJJTlZYXV5dOEVmbWVabFNbXVn/2wBDAQ8QEBYTFioXFypZOzI7WVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVn/wAARCAASACADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwCppmnMU3pOilmIO4Ece1X7TTLmzupLlWgmY8YLf41RgQSxRL5oDphlGOhp1y06RMGiV+Rt2nHU1xppvc6HGS6G+muXtsyhrZDCoxtQiq0eqMhkeK2jBf8AvsOK5+SEG+js/NkNw+GY5+Vc/wA6t2lvDNO9t9sKToSDGyjnHetLu25Ci7k0XA44+lJcE7Op6j+dFFcq3O57EQA/t2Q4GfJHP41nwceK5ccfu6KK2X6GD/U//9k=");
+  --kx-lqip-campus2: url("data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAA4KCw0LCQ4NDA0QDw4RFiQXFhQUFiwgIRokNC43NjMuMjI6QVNGOj1OPjIySGJJTlZYXV5dOEVmbWVabFNbXVn/2wBDAQ8QEBYTFioXFypZOzI7WVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVn/wAARCAASACADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwC1b6ot3aSpOEhlIwFJ61mxW8VtcfafPiLhhlcnpUCC6by98SgIOuQSTU1tLcxeZvGxP72zdWEqrbNFTSR0H9q2W5VLSFm6BUND6nEE3JaXUg/3cViS3c7zRGwlJAI8wOuMj2q8ZZDbYaaVZfUYxUyrT7jVKPYx4iSRkmtFAPL6UUVMjSJFN8qjb8vHaqkjMepJ/GiihDZ//9k=");
+  --kx-lqip-mod-eleves: url("data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAA4KCw0LCQ4NDA0QDw4RFiQXFhQUFiwgIRokNC43NjMuMjI6QVNGOj1OPjIySGJJTlZYXV5dOEVmbWVabFNbXVn/2wBDAQ8QEBYTFioXFypZOzI7WVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVn/wAARCAAYACADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwCbUNfjuPNW4jaNmG3I5FWru4gvtPiaF9wX5T9eKwb26hETrIhY8d8Yqa1vDFpxQWztlsqY/mBrlV3qwxNJckuRai3mrXsF7FFAglA+8uMkjNdDeTSW+ntOigOAOGrk5blWvUZFAlX5iTwR7VvalfxvoZXzFMp25A+tTyq6NJS5YXZU017aZgJo4sBeSRWTGlvJqckIBZFBI7UUU0+hpPZsyIplS/wZcKrkEE+9bEj+bblVBOcY4oorSSskzFxVRWkf/9k=");
+  --kx-lqip-mod-presences: url("data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAA4KCw0LCQ4NDA0QDw4RFiQXFhQUFiwgIRokNC43NjMuMjI6QVNGOj1OPjIySGJJTlZYXV5dOEVmbWVabFNbXVn/2wBDAQ8QEBYTFioXFypZOzI7WVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVn/wAARCAAYACADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwCAu6j75HplqXbdsYynmbGz0zzVMyG5uWhjDb4zkr6+tXrq7miSxMQdnYlVCnhB0yfXNZJJuwknZMje5kjdFLvljj7xqZZpSTiZ+P8AaqlNu80pIQJwd208HP0qW23SyExxk+ZgjHc0WVwtJx9CbT/D2oWesPdsgeMEkYPLZ9u1bVrFLpjOk0QZZDuUDB2j0ooqaj5VdG8Pedmc7daLqN74ia5SHETvuDk8AV2lvBDYWkbLEuc5PsT1NFFP7Nxfasf/2Q==");
+  --kx-lqip-mod-resultats: url("data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAA4KCw0LCQ4NDA0QDw4RFiQXFhQUFiwgIRokNC43NjMuMjI6QVNGOj1OPjIySGJJTlZYXV5dOEVmbWVabFNbXVn/2wBDAQ8QEBYTFioXFypZOzI7WVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVn/wAARCAAYACADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwDYgub27fB0+4cA4PnSbRWR4nuI5IJbK2jTz9wBWM5yK7OCdJkHzA5GQR0I9RXEXvh28g1fzoz5kO/cOeetZuPU0i1szJm0qWPTSRblHGCfXNYzRyKCXYAjgDNek65YT6lYoICI2HLA8bq4yfQrhbkRyMhBHOxgcUneK1J5IzZc8N+Ivs5FtcMTDnhu6H/Cuj1DWL1X2xJEseM+ax60UUpNxdkaJJpNnP3msKxInvpJj/ci6VmHVSjk20QQ/wB5zk0UVD8y15H/2Q==");
+  --kx-lqip-mod-frais: url("data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAA4KCw0LCQ4NDA0QDw4RFiQXFhQUFiwgIRokNC43NjMuMjI6QVNGOj1OPjIySGJJTlZYXV5dOEVmbWVabFNbXVn/2wBDAQ8QEBYTFioXFypZOzI7WVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVn/wAARCAAYACADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwDbm8SSW+oRWQg/d4CljnJ47Vf1TBiXAxhv6VxE2ryTalHNIFLQkbBjgCtOTXLi6YRAxljyB3rmlJyTRtZRsyaa5+y3cKiMuZW2/SqWnazd3euG2Kp5BYgADkAd80pv4pI4zLgXEbHHHIqvp9xAmoebFGEZjzzUwpXQ51bHOhGeyt5Fw7NlcdxiulktrSz022kt4/tVzkb426/lRRWzSRmtTLumkSQulqIFKnIZ8n8PSq1kW+0ByeSaKKqDujOruf/Z");
+  --kx-lqip-mod-discipline: url("data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAA4KCw0LCQ4NDA0QDw4RFiQXFhQUFiwgIRokNC43NjMuMjI6QVNGOj1OPjIySGJJTlZYXV5dOEVmbWVabFNbXVn/2wBDAQ8QEBYTFioXFypZOzI7WVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVn/wAARCAAYACADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwBk9xdWxPyIRuxwSP61B/bNzu2qjAg9nPNPv72O88yKI+W4bh2PAqxeJDDa2mIke4dV3EHbyP8AHNYKDauynJPYrJc6hLnY+we1Pi0xpoJJZWLSAnJPemwzT27ySyKHhIyFQ5KfX0psOsStdTr5bi3x0x3PfNZuEilUjtc5u5mKTnk9cipZdSmuLqKbp5SHHHSiiuu7tYxjFcpNp+rm181Gw8cvLBu9XtLv0kuDFd4MTcKCeBRRTvqVZWP/2Q==");
+  --kx-lqip-mod-direction: url("data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAA4KCw0LCQ4NDA0QDw4RFiQXFhQUFiwgIRokNC43NjMuMjI6QVNGOj1OPjIySGJJTlZYXV5dOEVmbWVabFNbXVn/2wBDAQ8QEBYTFioXFypZOzI7WVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVn/wAARCAAYACADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwDbuo2hsZZI+GVSRWat7drZxznBBXc3y9Ks32tWz6fOsW4sUOMjiuU1HV5PsFjHESm3hsHhq41Tuae1V9GdnpUst4JvOUBo224AxV82gIrmfC+r+TBP5qNIxYHOa3G15AOIP/Hqfs0J1orRs4gktayLnqpqi6q1kFbGQf6UUVqtznoRVmzU0v5PM4wML/KrzNkHmiiobK9jGUm2f//Z");
+  --kx-lqip-gal-mains: url("data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAA4KCw0LCQ4NDA0QDw4RFiQXFhQUFiwgIRokNC43NjMuMjI6QVNGOj1OPjIySGJJTlZYXV5dOEVmbWVabFNbXVn/2wBDAQ8QEBYTFioXFypZOzI7WVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVn/wAARCAAgABgDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwDNiaQ9Hf8AA1cjaYdJH/76qKCBy4JHCtggdqsGJjcRFSMRvh1B5BPTNZ6Ga5nYsxpcEAiaQf8AAqKuQRv9pYEHGwYX0oqkombc/MraXpA0yO8e5ugFlbcCepAOfzNZmn6raXFzqoihkSSdgyknPII4qDW4dW1aa32WkkarxjdnJ9a3tD8PxWLJPMpN0Tu9hSSUldHY3yvUxtSe60X/AI9L7dd3MhcqOoX8feikm8Pajq+sNcyRrAjNzubOB+FFNaol7n//2Q==");
+  --kx-lqip-gal-parent: url("data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAA4KCw0LCQ4NDA0QDw4RFiQXFhQUFiwgIRokNC43NjMuMjI6QVNGOj1OPjIySGJJTlZYXV5dOEVmbWVabFNbXVn/2wBDAQ8QEBYTFioXFypZOzI7WVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVn/wAARCAAgABgDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwBIh0qnc63c22prBaojKmN+RnNUYb+aRsM+E6cU+C3FrdGbKsMgkHnJrm9lzK7NvapOx22r3W/TxG0ZBIBBHaiuavNduZUkQ2bFW6EHpRWCT7G1kclb3AWJlZiM96lm1CZ8BMYHc96U2MbHgkfSmS2SqhKucj1rsTRy26joFlmJ2SZkJzjOM0VVSbYqsvDKecUUOLewKR//2Q==");
+  --kx-lqip-gal-recre: url("data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAA4KCw0LCQ4NDA0QDw4RFiQXFhQUFiwgIRokNC43NjMuMjI6QVNGOj1OPjIySGJJTlZYXV5dOEVmbWVabFNbXVn/2wBDAQ8QEBYTFioXFypZOzI7WVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVn/wAARCAAYACADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwBYDpMDmW3t7kuAed2P61i3smZmdsDc3A35pLKwubvY+0+U5wSzdBWvL4ftdp2qAex61wuSTszpjByXYpaWWinf7RA0sHoOefUYropFtpCrO8yEdMsRWFLo8lrGZFl5HOF4NT2mp6mkwhVzJ0/1i5UCjmQOLjpYx7a6lEaor4A7Vs2TzsyZLY68niiipnodETUBZky4USYwaz54bgOzxv15x0oorBPU0sf/2Q==");
+  --kx-lqip-gal-tampon: url("data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAA4KCw0LCQ4NDA0QDw4RFiQXFhQUFiwgIRokNC43NjMuMjI6QVNGOj1OPjIySGJJTlZYXV5dOEVmbWVabFNbXVn/2wBDAQ8QEBYTFioXFypZOzI7WVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVn/wAARCAAYACADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwCWfWbqQ/JshHoBk/madJrbSWUyx4FyiZGOasW3htLi4b7TdsUz8qKNuR9a159Kjs9OlTTYI1lIxllySO9ZckJLQUXUjK8meZRtNeSu0iSNI4+THUmtXT9AvWlSSU+QoOcnk/lUuiG9tNVkjmiHkFsM23lfpXRzytEM9U/vCsqilHY6oSUtx8t5FbMokkCknArWtr4EBZT9GoopOTjK6HyqS1ILq8t8nagdvXGBWBetPISEbYp7LRRUSqybsVGnFI//2Q==");
+  --kx-lqip-gal-sacs: url("data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAA4KCw0LCQ4NDA0QDw4RFiQXFhQUFiwgIRokNC43NjMuMjI6QVNGOj1OPjIySGJJTlZYXV5dOEVmbWVabFNbXVn/2wBDAQ8QEBYTFioXFypZOzI7WVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVn/wAARCAAgABgDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwDUu9XtbK+itpmA3jJP930q6s1vMqlJB8xIHPXFcD4hmZvEsoPGzAGfpV8hjpULKPnEo27c5rnlTSUfM0U/i8jpbqHgsPzFFczG2pxQAidkwcYcg/nRUezfcuU0nYnku/tUskjQxBnOSdoJH41YUtIQXYnAxWZAwBFX43yOta2ODmbBQNso/wBqim7l+bB6nNFLY6I09NT/2Q==");
+  --kx-lqip-gal-proclamation: url("data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAA4KCw0LCQ4NDA0QDw4RFiQXFhQUFiwgIRokNC43NjMuMjI6QVNGOj1OPjIySGJJTlZYXV5dOEVmbWVabFNbXVn/2wBDAQ8QEBYTFioXFypZOzI7WVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVn/wAARCAAYACADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwDKGmTw2n2gow2L5u9v5VoaZos8ljJcS53P8yqOMe9V7/Uzc20NsWfJI8zPG4delXIdSbziYxIYEXb5YI4PbmuPVG/uk9rpcdzYRmBjHdRPlw38fepPEWmJ/Z63saBJ1wZEXp9arRXzReaZY5cOcKfQ+lRLek28tvOksjPnBJGQD7U1KXYSUUUpLSCee3a24hkGZTnkY6Y9KZFd/wDE3lXaBaSYVl6ZI6H60UVrtUt0HBc8W2N1O6Ft5dpBIWj3b3DnJ3djmprNP36vPMsyzZCupIMZxxiiit5RSvY54ybSP//Z");
+  --kx-lqip-gal-craie: url("data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAA4KCw0LCQ4NDA0QDw4RFiQXFhQUFiwgIRokNC43NjMuMjI6QVNGOj1OPjIySGJJTlZYXV5dOEVmbWVabFNbXVn/2wBDAQ8QEBYTFioXFypZOzI7WVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVn/wAARCAAgABgDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwDMZCPusc1GWZf4mH0NTv0+WqdxMUdPl+XOGNKxgm2JJLIDgSOPxoqCSGRbx5WBRGGVX1opJJlSvF2ubTQSAcKo/GooraRZdzKuACcE1qeM9TmsBElofK3DJYCp4Zzd+Fo7i6CiRkyTjGeetQ5No1jSjF3OXvllnaNTLlwuSvpRUmg3In8QHcAQVJ/DFFTzOGhcoKTuf//Z");
 }
 /* LQIP-END */
+
+/* ===========================================================================
+   7. LA VISION — du chaos à l'orbite, en 3D, au défilement
+   Six outils épars flottent ; le logo monte au centre et les aspire ; la
+   caméra bascule ; six modules sortent du noyau et prennent place sur une
+   orbite inclinée, reliés à lui par des rayons ; l'orbite tourne avec le
+   défilement.
+
+   GÉOMÉTRIE. Le monde est incliné puis tourné : rotateX(--vt) rotateZ(--vs).
+   Chaque module est posé sur l'anneau — rotateZ(a) translateX(R) — puis
+   redressé face à la caméra en défaisant exactement ces rotations, dans
+   l'ordre inverse : rotateZ(-a - vs) rotateX(-vt). Le produit des rotations
+   vaut l'identité ; il ne reste que la position sur l'orbite. C'est ce qui
+   garde les étiquettes lisibles quel que soit l'angle de vue.
+
+   Valeurs par défaut = état d'ARRIVÉE (orbite posée). cine.js n'écrit que
+   --p ; les départs sont calculés ici, sous .kx-live.
+   =========================================================================== */
+.kx-vision {
+  --vt: 60deg;
+  --vs: 20deg;
+  --vpull: 1;
+  --vcore: 1;
+  --vbeam: 1;
+  background: var(--bg);
+}
+.kx-vision.kx-live {
+  --vt: calc(14deg + clamp(0, calc((var(--p) - 0.18) / 0.3), 1) * 48deg);
+  --vs: calc(var(--p) * 160deg - 30deg);
+  --vpull: clamp(0, calc((var(--p) - 0.16) / 0.24), 1);
+  --vcore: clamp(0, calc((var(--p) - 0.2) / 0.2), 1);
+  --vbeam: clamp(0, calc((var(--p) - 0.5) / 0.16), 1);
+}
+.kx-vision-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.3fr);
+  gap: clamp(20px, 4vw, 60px);
+  align-items: center;
+  padding-top: clamp(80px, 10vw, 130px);
+  padding-bottom: clamp(80px, 10vw, 130px);
+}
+.kx-vision.kx-live .kx-vision-grid {
+  height: 100%;
+  padding-top: calc(var(--nav-h, 72px) + 40px);
+  padding-bottom: 30px;
+}
+.kx-vision.kx-live .kx-beats { min-height: 320px; }
+.kx-vision .kx-beat .kx-title { font-size: clamp(28px, 3.2vw, 46px); }
+.kx-vision .kx-beat .kx-lead { margin-top: 18px; }
+.kx-vision:not(.kx-live) .kx-beat + .kx-beat { margin-top: 36px; }
+.kx-vision .kx-beats { margin-top: 16px; }
+.kx-rail-ink i { background: var(--line); }
+.kx-rail-ink i::after { background: var(--lime-deep); }
+
+.kx-vision-stage {
+  --R: min(24vw, 250px);
+  position: relative;
+  height: min(66vh, 600px);
+  min-height: 440px;
+  perspective: 1500px;
+  perspective-origin: 50% 30%;
+  container-type: size;
+}
+.kx-v-world {
+  position: absolute;
+  left: 50%;
+  top: 56%;
+  width: 0;
+  height: 0;
+  transform-style: preserve-3d;
+  transform: rotateX(var(--vt)) rotateZ(var(--vs));
+}
+.kx-v-ring {
+  position: absolute;
+  left: calc(var(--R) * var(--r) * -1);
+  top: calc(var(--R) * var(--r) * -1);
+  width: calc(var(--R) * var(--r) * 2);
+  height: calc(var(--R) * var(--r) * 2);
+  border-radius: 50%;
+  border: 1.5px solid color-mix(in srgb, var(--lime-deep) 45%, transparent);
+}
+.kx-v-ring:first-child {
+  background: radial-gradient(circle, color-mix(in srgb, var(--lime) 14%, transparent) 0%, transparent 70%);
+  border-style: dashed;
+}
+.kx-v-beam {
+  position: absolute;
+  left: 0;
+  top: -1px;
+  width: var(--R);
+  height: 2px;
+  transform-origin: 0 50%;
+  transform: rotateZ(var(--a)) scaleX(var(--vbeam));
+  background: linear-gradient(90deg, var(--lime), color-mix(in srgb, var(--lime) 0%, transparent));
+}
+.kx-v-core {
+  position: absolute;
+  left: -60px;
+  top: -60px;
+  width: 120px;
+  height: 120px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow: 0 24px 60px -14px rgba(22, 48, 31, 0.45), 0 0 0 10px color-mix(in srgb, var(--lime) 16%, transparent);
+  transform:
+    rotateZ(calc(var(--vs) * -1)) rotateX(calc(var(--vt) * -1))
+    translateY(calc(var(--vcore) * -34px)) scale(calc(0.55 + var(--vcore) * 0.45));
+}
+.kx-v-core img { position: relative; width: 66px; height: 66px; border-radius: 18px; }
+.kx-v-halo {
+  position: absolute;
+  inset: -36px;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--lime) 40%, transparent) 0%, transparent 66%);
+  opacity: var(--vcore);
+  animation: kx-halo 3.2s ease-in-out infinite;
+}
+@keyframes kx-halo { 50% { transform: scale(1.12); } }
+.kx-v-mod {
+  --m: 1;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  transform-style: preserve-3d;
+  transform:
+    rotateZ(var(--a)) translateX(calc(var(--R) * (0.18 + var(--m) * 0.82)))
+    rotateZ(calc(var(--a) * -1 - var(--vs))) rotateX(calc(var(--vt) * -1));
+}
+.kx-vision.kx-live .kx-v-mod { --m: clamp(0, calc((var(--p) - 0.32 - var(--i) * 0.035) / 0.15), 1); }
+.kx-v-mod > span {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px 8px 8px;
+  border-radius: 99px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: 0 14px 30px -12px rgba(22, 48, 31, 0.35);
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--ink);
+  white-space: nowrap;
+  opacity: var(--m);
+  transform: translate(-50%, -50%) scale(calc(0.4 + var(--m) * 0.6));
+}
+.kx-v-mod .kx-ic {
+  width: 34px;
+  height: 34px;
+  padding: 8px;
+  border-radius: 50%;
+  background: var(--v-forest, #14301F);
+  color: #F5F8EF;
+}
+.kx-v-mod:nth-of-type(even) .kx-ic { background: var(--v-gold, #E3A82B); color: #2A1D00; }
+/* Le chaos : six outils épars, dans le plan de l'écran, qui convergent vers
+   le noyau et s'y fondent. Positions en unités de conteneur (cqw/cqh). */
+.kx-v-chaos { position: absolute; inset: 0; pointer-events: none; }
+.kx-vision:not(.kx-live) .kx-v-chaos { display: none; }
+.kx-v-tool {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: 0 16px 34px -14px rgba(22, 48, 31, 0.35);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  opacity: calc(1 - var(--vpull));
+  transform:
+    translate(-50%, -50%)
+    translate(calc(var(--x) * 1cqw * (1 - var(--vpull))), calc(var(--y) * 1cqh * (1 - var(--vpull))))
+    rotate(calc(var(--rot) * (1 - var(--vpull))))
+    scale(calc(1 - var(--vpull) * 0.7));
+  animation: kx-flotte 5s ease-in-out infinite alternate;
+  animation-delay: calc(var(--i) * -0.9s);
+}
+.kx-v-tool .kx-ic { width: 18px; height: 18px; color: var(--ink-faint); }
+@keyframes kx-flotte { to { translate: 0 -10px; } }
+
+/* ===========================================================================
+   8. LE MANIFESTE — l'encre qui avance avec le défilement
+   =========================================================================== */
+.kx-manif { background: var(--bg); }
+.kx-manif-in {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-top: clamp(90px, 12vw, 160px);
+  padding-bottom: clamp(90px, 12vw, 160px);
+}
+.kx-manif.kx-live .kx-manif-in { height: 100%; padding-top: 0; padding-bottom: 0; }
+.kx-manif-text {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(30px, 4.6vw, 68px);
+  line-height: 1.14;
+  letter-spacing: -0.02em;
+  max-width: 21ch;
+  margin: 20px 0 0;
+  color: var(--ink);
+}
+.kx-manif.kx-live .kx-ch { color: color-mix(in srgb, var(--ink) 15%, transparent); transition: color 0.3s; }
+.kx-manif.kx-live .kx-ch.on { color: var(--ink); }
+.kx-oval { position: relative; display: inline-block; font-style: italic; font-weight: 500; }
+.kx-manif.kx-live .kx-oval .kx-ch.on,
+.kx-manif:not(.kx-live) .kx-oval { color: var(--lime-deep); }
+:root[data-theme="dark"] .kx-manif.kx-live .kx-oval .kx-ch.on,
+:root[data-theme="dark"] .kx-manif:not(.kx-live) .kx-oval { color: var(--lime); }
+.kx-oval svg {
+  position: absolute;
+  left: -14%;
+  top: -24%;
+  width: 128%;
+  height: 150%;
+  overflow: visible;
+  pointer-events: none;
+}
+/* pathLength="1" : le tracé se mesure de 0 à 1, quelle que soit sa taille à
+   l'écran. Pas de `non-scaling-stroke` : il fait évaluer les tirets en pixels
+   écran et casse cette normalisation. */
+.kx-oval path {
+  fill: none;
+  stroke: var(--lime);
+  stroke-width: 3.2;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: calc(1 - var(--ov, 1));
+}
+.kx-manif.kx-live { --ov: clamp(0, calc((var(--p) - 0.5) / 0.22), 1); }
+
+/* ===========================================================================
+   9. LA DEVISE — trois mots sur la bande lime
+   =========================================================================== */
+/* `clip` et PAS `hidden` : un ancêtre en overflow:hidden devient le conteneur
+   de défilement de référence, et le plateau `position: sticky` cessait de
+   coller à la fenêtre — il partait avec la page, et la bande restait vide
+   (constaté en test). `clip` découpe sans créer de conteneur de défilement. */
+.kx-motto { background: var(--lime); color: #142000; overflow: clip; }
+.kx-motto-track {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 50px;
+  padding: clamp(80px, 10vw, 130px) 24px;
+  text-align: center;
+}
+.kx-motto-word { display: flex; flex-direction: column; align-items: center; }
+.kx-mw {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-style: italic;
+  font-size: clamp(64px, 14vw, 220px);
+  line-height: 0.95;
+  letter-spacing: -0.035em;
+  white-space: nowrap;
+}
+.kx-mw .kx-sc { display: inline-block; }
+.kx-motto-word p {
+  margin: 18px 0 0;
+  max-width: 38ch;
+  font-size: clamp(15px, 1.3vw, 18px);
+  font-weight: 600;
+  color: #243600;
+}
+/* Pilotée : un seul rang de mots, qui glisse ; cine.js place chaque lettre. */
+.kx-motto.kx-live .kx-motto-track {
+  flex-direction: row;
+  align-items: center;
+  gap: 16vw;
+  height: 100%;
+  padding: 0;
+  width: max-content;
+  will-change: transform;
+}
+.kx-motto.kx-live .kx-motto-word p {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 0.45s var(--kx-ease), transform 0.6s var(--kx-ease);
+}
+.kx-motto.kx-live[data-beat="0"] .kx-motto-word[data-b="0"] p,
+.kx-motto.kx-live[data-beat="1"] .kx-motto-word[data-b="1"] p,
+.kx-motto.kx-live[data-beat="2"] .kx-motto-word[data-b="2"] p { opacity: 1; transform: none; }
+
+/* ===========================================================================
+   10. La confiance — le décompte existant, aux couleurs de la vitrine
+   =========================================================================== */
+.kx-trust-wrap { max-width: var(--v-wrap, 1220px); }
+.kx-trust-wrap .trust-card .kx-trust-ic {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--v-forest, #14301F);
+  color: #F5F8EF;
+  font-size: 0;
+}
+.kx-trust-wrap .trust-card:nth-child(even) .kx-trust-ic { background: var(--v-gold, #E3A82B); color: #2A1D00; }
+.kx-trust-wrap .trust-card .kx-trust-ic .kx-ic { width: 24px; height: 24px; }
+.kx-trust-wrap .story-index { color: var(--v-gold-ink, #7F5700); }
+
+/* Les étapes « Comment ça marche » : le filet se trace à l'arrivée. */
+.kx-steps.kx-pending::before { transform: scaleX(0); }
+.kx-steps.kx-pending.in-view::before { transform: scaleX(1); transition: transform 1.6s var(--kx-ease); }
+
+@media (prefers-reduced-motion: reduce) {
+  .kx-v-tool, .kx-v-halo { animation: none; }
+}
+@media (max-width: 960px) {
+  .kx-vision-grid { grid-template-columns: 1fr; }
+  .kx-vision.kx-live .kx-vision-grid { grid-template-rows: auto 1fr; gap: 0; padding-top: calc(var(--nav-h, 72px) + 10px); }
+  .kx-vision.kx-live .kx-vision-stage { order: -1; height: 48svh; min-height: 300px; }
+  .kx-vision-stage { --R: min(34vw, 170px); height: 380px; min-height: 0; }
+  .kx-vision.kx-live .kx-beats { min-height: 250px; }
+  .kx-v-core { left: -46px; top: -46px; width: 92px; height: 92px; }
+  .kx-v-core img { width: 50px; height: 50px; }
+  .kx-v-mod > span { font-size: 12px; padding: 6px 12px 6px 6px; gap: 7px; }
+  .kx-v-mod .kx-ic { width: 26px; height: 26px; padding: 6px; }
+  .kx-v-tool { font-size: 11.5px; padding: 8px 10px; }
+  .kx-motto.kx-live .kx-motto-track { gap: 24vw; }
+}
+
+/* La confiance : ses titres passent à la grammaire de la vitrine (serif,
+   sur-titre doré en capitales) — elle gardait ceux de l'ancienne page. */
+.kx-trust-wrap .story-index {
+  font-family: var(--kx-font-label);
+  font-style: normal;
+  font-stretch: 118%;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+.kx-trust-wrap .story-copy h2 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.08;
+}
+.kx-trust-wrap .trust-card h4 { font-family: var(--font-display); font-weight: 600; font-size: 17px; }
+/* style.css écrit ce texte en --ink-faint : ~3,3:1 sur blanc, sous le seuil
+   AA pour un texte qui porte une information. Relevé ici, dans cette seule
+   section, sans toucher la feuille partagée par l'application. */
+.kx-trust-wrap .trust-card p { color: var(--ink-soft); }

@@ -242,7 +242,6 @@
     if (M) {
       M.observer(document.getElementById("demoContent") || document);
       M.typographieCinetique();
-      M.curseur();
     }
   }
 

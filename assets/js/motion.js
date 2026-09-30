@@ -238,113 +238,13 @@
     }, { passive: true });
   }
 
-  // ---------------------------------------------------------------------
-  // Curseur
-  // ---------------------------------------------------------------------
-
-  /**
-   * Point + anneau, en `mix-blend-mode: difference`.
-   *
-   * Le point suit exactement le pointeur ; l'anneau le rattrape par ressort.
-   * C'est ce décalage qui donne l'impression d'une masse, et c'est pour cela
-   * qu'il est calculé plutôt que transitionné.
-   *
-   * Il ne REMPLACE jamais le curseur système : on le superpose et on masque
-   * le natif uniquement là où un vrai pointeur existe (`hover: hover`). Sur
-   * un écran tactile, il ne s'installe pas du tout — il n'y aurait rien à
-   * suivre, et deux couches fixes de plus coûteraient des images perdues.
-   */
-  function curseur() {
-    if (reduit) return;
-    if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
-
-    var point = document.createElement("div");
-    point.className = "mo-cursor";
-    point.setAttribute("aria-hidden", "true");
-    var anneau = document.createElement("div");
-    anneau.className = "mo-ring";
-    anneau.setAttribute("aria-hidden", "true");
-    document.body.appendChild(point);
-    document.body.appendChild(anneau);
-    document.documentElement.classList.add("mo-cursor-on");
-
-    var x = innerWidth / 2, y = innerHeight / 2;
-    var rx = new Ressort(x, 120, 15), ry = new Ressort(y, 120, 15);
-    var echelle = new Ressort(1, 160, 16);
-    var t = performance.now();
-
-    document.addEventListener("pointermove", function (e) {
-      x = e.clientX; y = e.clientY;
-      rx.cible = x; ry.cible = y;
-      point.style.transform = "translate3d(" + x + "px," + y + "px,0)";
-    }, { passive: true });
-
-    // Sur un élément actionnable, l'anneau grossit : le curseur dit ce qui
-    // est cliquable avant qu'on ne l'ait cliqué.
-    document.addEventListener("pointerover", function (e) {
-      var a = e.target.closest && e.target.closest("a,button,[role=button],input,select,textarea,.mo-magnet");
-      echelle.cible = a ? 1.9 : 1;
-      anneau.classList.toggle("mo-ring-on", !!a);
-    }, { passive: true });
-
-    document.addEventListener("pointerleave", function () {
-      point.style.opacity = "0"; anneau.style.opacity = "0";
-    });
-    document.addEventListener("pointerenter", function () {
-      point.style.opacity = ""; anneau.style.opacity = "";
-    });
-
-    (function boucle(now) {
-      var dt = (now - t) / 1000 || 0.016; t = now;
-      var ax = rx.pas(dt), ay = ry.pas(dt), s = echelle.pas(dt);
-      anneau.style.transform = "translate3d(" + ax + "px," + ay + "px,0) scale(" + s.toFixed(3) + ")";
-      requestAnimationFrame(boucle);
-    })(t);
-  }
-
-  // ---------------------------------------------------------------------
-  // Aimantation
-  // ---------------------------------------------------------------------
-
-  /**
-   * Un élément `.mo-magnet` se penche vers le pointeur quand il en approche.
-   *
-   * Le rayon est proportionnel à la taille de l'élément : un grand bouton
-   * attire de plus loin qu'une petite puce, ce qui correspond à l'intuition.
-   */
-  function aimants(racine) {
-    if (reduit) return;
-    if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
-    var els = (racine || document).querySelectorAll(".mo-magnet");
-    if (!els.length) return;
-
-    Array.prototype.forEach.call(els, function (el) {
-      var sx = new Ressort(0, 140, 14), sy = new Ressort(0, 140, 14);
-      var t = performance.now(), anime = false;
-
-      function boucle(now) {
-        var dt = (now - t) / 1000 || 0.016; t = now;
-        var vx = sx.pas(dt), vy = sy.pas(dt);
-        el.style.transform = "translate3d(" + vx.toFixed(2) + "px," + vy.toFixed(2) + "px,0)";
-        if (Math.abs(vx) < 0.05 && Math.abs(vy) < 0.05 && sx.cible === 0 && sy.cible === 0) {
-          el.style.transform = ""; anime = false; return;
-        }
-        requestAnimationFrame(boucle);
-      }
-      function reveiller() { if (!anime) { anime = true; t = performance.now(); requestAnimationFrame(boucle); } }
-
-      el.addEventListener("pointermove", function (e) {
-        var r = el.getBoundingClientRect();
-        var dx = e.clientX - (r.left + r.width / 2);
-        var dy = e.clientY - (r.top + r.height / 2);
-        sx.cible = dx * 0.22; sy.cible = dy * 0.28;
-        reveiller();
-      }, { passive: true });
-      el.addEventListener("pointerleave", function () {
-        sx.cible = 0; sy.cible = 0; reveiller();
-      }, { passive: true });
-    });
-  }
+  // CURSEUR ET AIMANTATION : RETIRÉS (30/09).
+  //
+  // Un anneau qui suivait le pointeur et des boutons qui se penchaient vers
+  // lui. Le propriétaire les a jugés de trop : « ça fait trop ». Ils
+  // n'apportaient aucune information, et un curseur qui ne suit pas
+  // exactement la main se lit comme un retard. Supprimés, pas désactivés —
+  // un effet coupé mais laissé en place finit toujours par être rebranché.
 
   // ---------------------------------------------------------------------
   // Séquence — des blocs qui se succèdent, pas qui surgissent ensemble
@@ -462,6 +362,10 @@
       });
     });
 
+    // Exposée pour le suivi de section de la landing (cine.js), qui change
+    // d'onglet actif au défilement et doit pouvoir déplacer la lampe.
+    lampe.placer = placer;
+
     replacer();
     requestAnimationFrame(replacer);
     window.addEventListener("load", replacer);
@@ -481,8 +385,6 @@
     decouperMots: decouperMots,
     Ressort: Ressort,
     typographieCinetique: typographieCinetique,
-    curseur: curseur,
-    aimants: aimants,
     lampeNav: lampeNav,
     reduit: reduit,
   };

@@ -11,11 +11,17 @@
 (function () {
   "use strict";
 
+  // La même barre que la landing, onglet pour onglet. À propos, FAQ et
+  // Contact vivent désormais DANS la landing (fusion du 30/09) : leurs
+  // anciennes pages ne sont plus que des redirections. Seul le Centre d'aide
+  // reste une page à part.
   var PAGES = [
-    { href: "a-propos.html", label: "À propos" },
+    { href: "index.html#produit", label: "Le logiciel" },
+    { href: "index.html#vision", label: "Fonctionnement" },
+    { href: "index.html#a-propos", label: "À propos" },
     { href: "aide.html", label: "Centre d'aide" },
-    { href: "faq.html", label: "FAQ" },
-    { href: "contact.html", label: "Contact" },
+    { href: "index.html#faq", label: "FAQ" },
+    { href: "index.html#contact", label: "Contact" },
   ];
 
   var courante = (window.location.pathname.split("/").pop() || "index.html");
@@ -24,7 +30,7 @@
   //
   // Sécurité, CGU, confidentialité et mentions n'ont pas d'onglet à elles —
   // et n'en méritent pas un. Sans rattachement, la lampe serait retombée sur
-  // le premier onglet venu, donc sur « Produit », qui est faux. On les
+  // le premier onglet venu, donc sur « Le logiciel », qui est faux. On les
   // rattache au Centre d'aide, qui est bien l'endroit d'où on y arrive.
   // Le rattachement allume la lampe mais ne pose PAS aria-current : on n'est
   // pas sur cette page-là, et l'annoncer serait mentir au lecteur d'écran.
@@ -44,10 +50,9 @@
         // « disparaissait » dès qu'on quittait la landing. motion.js la place
         // ensuite au-dessus de l'onglet marqué `active`.
         '<div class="tubelight-lamp" id="tubelightLamp" aria-hidden="true"><div class="tubelight-glow"></div></div>' +
-        '<a href="index.html#produit">Produit</a>' +
-        // La démonstration est la page qui convainc : elle a sa place dans la
-        // barre, comme sur la landing (30/09).
-        '<a href="demo.html">Démo</a>' +
+        // PAS d'onglet « Démo » : le propriétaire l'a demandé deux fois. On
+        // entre dans la démonstration par UN bouton, à droite — comme sur la
+        // landing.
         PAGES.map(function (p) {
           var cls = [];
           if (p.href === courante) cls.push("actif");
@@ -60,7 +65,7 @@
       "</div>" +
       '<div class="nav-actions">' +
         '<a href="app/connexion.html" class="btn btn-ghost btn-sm">Connexion</a>' +
-        '<a href="app/inscription.html" class="btn btn-primary btn-sm"><span class="btn-label">Créer mon espace</span></a>' +
+        '<a href="demo.html" class="btn btn-lime btn-sm"><span class="btn-label">Voir la démo</span></a>' +
       "</div>" +
       '<button type="button" class="pub-burger" id="pubBurger" aria-label="Ouvrir le menu" aria-expanded="false">' +
         '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>' +
@@ -71,9 +76,9 @@
   // le vide vaut moins que pas de lien du tout : il fait douter du reste.
   function footer() {
     var cols = [
-      ["Klassio", [["a-propos.html", "À propos"], ["index.html#produit", "Produit"], ["demo.html", "Démonstration"], ["contact.html", "Contact"]]],
-      ["Pour qui", [["a-propos.html#roles", "Direction"], ["a-propos.html#roles", "Professeurs"], ["a-propos.html#roles", "Parents"], ["a-propos.html#roles", "Directeur des disciplines"]]],
-      ["Ressources", [["aide.html", "Centre d'aide"], ["faq.html", "FAQ"], ["securite.html", "Sécurité"], ["app/inscription.html", "Créer un espace"]]],
+      ["Klassio", [["index.html#a-propos", "À propos"], ["index.html#produit", "Le logiciel"], ["demo.html", "Démonstration"], ["index.html#contact", "Contact"]]],
+      ["Pour qui", [["index.html#roles", "Direction"], ["index.html#roles", "Professeurs"], ["index.html#roles", "Parents"], ["index.html#roles", "Directeur des disciplines"]]],
+      ["Ressources", [["aide.html", "Centre d'aide"], ["index.html#faq", "FAQ"], ["securite.html", "Sécurité"], ["app/inscription.html", "Créer un espace"]]],
       ["Légal", [["confidentialite.html", "Confidentialité"], ["cgu.html", "Conditions générales"], ["mentions.html", "Mentions légales"], ["confidentialite.html#suppression", "Suppression du compte"]]],
     ];
     return "<footer><div class=\"container\"><div class=\"footer-top\">" +
