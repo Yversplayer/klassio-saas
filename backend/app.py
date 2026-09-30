@@ -5,11 +5,12 @@ vient exclusivement de g.ctx (résolu depuis la session serveur par
 security.require_auth), jamais d'un champ envoyé dans le JSON ou l'URL — même
 si le client en envoie un, il est purement et simplement ignoré.
 """
-from flask import Flask, request, jsonify, g
+from flask import Flask, request, jsonify, g, send_from_directory
 import bisect
 import datetime
 import gzip
 import json
+import os
 import time
 import csv
 import io
@@ -2418,7 +2419,94 @@ def _startup_banner():
         print("  Supabase : non configuré (voir backend/.env.example)")
 
 
+# ---------------------------------------------------------------------------
+# Servir le frontend depuis la MÊME origine que l'API (développement et démo)
+#
+# Pourquoi. Le montage habituel sépare les pages (port 4173) de l'API (5001).
+# Deux origines, donc trois obstacles à franchir dès qu'on ouvre Klassio depuis
+# une autre machine : le CORS, la CSP `connect-src` de chaque page, et la
+# résolution de l'adresse d'API par le navigateur. Chacun se règle en
+# déclarant l'origine du visiteur — qui change avec le réseau, et qu'il faut
+# alors redéclarer partout.
+#
+# Servies ici, pages et API partagent l'origine : `connect-src 'self'` suffit,
+# le CORS ne s'applique plus, et l'adresse marche telle quelle depuis une IP
+# de réseau local comme depuis un tunnel. C'est aussi la forme qu'aura la
+# production derrière un proxy inverse.
+#
+# `send_from_directory` résout le chemin à l'intérieur du dossier indiqué et
+# refuse tout ce qui en sortirait : pas de remontée par `../`.
+_RACINE = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+_DOSSIERS_SERVIS = ("app", "assets")
+# Seuls fichiers non-HTML servis depuis la racine du dépôt.
+_FICHIERS_RACINE_PUBLICS = frozenset({"robots.txt", "sitemap.xml", "favicon.ico"})
+
+
+@app.get("/")
+def _page_accueil():
+    return send_from_directory(_RACINE, "index.html")
+
+
+@app.get("/<path:chemin>")
+def _fichier_frontend(chemin):
+    """Sert les pages et les ressources du frontend.
+
+    Les routes /api/... sont déclarées avant celle-ci et ont des règles plus
+    spécifiques : Flask les fait correspondre en premier. Cette route ne les
+    masque donc pas — et refuse explicitement le préfixe, par sécurité.
+    """
+    if chemin.startswith("api/"):
+        return jsonify({"error": "Route inconnue."}), 404
+
+    # `send_from_directory` garantit une seule chose : ne pas sortir du dossier
+    # qu'on lui donne. La première version de cette route lui donnait la RACINE
+    # du dépôt — or `backend/` en fait partie. `/assets/../backend/klassio.db`
+    # restait donc « à l'intérieur » et la base de développement sortait en 200,
+    # 50 Mo, à qui pouvait joindre le port. Werkzeug décode l'URL avant le
+    # routage : `%2e%2e` arrive ici déjà sous la forme `..`. On refuse la
+    # remontée soi-même, et on ne sert plus jamais depuis la racine.
+    segments = chemin.split("/")
+    if any(s in ("", ".", "..") for s in segments):
+        return jsonify({"error": "Page inconnue."}), 404
+
+    # Fichiers de premier niveau. La racine du dépôt n'est pas un dossier
+    # public : elle contient aussi AGENTS.md, DEPLOIEMENT.md, render.yaml,
+    # .mcp.json, requirements.txt, demarrer.sh — tous téléchargeables dans la
+    # première version. Seules les pages du site et les trois fichiers publics
+    # attendus à la racine d'un site web en sortent.
+    if len(segments) == 1:
+        nom = segments[0]
+        if not (nom.endswith(".html") or nom in _FICHIERS_RACINE_PUBLICS):
+            return jsonify({"error": "Page inconnue."}), 404
+        if not os.path.isfile(os.path.join(_RACINE, nom)):
+            return jsonify({"error": "Page inconnue."}), 404
+        return send_from_directory(_RACINE, nom)
+
+    if segments[0] not in _DOSSIERS_SERVIS:
+        return jsonify({"error": "Page inconnue."}), 404
+    # Le dossier de base est `app/` ou `assets/`, jamais la racine : la garantie
+    # de `send_from_directory` redevient celle qu'on croyait avoir.
+    return send_from_directory(os.path.join(_RACINE, segments[0]),
+                               "/".join(segments[1:]))
+
+
 if __name__ == "__main__":
     db.init_db()
     _startup_banner()
-    app.run(port=5001, debug=False, use_reloader=False)
+    # Hôte d'écoute. Par défaut 127.0.0.1 : le serveur n'est joignable que
+    # depuis cette machine, ce qui est le bon défaut pour du développement.
+    #
+    # Pour faire tester Klassio à quelqu'un d'autre sur le même réseau :
+    #
+    #     KLASSIO_HOST=0.0.0.0 backend_venv/bin/python backend/app.py
+    #
+    # Il faut alors AUSSI déclarer l'origine depuis laquelle il ouvrira les
+    # pages, sinon le CORS refusera tous les appels :
+    #
+    #     KLASSIO_ALLOWED_ORIGINS=http://192.168.x.x:4173
+    #
+    # Ne pas exposer ainsi une base contenant de vraies données d'établissement.
+    hote = config.get("KLASSIO_HOST", "127.0.0.1") or "127.0.0.1"
+    if hote != "127.0.0.1":
+        print(f"  ⚠ Écoute sur {hote}:5001 — joignable depuis le réseau.")
+    app.run(host=hote, port=5001, debug=False, use_reloader=False)

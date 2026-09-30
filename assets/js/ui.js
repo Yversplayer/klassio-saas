@@ -402,7 +402,14 @@
     if (typeof window.KLASSIO_API_ORIGIN === "string") return window.KLASSIO_API_ORIGIN;
     var h = window.location.hostname;
     if (h === "localhost" || h === "127.0.0.1" || h === "" || h === "::1") return "http://localhost:5001";
-    return "";   // même origine : fetch("/api/...")
+    // Montage de DÉVELOPPEMENT : les pages sont servies sur 4173 et l'API vit
+    // sur 5001 de la même machine. Sans ce cas, ouvrir Klassio depuis une autre
+    // machine du réseau (http://192.168.x.x:4173) faisait partir les appels en
+    // « même origine » vers le serveur de fichiers statiques — qui n'a pas de
+    // route /api et répond 404, ou 504 derrière un proxy. Le testeur voyait
+    // « Le serveur Klassio est injoignable » sans que rien ne soit cassé.
+    if (window.location.port === "4173") return window.location.protocol + "//" + h + ":5001";
+    return "";   // production : même origine, derrière un proxy inverse
   }
 
   window.KlassioUI = {
