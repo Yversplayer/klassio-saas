@@ -361,6 +361,26 @@
     var trainEl = el.querySelector("[data-kx-motto]");
     var train = trainEl ? trainDeMots(trainEl) : null;
 
+    // Séquences : une file d'éléments qui s'allument un à un sur une portion
+    // de la piste — l'appel de la démonstration, où les mains se lèvent
+    // l'une après l'autre pendant que la ligne de l'élève se coche sur le
+    // téléphone. data-kx-seq="0.18 0.62" : début et fin, en progression de
+    // scène. Les éléments de même data-kx-i avancent ENSEMBLE, où qu'ils
+    // soient dans la scène (l'élève dans la classe, sa ligne à l'écran) :
+    // .is-on quand leur tour est venu, .is-now pendant leur tour, et --seq
+    // (0 → 1) sur le conteneur. L'ARRIVÉE — tout coché — est écrite dans le
+    // balisage : sans script, l'appel s'affiche terminé ; le départ n'existe
+    // qu'ici (règle 1).
+    var sequences = [].slice.call(el.querySelectorAll("[data-kx-seq]")).map(function (s) {
+      var bornes = s.getAttribute("data-kx-seq").split(/[\s,]+/).map(Number);
+      var items = [].slice.call(s.querySelectorAll("[data-kx-i]")).map(function (it) {
+        return { el: it, i: parseInt(it.getAttribute("data-kx-i"), 10) || 0 };
+      });
+      var n = 0;
+      items.forEach(function (it) { n = Math.max(n, it.i + 1); });
+      return { el: s, a: bornes[0] || 0, b: bornes[1] || 1, items: items, n: n, tour: -2, loc: -1 };
+    });
+
     function mesurer() {
       var r = el.getBoundingClientRect();
       var sy = window.scrollY || window.pageYOffset;
@@ -396,6 +416,23 @@
         }
       }
       if (train) train.appliquer(p, vh, vw);
+
+      for (var sq = 0; sq < sequences.length; sq++) {
+        var seq = sequences[sq];
+        var loc = clamp((p - seq.a) / (seq.b - seq.a), 0, 1);
+        if (Math.abs(loc - seq.loc) > 0.001) {
+          seq.loc = loc;
+          seq.el.style.setProperty("--seq", loc.toFixed(3));
+        }
+        var tour = loc <= 0 ? -1 : (loc >= 1 ? seq.n : Math.min(seq.n - 1, Math.floor(loc * seq.n)));
+        if (tour !== seq.tour) {
+          seq.tour = tour;
+          for (var it = 0; it < seq.items.length; it++) {
+            seq.items[it].el.classList.toggle("is-on", seq.items[it].i <= tour);
+            seq.items[it].el.classList.toggle("is-now", seq.items[it].i === tour);
+          }
+        }
+      }
 
       if (Math.abs(p - pEcrit) > 0.0004) {
         pEcrit = p;

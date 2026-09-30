@@ -192,6 +192,19 @@
       });
     }, { rootMargin: "-33% 0px -60% 0px", threshold: 0 });
     etapes.forEach(function (s) { io.observe(s); });
+
+    // Le rail est celui de la VISITE. Depuis que la démonstration s'ouvre
+    // sur un récit en quatre scènes (30/09), un rail fixe affiché dès la
+    // première image flottait par-dessus la salle de classe et le portail,
+    // avec des chapitres qui n'étaient pas encore là. Il n'apparaît donc
+    // que lorsque la visite occupe l'écran.
+    var visite = document.getElementById("demoShell");
+    if (visite) {
+      rail.classList.add("rc-rail-hors");
+      new IntersectionObserver(function (entrees) {
+        rail.classList.toggle("rc-rail-hors", !entrees[0].isIntersecting);
+      }, { rootMargin: "-40% 0px -40% 0px", threshold: 0 }).observe(visite);
+    }
     return rail;
   }
 

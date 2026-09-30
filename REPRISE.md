@@ -29,8 +29,8 @@ l'application sont les chantiers ouverts.
 
 | | |
 |---|---|
-| 🔒 **Landing** | `index.html`, `assets/js/main.js`, blocs « landing » de `style.css`. **Lire `LANDING_FIGEE.md` avant d'y écrire une ligne.** On n'y corrige qu'un défaut constaté. |
-| ✅ **Démo** | `demo.html`, `page-demo.js`, `demo-data.js` — ouverte. Deux garde-fous : données toujours fictives et annoncées, et `style.css` est partagé. |
+| 🎨 **Landing** | **Dégelée depuis le 22/09** pour la refonte visuelle (AGENTS.md §10). Refaite le 30/09 : identité « vitrine », À propos / FAQ / Contact fusionnés dedans. `LANDING_FIGEE.md` liste ce qu'elle doit continuer d'honorer. |
+| ✅ **Démo** | `demo.html` — récit en quatre scènes (30/09) puis visite interactive. Données toujours fictives et annoncées ; détail dans AGENTS.md §10. |
 | ✅ **Application** | `app/*.html` et ses `page-*.js` — chantier principal. |
 
 ### Faire tourner le logiciel

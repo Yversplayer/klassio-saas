@@ -351,7 +351,8 @@ réel — pas un écran noir — et respecte `prefers-reduced-motion`, le mobile
 
 `cgu.html`, `confidentialite.html`, `mentions.html`, `securite.html`,
 `aide.html`, `faq.html`, `contact.html`, `a-propos.html`, `robots.txt` et
-`sitemap.xml` **existent**. Une demande de « créer une page CGU » est déjà
+`sitemap.xml` **existent** (FAQ, Contact et À propos sont, depuis le 30/09,
+des sections de la landing : leurs pages redirigent). Une demande de « créer une page CGU » est déjà
 satisfaite : relis-la, améliore-la, ne la duplique pas.
 
 Existent aussi, depuis : **favicon** (`favicon.ico`, déclaré dans toutes les
@@ -369,7 +370,27 @@ cinématique : scènes pilotées par le défilement, ordinateur et téléphone e
 |---|---|
 | `assets/css/cine.css` | tout le visuel, classes préfixées `kx-`. L'application ne charge pas ce fichier : rien ici ne peut l'atteindre. |
 | `assets/js/cine.js` | le moteur : écrit `--p` (progression) et `data-beat` (étape) sur chaque `[data-kx-scene]`. Chargé AVANT `main.js`. |
-| `assets/cine/*.webp` | 8 photos générées (Higgsfield, projet « Klassio — site cinématique »), 960 et 1600 px. Sources PNG hors dépôt (`.gitignore`). |
+| `assets/cine/*.webp` | 24 photos générées (Higgsfield, projet « Klassio — site cinématique »), 960 et 1600 px, miniature floue dans le bloc `LQIP` de `cine.css`. Sources PNG hors dépôt (`.gitignore`). Politique : adultes de face, élèves de dos ou au loin, aucun drapeau, aucun texte lisible. |
+| `assets/css/vitrine.css` | la grammaire de la landing (sur-titres dorés, serif, cartes photo, bande vert forêt, pied de page en rideau). Préfixe `kx-`. Landing et démo seulement. |
+| `assets/css/demo-cine.css` | le récit de la démo (salle de classe, portail, dossier en coupe, mur d'écrans). Préfixe `kd-`. `demo.html` seulement. |
+| `assets/js/entree.js` | dans `<head>` de la landing : saute l'accueil animé si on arrive par une ancre ou si on l'a déjà vu dans la session, et saute NET à l'ancre (sinon `scroll-behavior: smooth` faisait défiler 22 000 px de scènes). |
+| `assets/js/contact.js` | le formulaire de contact, désormais dans la landing (`#contact`). Pas de script en ligne : la CSP le bloquerait. |
+
+**Fusion du 30/09.** À propos, FAQ et Contact sont des sections de la landing
+(`#a-propos`, `#faq`, `#contact`) ; `a-propos.html`, `faq.html` et
+`contact.html` ne sont plus que des redirections (`noindex`), sorties du
+sitemap. Le Centre d'aide et les pages légales restent des pages. La barre
+publique (`public.js`) pointe vers les ancres et n'a **pas d'onglet
+« Démo »** : on y entre par UN bouton, à droite — le propriétaire l'a demandé
+deux fois. Curseur personnalisé et aimantation des boutons : **retirés**, à
+sa demande ; ne pas les remettre.
+
+**La démo** (`demo.html`, générée) s'ouvre sur un récit en quatre scènes,
+puis la visite interactive (`.demo-shell`, inchangée). L'appel utilise les
+séquences de `cine.js` (`data-kx-seq` : un élève et sa ligne sur le
+téléphone partagent un `data-kx-i`). Les destinataires montrés sont ceux de
+`notifications.on_attendance_recorded`, et les périmètres du dossier en coupe
+ceux de `school.student_dossier` : si l'un change, la démo doit changer.
 
 1. **Une scène n'est animée que si `cine.js` lui ajoute `.kx-live`.** Sans
    script ou en mouvement réduit, elle s'affiche à plat, tout en place.

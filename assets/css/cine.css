@@ -555,7 +555,10 @@
 .kx-live[data-beat="0"] .kx-beat[data-b="0"],
 .kx-live[data-beat="1"] .kx-beat[data-b="1"],
 .kx-live[data-beat="2"] .kx-beat[data-b="2"],
-.kx-live[data-beat="3"] .kx-beat[data-b="3"] {
+.kx-live[data-beat="3"] .kx-beat[data-b="3"],
+.kx-live[data-beat="4"] .kx-beat[data-b="4"],
+.kx-live[data-beat="5"] .kx-beat[data-b="5"],
+.kx-live[data-beat="6"] .kx-beat[data-b="6"] {
   opacity: 1;
   transform: none;
   filter: none;
@@ -589,7 +592,10 @@
 .kx-live[data-beat="0"] .kx-rail i:nth-child(-n+1)::after,
 .kx-live[data-beat="1"] .kx-rail i:nth-child(-n+2)::after,
 .kx-live[data-beat="2"] .kx-rail i:nth-child(-n+3)::after,
-.kx-live[data-beat="3"] .kx-rail i:nth-child(-n+4)::after { transform: scaleX(1); }
+.kx-live[data-beat="3"] .kx-rail i:nth-child(-n+4)::after,
+.kx-live[data-beat="4"] .kx-rail i:nth-child(-n+5)::after,
+.kx-live[data-beat="5"] .kx-rail i:nth-child(-n+6)::after,
+.kx-live[data-beat="6"] .kx-rail i:nth-child(-n+7)::after { transform: scaleX(1); }
 
 /* ---- Typographie de cinéma ---- */
 .kx-kicker {
@@ -991,170 +997,12 @@
 .pub-body .pub-page > .container { position: relative; z-index: 1; }
 
 /* ===========================================================================
-   6. Ouverture de la démonstration
-   Un bureau la nuit, un portable fermé. Le défilement l'ouvre, le tableau de
-   bord de l'établissement s'allume, le téléphone du parent se lève à côté,
-   puis la caméra plonge vers l'écran et rend la main à la visite.
-   =========================================================================== */
-.kx-demo-open .kx-plate::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(60% 50% at 50% 60%, rgba(10, 18, 14, 0.1), rgba(10, 18, 14, 0.82) 85%),
-    linear-gradient(180deg, rgba(10, 18, 14, 0.75), transparent 35%, transparent 70%, rgba(10, 18, 14, 0.95));
-}
-.kx-demo-inner {
-  position: relative;
-  z-index: 2;
-  height: 100%;
-  display: grid;
-  grid-template-rows: auto 1fr auto;
-  justify-items: center;
-  padding: 88px 24px 28px;
-  text-align: center;
-}
-/* Le texte passe AU-DESSUS de l'objet : pendant l'ouverture, puis la plongée
-   finale, le portable grandit vers lui. Sans cela il recouvrait le titre
-   (« Deux mille trois… » coupé net, constaté en test). */
-/* Les étapes sont superposées en position absolue : elles ne réservent
-   aucune hauteur. La dernière (titre + rôles + boutons) est la plus haute ;
-   sans cette réserve elle débordait sur l'écran blanc du portable, et le
-   bouton « Créer mon espace », crème, y devenait invisible. */
-.kx-demo-open .kx-beats { position: relative; z-index: 3; max-width: 760px; width: 100%; min-height: 270px; }
-.kx-demo-open .kx-beat:not([data-b="0"]) .kx-h { font-size: clamp(28px, 3.6vw, 50px); }
-.kx-demo-open .kx-h { font-size: clamp(32px, 5vw, 70px); }
-.kx-demo-open .kx-p { margin-left: auto; margin-right: auto; }
-.kx-demo-stage {
-  position: relative;
-  align-self: center;
-  display: grid;
-  place-items: center;
-  width: 100%;
-}
-.kx-demo-stage .kx-laptop { --lw: min(50vw, 640px, calc((100svh - 470px) * 1.45)); }
-.kx-demo-stage .kx-phone-rig {
-  position: absolute;
-  left: calc(50% + min(25vw, 320px, calc((100svh - 470px) * 0.725)) - 30px);
-  bottom: 0;
-  transform: translate3d(0, 0, 80px) rotateY(-16deg) rotateX(6deg);
-}
-.kx-demo-stage .kx-phone { --pw: clamp(110px, 11vw, 170px); }
-.kx-badge {
-  position: absolute;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
-  border-radius: 14px;
-  background: rgba(15, 26, 20, 0.78);
-  border: 1px solid var(--kx-rule-night);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  text-align: left;
-  color: var(--kx-on-night);
-  font-size: 13px;
-  box-shadow: 0 18px 40px -18px rgba(0, 0, 0, 0.7);
-}
-.kx-badge b { display: block; font-size: 13.5px; }
-.kx-badge small { display: block; color: var(--kx-on-night-soft); font-size: 12px; }
-.kx-badge i {
-  flex: none;
-  width: 30px;
-  height: 30px;
-  border-radius: 10px;
-  display: grid;
-  place-items: center;
-  background: rgba(184, 240, 0, 0.14);
-  color: var(--kx-lime);
-  font-style: normal;
-  font-weight: 800;
-}
-.kx-badge-a { left: 4%; top: 18%; }
-.kx-badge-b { right: 3%; top: 8%; }
-.kx-demo-roles { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 18px; }
-.kx-demo-roles span {
-  padding: 7px 14px;
-  border-radius: 99px;
-  border: 1px solid var(--kx-rule-night);
-  font-size: 13px;
-  color: var(--kx-on-night-soft);
-  background: rgba(15, 26, 20, 0.6);
-}
-.kx-demo-roles span b { color: var(--kx-lime); font-weight: 700; }
-.kx-demo-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 26px; }
-.kx-scroll-hint {
-  font-family: var(--kx-font-label);
-  font-stretch: 115%;
-  font-size: 11px;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--kx-on-night-faint);
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.kx-scroll-hint::after {
-  content: "";
-  width: 1px;
-  height: 34px;
-  background: linear-gradient(var(--kx-lime), transparent);
-  animation: kx-hint 2.2s var(--kx-ease) infinite;
-}
-@keyframes kx-hint {
-  0% { transform: scaleY(0); transform-origin: top; }
-  45% { transform: scaleY(1); transform-origin: top; }
-  55% { transform: scaleY(1); transform-origin: bottom; }
-  100% { transform: scaleY(0); transform-origin: bottom; }
-}
-.kx-scroll-hint { display: none; }
-.kx-live .kx-scroll-hint { display: flex; }
-/* L'invitation à défiler n'a de sens qu'au premier temps : une fois la scène
-   engagée, elle se retire. */
-.kx-scroll-hint { transition: opacity 0.4s; }
-.kx-live:not([data-beat="0"]) .kx-scroll-hint { opacity: 0; }
-
-/* Pilotée */
-.kx-demo-open.kx-live .kx-laptop {
-  --lo: clamp(0, calc((var(--p) - 0.14) / 0.18), 1);
-  --loe: calc(var(--lo) * (2 - var(--lo)));
-  --zo: clamp(0, calc((var(--p) - 0.78) / 0.2), 1);
-  --kx-lid: calc(-88deg + var(--loe) * 100deg);
-  --kx-tilt: calc(-32deg + var(--loe) * 18deg + var(--zo) * 2deg);
-  --kx-turn: calc(-18deg + var(--loe) * 18deg);
-}
-.kx-demo-open.kx-live .kx-demo-stage {
-  --zo: clamp(0, calc((var(--p) - 0.78) / 0.2), 1);
-  transform: scale(calc(1 + var(--zo) * var(--zo) * 0.22)) translateY(calc(var(--zo) * 10%));
-}
-.kx-demo-open.kx-live .kx-phone-rig {
-  --pe: clamp(0, calc((var(--p) - 0.4) / 0.16), 1);
-  --pee: calc(var(--pe) * (2 - var(--pe)));
-  opacity: calc(var(--pe) * (1 - clamp(0, calc((var(--p) - 0.8) / 0.1), 1)));
-  transform:
-    translate3d(calc((1 - var(--pee)) * 90%), calc((1 - var(--pee)) * 60px), calc(80px - (1 - var(--pee)) * 260px))
-    rotateY(calc(-16deg - (1 - var(--pee)) * 40deg))
-    rotateX(6deg);
-}
-.kx-demo-open.kx-live .kx-badge {
-  opacity: 0;
-  transform: translateY(12px) scale(0.96);
-  transition: opacity 0.5s var(--kx-ease), transform 0.7s var(--kx-ease);
-}
-.kx-demo-open.kx-live[data-beat="2"] .kx-badge { opacity: 1; transform: none; }
-
-/* À plat : titre, appareils posés, et l'accès à la visite. */
-.kx-demo-open:not(.kx-live) .kx-demo-inner { padding-top: 120px; padding-bottom: 80px; gap: 40px; }
-.kx-demo-open:not(.kx-live) .kx-demo-stage { min-height: 420px; }
-
-/* ===========================================================================
    Mouvement réduit : aucune 3D animée, aucun flottement, aucun fondu.
    cine.js ne pose pas `.kx-live` dans ce cas ; ces règles couvrent ce qui
-   bouge sans lui (flottement, indice de défilement, lumière de l'appel final).
+   bouge sans lui (flottement, lumière de l'appel final).
    =========================================================================== */
 @media (prefers-reduced-motion: reduce) {
-  .kx-day-phone .kx-phone-rig,
-  .kx-scroll-hint::after { animation: none; }
+  .kx-day-phone .kx-phone-rig { animation: none; }
   .kx-cta .kx-plate img { transition: none; transform: none; }
   .kx-scr { transition: none; }
 }
@@ -1188,9 +1036,6 @@
   .kx-timeline { grid-row: 4; }
   .kx-day:not(.kx-live) .kx-beats { grid-template-columns: 1fr; }
 
-  .kx-demo-stage .kx-laptop { --lw: min(86vw, 520px, calc((100svh - 360px) * 1.3)); }
-  .kx-demo-stage .kx-phone-rig { left: auto; right: 2%; }
-  .kx-badge { display: none; }
 }
 
 @media (max-width: 560px) {
@@ -1202,7 +1047,6 @@
   .kx-timeline { gap: 6px; }
   .kx-timeline span { font-size: 10.5px; letter-spacing: 0.06em; }
   .kx-cta { padding-left: 20px; padding-right: 20px; }
-  .kx-demo-open .kx-h { font-size: clamp(28px, 8.4vw, 40px); }
 }
 
 /* LQIP-START — généré depuis assets/cine/_src/lqip.json ; ne pas éditer à la main. */
@@ -1230,6 +1074,7 @@
   --kx-lqip-gal-sacs: url("data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAA4KCw0LCQ4NDA0QDw4RFiQXFhQUFiwgIRokNC43NjMuMjI6QVNGOj1OPjIySGJJTlZYXV5dOEVmbWVabFNbXVn/2wBDAQ8QEBYTFioXFypZOzI7WVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVn/wAARCAAgABgDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwDUu9XtbK+itpmA3jJP930q6s1vMqlJB8xIHPXFcD4hmZvEsoPGzAGfpV8hjpULKPnEo27c5rnlTSUfM0U/i8jpbqHgsPzFFczG2pxQAidkwcYcg/nRUezfcuU0nYnku/tUskjQxBnOSdoJH41YUtIQXYnAxWZAwBFX43yOta2ODmbBQNso/wBqim7l+bB6nNFLY6I09NT/2Q==");
   --kx-lqip-gal-proclamation: url("data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAA4KCw0LCQ4NDA0QDw4RFiQXFhQUFiwgIRokNC43NjMuMjI6QVNGOj1OPjIySGJJTlZYXV5dOEVmbWVabFNbXVn/2wBDAQ8QEBYTFioXFypZOzI7WVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVn/wAARCAAYACADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwDKGmTw2n2gow2L5u9v5VoaZos8ljJcS53P8yqOMe9V7/Uzc20NsWfJI8zPG4delXIdSbziYxIYEXb5YI4PbmuPVG/uk9rpcdzYRmBjHdRPlw38fepPEWmJ/Z63saBJ1wZEXp9arRXzReaZY5cOcKfQ+lRLek28tvOksjPnBJGQD7U1KXYSUUUpLSCee3a24hkGZTnkY6Y9KZFd/wDE3lXaBaSYVl6ZI6H60UVrtUt0HBc8W2N1O6Ft5dpBIWj3b3DnJ3djmprNP36vPMsyzZCupIMZxxiiit5RSvY54ybSP//Z");
   --kx-lqip-gal-craie: url("data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAA4KCw0LCQ4NDA0QDw4RFiQXFhQUFiwgIRokNC43NjMuMjI6QVNGOj1OPjIySGJJTlZYXV5dOEVmbWVabFNbXVn/2wBDAQ8QEBYTFioXFypZOzI7WVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVn/wAARCAAgABgDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwDMZCPusc1GWZf4mH0NTv0+WqdxMUdPl+XOGNKxgm2JJLIDgSOPxoqCSGRbx5WBRGGVX1opJJlSvF2ubTQSAcKo/GooraRZdzKuACcE1qeM9TmsBElofK3DJYCp4Zzd+Fo7i6CiRkyTjGeetQ5No1jSjF3OXvllnaNTLlwuSvpRUmg3In8QHcAQVJ/DFFTzOGhcoKTuf//Z");
+  --kx-lqip-portail: url("data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAA4KCw0LCQ4NDA0QDw4RFiQXFhQUFiwgIRokNC43NjMuMjI6QVNGOj1OPjIySGJJTlZYXV5dOEVmbWVabFNbXVn/2wBDAQ8QEBYTFioXFypZOzI7WVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVn/wAARCAASACADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwDrI9WlVG3iNiv3jnGKrT+IJbd2Uor4XfnpxXCrrF+1hdAuA6ufmA61blnmuNOmndsXCIu3jj6Vi7rqXvsjp08VJc2xMkIRTweaqzXNvq6JavboAqkqx6j6Vy0UksRs1aIHz5SHUj/OK0j51iZZBISwOEyOgyf/AK1KUl3BJqN2tjPjA+xy8Dr/AEFaCDMGD6Ciis5HVEiu+JbHH/PWp7zkEHkUUVD6Frqf/9k=");
 }
 /* LQIP-END */
 
