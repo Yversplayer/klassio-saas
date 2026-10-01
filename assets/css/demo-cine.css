@@ -554,15 +554,16 @@
   --e: clamp(0, calc(var(--p, 0) / 0.32), 1);
   transform-origin: 50% 0;
   transform:
-    translateY(calc((1 - var(--e)) * -30vh - clamp(0, var(--p, 0) - 0.5, 1) * 52vh))
+    translateY(calc((1 - var(--e)) * -30vh - clamp(0, var(--p, 0) - 0.45, 1) * 110vh))
     rotateX(calc((1 - var(--e)) * 15deg))
     rotateZ(calc((1 - var(--e)) * 16deg));
   opacity: calc(0.2 + var(--e) * 0.8);
 }
 .kd-wall.kx-live .kd-wall-row[data-r="0"],
 .kd-wall.kx-live .kd-wall-row[data-r="2"] { transform: translateX(calc((var(--p, 0) - 0.5) * 34vw)); }
-.kd-wall.kx-live .kd-wall-row[data-r="1"] { transform: translateX(calc((0.5 - var(--p, 0)) * 34vw)); }
-.kd-wall.kx-live .kd-wall-head { opacity: calc(1 - clamp(0, calc((var(--p, 0) - 0.5) / 0.2), 1)); }
+.kd-wall.kx-live .kd-wall-row[data-r="1"],
+.kd-wall.kx-live .kd-wall-row[data-r="3"] { transform: translateX(calc((0.5 - var(--p, 0)) * 34vw)); }
+.kd-wall.kx-live .kd-wall-head { opacity: calc(1 - clamp(0, calc((var(--p, 0) - 0.42) / 0.18), 1)); }
 
 /* --- Les écrans en miniature (tailles en cqw : suivent la largeur) --- */
 .kd-win-bar { display: flex; gap: 1.2cqw; align-items: center; height: 6.4cqw; padding: 0 2.6cqw; background: #EFEBDC; border-bottom: 1px solid var(--kx-app-line); }
@@ -731,7 +732,8 @@
   .kd-wall-plane { gap: 18px; }
   .kd-wall.kx-live .kd-wall-row[data-r="0"],
   .kd-wall.kx-live .kd-wall-row[data-r="2"] { transform: translateX(calc((var(--p, 0) - 0.5) * 70vw)); }
-  .kd-wall.kx-live .kd-wall-row[data-r="1"] { transform: translateX(calc((0.5 - var(--p, 0)) * 70vw)); }
+  .kd-wall.kx-live .kd-wall-row[data-r="1"],
+  .kd-wall.kx-live .kd-wall-row[data-r="3"] { transform: translateX(calc((0.5 - var(--p, 0)) * 70vw)); }
 }
 @media (max-width: 560px) {
   .kd-chip { display: none; }
@@ -758,3 +760,17 @@
   /* Les quatre boutons de rôle passent à la ligne au lieu de sortir de l'écran. */
   .demo-shell .role-switch { flex-wrap: wrap; }
 }
+
+/* Écrans ajoutés le 01/10 : calendrier, attestation, portail de l'école. */
+.kd-s-cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.8cqw; }
+.kd-s-cal i { font-style: normal; text-align: center; padding: 0.8cqw 0; border-radius: 0.8cqw; font-size: 0.8em; font-weight: 700; background: var(--kx-app-surface); border: 1px solid var(--kx-app-line); }
+.kd-s-cal i.ev { background: var(--kx-app-forest); color: #EEFBCB; border-color: var(--kx-app-forest); }
+.kd-s-cal i.ex { background: #FDF1D6; color: #7A5300; }
+.kd-s-cal i.dv { background: rgba(159, 227, 0, 0.22); color: var(--kx-app-lime-deep); }
+.kd-s-doc-p { margin: 0; font-size: 0.86em; line-height: 1.55; }
+.kd-s-portal { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.4cqw; padding: 2cqw 22%; text-align: center; background: linear-gradient(160deg, #EAF2DD, var(--kx-app-bg)); }
+.kd-s-portal-logo { width: 8cqw; height: 8cqw; border-radius: 50%; display: grid; place-items: center; background: #7A1F2B; color: #fff; font-weight: 800; font-size: 0.9em; }
+.kd-s-portal b { font-family: var(--font-display); font-size: 1.2em; }
+.kd-s-portal small { font-size: 0.74em; color: var(--kx-app-ink-soft); }
+.kd-s-portal .kd-s-search, .kd-s-portal .kd-s-btn { width: 100%; margin-top: 0; }
+.kd-s-portal .kd-s-foot { margin-top: 0.6cqw; font-size: 0.68em; }

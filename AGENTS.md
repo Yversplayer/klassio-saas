@@ -376,6 +376,16 @@ cinématique : scènes pilotées par le défilement, ordinateur et téléphone e
 | `assets/js/entree.js` | dans `<head>` de la landing : saute l'accueil animé si on arrive par une ancre ou si on l'a déjà vu dans la session, et saute NET à l'ancre (sinon `scroll-behavior: smooth` faisait défiler 22 000 px de scènes). |
 | `assets/js/contact.js` | le formulaire de contact, désormais dans la landing (`#contact`). Pas de script en ligne : la CSP le bloquerait. |
 
+**Règle du propriétaire (01/10) : le site et la démo montrent TOUT le logiciel,
+et RIEN d'autre.** Chaque fonction de `app/` doit y apparaître sous son
+meilleur jour ; aucune fonction absente du logiciel ne doit y figurer (la
+saisie des notes par les professeurs a été retirée pour cette raison : les
+résultats entrent par l'import). Seule tolérance : Mobile Money, présenté tel
+qu'il est — le parent annonce, l'école confirme. L'inventaire vit dans la
+section `#fonctions` de la landing (32 fonctions, six familles) et dans le mur
+d'écrans de la démo (24 écrans) : une fonction ajoutée au logiciel s'ajoute
+aux deux.
+
 **Fusion du 30/09.** À propos, FAQ et Contact sont des sections de la landing
 (`#a-propos`, `#faq`, `#contact`) ; `a-propos.html`, `faq.html` et
 `contact.html` ne sont plus que des redirections (`noindex`), sorties du
@@ -385,7 +395,7 @@ publique (`public.js`) pointe vers les ancres et n'a **pas d'onglet
 deux fois. Curseur personnalisé et aimantation des boutons : **retirés**, à
 sa demande ; ne pas les remettre.
 
-**La démo** (`demo.html`, générée) s'ouvre sur un récit en quatre scènes,
+**La démo** (`demo.html`, à modifier directement) s'ouvre sur un récit en quatre scènes,
 puis la visite interactive (`.demo-shell`, inchangée). L'appel utilise les
 séquences de `cine.js` (`data-kx-seq` : un élève et sa ligne sur le
 téléphone partagent un `data-kx-i`). Les destinataires montrés sont ceux de

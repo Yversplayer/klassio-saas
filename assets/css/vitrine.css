@@ -1013,6 +1013,104 @@
   .kx-card p { margin-bottom: 10px; }
   .kx-card .kx-arrow-link { justify-content: flex-start; font-size: 11px; white-space: nowrap; }
 }
+/* ===========================================================================
+   Tout Klassio — l'inventaire complet (01/10)
+   Six familles, chaque fonction du logiciel. Cartes blanches et cartes vert
+   forêt en alternance ; arrivée désordonnée puis posée, comme les modules
+   (départ sous .kx-arriving seulement — sans script, tout est en place).
+   =========================================================================== */
+.kx-all { background: var(--v-card-soft); }
+.kx-all-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: clamp(24px, 4vw, 64px);
+  align-items: end;
+  margin-bottom: clamp(36px, 5vw, 60px);
+}
+.kx-all-head .kx-lead { margin-top: 0; }
+.kx-all-head .btn { margin-top: 22px; }
+.kx-fams { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+.kx-fam {
+  position: relative;
+  padding: 26px 26px 24px;
+  border-radius: 20px;
+  background: var(--v-card);
+  border: 1px solid var(--line-soft);
+  box-shadow: var(--v-shadow);
+  transition: box-shadow 0.4s var(--v-ease), transform 0.4s var(--v-ease);
+}
+.kx-fam:hover { box-shadow: var(--v-shadow-hi); transform: translateY(-4px); }
+.kx-fam header { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
+.kx-fam .kx-dot-ic { width: 46px; height: 46px; }
+.kx-fam .kx-dot-ic .kx-ic { width: 21px; height: 21px; }
+.kx-fam h3 { flex: 1; margin: 0; font-family: var(--v-serif); font-weight: 600; font-size: 21px; line-height: 1.2; color: var(--ink); }
+.kx-fam-n {
+  min-width: 32px;
+  padding: 4px 10px;
+  border-radius: 99px;
+  text-align: center;
+  font-family: var(--v-label);
+  font-weight: 700;
+  font-size: 12px;
+  background: color-mix(in srgb, var(--lime) 30%, transparent);
+  color: var(--ink);
+}
+.kx-fam ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 11px; }
+.kx-fam li { position: relative; padding-left: 26px; font-size: 14.5px; line-height: 1.5; color: var(--ink-soft); }
+.kx-fam li::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 0.32em;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--lime) 34%, transparent);
+  box-shadow: inset 0 0 0 1.5px var(--lime-deep);
+}
+.kx-fam li::after {
+  content: "";
+  position: absolute;
+  left: 7px;
+  top: calc(0.32em + 4px);
+  width: 4px;
+  height: 6px;
+  border: solid var(--v-forest);
+  border-width: 0 1.6px 1.6px 0;
+  transform: rotate(45deg);
+}
+/* Les cartes vert forêt : le même contenu, en négatif. */
+.kx-fam.forest { background: var(--v-forest); border-color: transparent; }
+.kx-fam.forest h3 { color: #F3F0E4; }
+.kx-fam.forest li { color: #C9D3C4; }
+.kx-fam.forest .kx-fam-n { background: rgba(184, 240, 0, 0.16); color: #DDF7A0; }
+.kx-fam.forest li::before { background: rgba(184, 240, 0, 0.14); box-shadow: inset 0 0 0 1.5px #B8F000; }
+.kx-fam.forest li::after { border-color: #B8F000; }
+:root[data-theme="dark"] .kx-fam li::after { border-color: var(--lime); }
+.kx-arriving .kx-fam {
+  transform: translate3d(var(--dx, 0), var(--dy, 120px), 0) rotate(var(--rot, 0deg));
+  opacity: 0;
+}
+.kx-arriving.in-view .kx-fam {
+  transform: none;
+  opacity: 1;
+  transition: transform 1.1s var(--v-ease) var(--dl, 0s), opacity 0.7s var(--v-ease) var(--dl, 0s);
+}
+.kx-arriving.in-view .kx-fam:hover { transform: translateY(-4px); }
+@media (max-width: 1060px) {
+  .kx-fams { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .kx-all-head { grid-template-columns: 1fr; align-items: start; }
+}
+@media (max-width: 640px) {
+  .kx-fams { grid-template-columns: 1fr; gap: 14px; }
+  .kx-fam { padding: 22px 20px 20px; }
+  .kx-fam h3 { font-size: 19px; }
+  .kx-fam li { font-size: 14px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .kx-fam { transition: none; }
+}
+
 /* Les cartes qui n'ont pas encore « atterri » attendent décalées de côté
    (--dx). html { overflow-x: hidden } ne suffit pas sur mobile : le viewport
    de mise en page s'élargissait jusqu'à 432 px, et la barre de navigation fixe

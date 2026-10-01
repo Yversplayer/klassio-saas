@@ -6,13 +6,13 @@
 <title>Klassio — La clarté derrière chaque établissement</title>
 <meta name="description" content="Klassio réunit élèves, présences, résultats, frais et discipline autour d'un dossier par élève. Quatre rôles, chacun son périmètre. Pensé pour les écoles de Kinshasa.">
 <!-- Avant TOUT le reste : décide si l'accueil animé doit jouer (entree.js). -->
-<script src="assets/js/entree.js?v=1791300005"></script>
+<script src="assets/js/entree.js?v=1791300006"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;1,500;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Archivo:wdth,wght@62..125,400..800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/style.css?v=1791100001" />
-<link rel="stylesheet" href="assets/css/cine.css?v=1791300005" />
-<link rel="stylesheet" href="assets/css/vitrine.css?v=1791300005" />
+<link rel="stylesheet" href="assets/css/cine.css?v=1791300006" />
+<link rel="stylesheet" href="assets/css/vitrine.css?v=1791300006" />
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' http://localhost:5001; base-uri 'self'; form-action 'self'">
 <script src="assets/js/theme.js?v=1790200001"></script>
 <style>
@@ -262,6 +262,48 @@
       <div class="kx-stat"><svg class="kx-ic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 9.5 12 4.5l8.5 5"/><path d="M5.5 9.5v9h13v-9"/><path d="M10 18.5v-4.5h4v4.5"/></svg><div><b data-kx-countup="3">3</b><span>niveaux : maternelle, primaire, secondaire</span></div></div>
       <div class="kx-stat"><svg class="kx-ic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.2 12a7.8 7.8 0 1 0 2.3-5.5"/><path d="M4 4.5v3.9h3.9"/><path d="M12 8v4.3l2.8 1.8"/></svg><div><b data-kx-countup="0">0</b><span>note écrasée — chaque correction crée une version</span></div></div>
       <div class="kx-stat"><svg class="kx-ic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4.2" y="4.6" width="15.6" height="6" rx="1.5"/><rect x="4.2" y="13.4" width="15.6" height="6" rx="1.5"/><path d="M7.6 7.6h.1M7.6 16.4h.1"/></svg><div><b data-kx-countup="100">100</b><span>% des moyennes calculées par le serveur</span></div></div>
+    </div>
+  </section>
+
+  <!-- TOUT KLASSIO — l'inventaire complet, famille par famille (tout_klassio.py) -->
+  <section class="kx-sec kx-all" id="fonctions" aria-labelledby="allTitle">
+    <div class="kx-wrap">
+      <div class="kx-all-head">
+        <div>
+          <span class="kx-eyebrow">Le logiciel, au complet</span>
+          <h2 class="kx-title" id="allTitle">Une école entière, <em>dans un seul logiciel</em>.</h2>
+        </div>
+        <div>
+          <p class="kx-lead">32 fonctions, une seule donnée. Toutes existent dans Klassio aujourd'hui — et toutes se visitent dans la démonstration.</p>
+          <a href="demo.html" class="btn btn-primary"><svg class="btn-arr btn-arr-left" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg><span class="btn-label">Voir la démo</span><svg class="btn-arr btn-arr-right" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>
+        </div>
+      </div>
+      <div class="kx-fams" data-kx-arrive>
+        <article class="kx-fam" style="--dx:-40px;--dy:150px;--rot:-4deg;--dl:0.00s">
+          <header><span class="kx-dot-ic" aria-hidden="true"><svg class="kx-ic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.4"/><path d="M5.2 19.5c.9-3.3 3.6-5.2 6.8-5.2s5.9 1.9 6.8 5.2"/></svg></span><h3>Scolarité</h3><span class="kx-fam-n">6</span></header>
+          <ul><li>Un dossier par élève, qui le suit d'année en année</li><li>Identifiants élèves au format choisi par l'école</li><li>Classes, titulaires, horaires et examens</li><li>Passage d'année préparé en brouillon, appliqué d'un geste</li><li>Attestations de fréquentation prêtes à imprimer</li><li>Appréciations en maternelle, notes au primaire et au secondaire</li></ul>
+        </article>
+        <article class="kx-fam forest" style="--dx:30px;--dy:180px;--rot:3deg;--dl:0.07s">
+          <header><span class="kx-dot-ic gold" aria-hidden="true"><svg class="kx-ic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.2"/><path d="m8.4 12.2 2.4 2.4 4.9-5"/></svg></span><h3>Présences &amp; vie scolaire</h3><span class="kx-fam-n">6</span></header>
+          <ul><li>L'appel en quelques touches, classe par classe</li><li>Retards pointés au portail, à l'heure réelle</li><li>Justificatif d'absence envoyé par le parent, pièce jointe comprise</li><li>Incidents, convocations et décisions signées</li><li>Points et seuils d'alerte — jamais de sanction automatique</li><li>Registres imprimables pour l'inspection et le conseil</li></ul>
+        </article>
+        <article class="kx-fam" style="--dx:-20px;--dy:130px;--rot:2deg;--dl:0.14s">
+          <header><span class="kx-dot-ic" aria-hidden="true"><svg class="kx-ic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 3.8h8l3 3v13.4h-11z"/><path d="M14.5 3.8v3h3"/><path d="M9 12.5h6M9 15.8h4.2"/></svg></span><h3>Résultats &amp; bulletins</h3><span class="kx-fam-n">5</span></header>
+          <ul><li>Import Excel rapproché ligne à ligne, erreurs signalées</li><li>Chaque correction versionnée : rien n'est écrasé</li><li>Délibérations : le conseil voit tout, une personne décide</li><li>Proclamation avec l'audience que l'école choisit</li><li>Bulletins PDF — jamais avant la proclamation</li></ul>
+        </article>
+        <article class="kx-fam" style="--dx:50px;--dy:160px;--rot:-3deg;--dl:0.21s">
+          <header><span class="kx-dot-ic" aria-hidden="true"><svg class="kx-ic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 3.8h11v16.6l-2.2-1.5-2.2 1.5-2.1-1.5-2.2 1.5-2.3-1.5z"/><path d="M9.3 8.8h5.4M9.3 12h5.4"/></svg></span><h3>Frais, caisse &amp; boutique</h3><span class="kx-fam-n">5</span></header>
+          <ul><li>Frais et échéances, élève par élève</li><li>Reçus numérotés, confirmés par la caisse</li><li>Soldes à relancer, sur un seul écran</li><li>Paiement Mobile Money annoncé par le parent, confirmé par l'école</li><li>Boutique scolaire : commande en ligne, retrait sur code</li></ul>
+        </article>
+        <article class="kx-fam forest" style="--dx:-30px;--dy:190px;--rot:4deg;--dl:0.28s">
+          <header><span class="kx-dot-ic gold" aria-hidden="true"><svg class="kx-ic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 17.4 3.8 20.2l3.6-1.2A8.2 8.2 0 1 0 5 17.4z"/></svg></span><h3>Communication</h3><span class="kx-fam-n">5</span></header>
+          <ul><li>Cahier de communication, élève par élève</li><li>Calendrier : événements, examens, devoirs, communiqués</li><li>Livres et devoirs publiés par classe</li><li>Notifications dans l'application, aux seules personnes concernées</li><li>Portail de connexion aux couleurs de l'école</li></ul>
+        </article>
+        <article class="kx-fam" style="--dx:20px;--dy:140px;--rot:-2deg;--dl:0.35s">
+          <header><span class="kx-dot-ic" aria-hidden="true"><svg class="kx-ic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4.2" y="4.6" width="15.6" height="6" rx="1.5"/><rect x="4.2" y="13.4" width="15.6" height="6" rx="1.5"/><path d="M7.6 7.6h.1M7.6 16.4h.1"/></svg></span><h3>Pilotage</h3><span class="kx-fam-n">5</span></header>
+          <ul><li>Tableau de bord de la Direction, à jour en permanence</li><li>Rapports : finances, effectifs, présences, discipline, personnel</li><li>Exports Excel et archive annuelle de toutes les données</li><li>Équipe, rôles et invitations sécurisées</li><li>Assistant IA qui lit et explique — il n'écrit jamais</li></ul>
+        </article>
+      </div>
     </div>
   </section>
 
@@ -606,10 +648,10 @@
     </footer>
   </div>
 
-  <script src="assets/js/cine.js?v=1791300005"></script>
-  <script src="assets/js/motion.js?v=1791300005"></script>
-  <script src="assets/js/main.js?v=1791300005"></script>
-  <script src="assets/js/contact.js?v=1791300005"></script>
+  <script src="assets/js/cine.js?v=1791300006"></script>
+  <script src="assets/js/motion.js?v=1791300006"></script>
+  <script src="assets/js/main.js?v=1791300006"></script>
+  <script src="assets/js/contact.js?v=1791300006"></script>
   <script src="assets/js/cookie-consent.js?v=1790800001"></script>
 </body>
 </html>
