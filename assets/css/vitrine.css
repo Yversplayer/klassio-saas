@@ -1133,6 +1133,61 @@
   .kx-fam { transition: none; }
 }
 
+/* ===========================================================================
+   Tarifs (01/10/2026) — montants identiques à la table plans du serveur.
+   Quatre offres, la deuxième en vert forêt pour le rythme — sans badge
+   « la plus choisie » : Klassio n'a pas encore de clients pour l'affirmer.
+   =========================================================================== */
+.kx-tarifs-head { max-width: 720px; margin-bottom: clamp(32px, 4vw, 52px); }
+.kx-prices { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; align-items: stretch; }
+.kx-price {
+  display: flex;
+  flex-direction: column;
+  padding: 28px 24px 24px;
+  border-radius: 20px;
+  background: var(--v-card);
+  border: 1px solid var(--line-soft);
+  box-shadow: var(--v-shadow);
+  transition: transform 0.4s var(--v-ease), box-shadow 0.4s var(--v-ease);
+}
+.kx-price:hover { transform: translateY(-4px); box-shadow: var(--v-shadow-hi); }
+.kx-price h3 { margin: 0; font-family: var(--v-serif); font-weight: 600; font-size: 24px; color: var(--ink); }
+.kx-price-range { margin: 8px 0 22px; font-size: 14px; color: var(--ink-soft); min-height: 42px; }
+.kx-price-amount { margin: 0 0 24px; color: var(--ink); }
+.kx-price-amount b { font-family: var(--v-serif); font-weight: 600; font-size: clamp(34px, 3.2vw, 44px); letter-spacing: -0.02em; }
+.kx-price-amount small { font-size: 14px; color: var(--ink-soft); }
+.kx-price-cta { margin-top: auto; justify-content: center; }
+.kx-price.forest { background: var(--v-forest); border-color: transparent; }
+.kx-price.forest h3, .kx-price.forest .kx-price-amount { color: #F3F0E4; }
+.kx-price.forest .kx-price-range, .kx-price.forest .kx-price-amount small { color: #C9D3C4; }
+.kx-tarifs-foot { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: clamp(24px, 4vw, 56px); margin-top: clamp(32px, 4vw, 48px); align-items: start; }
+.kx-inclus { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.kx-inclus li { position: relative; padding-left: 28px; font-size: 15px; color: var(--ink-soft); }
+.kx-inclus li::before { content: ""; position: absolute; left: 0; top: 0.2em; width: 17px; height: 17px; border-radius: 50%; background: color-mix(in srgb, var(--lime) 34%, transparent); box-shadow: inset 0 0 0 1.5px var(--lime-deep); }
+.kx-inclus li::after { content: ""; position: absolute; left: 6px; top: calc(0.2em + 4px); width: 4px; height: 7px; border: solid var(--v-forest); border-width: 0 1.6px 1.6px 0; transform: rotate(45deg); }
+:root[data-theme="dark"] .kx-inclus li::after { border-color: var(--lime); }
+.kx-tarifs-aside { padding: 22px 24px; border-radius: 18px; background: var(--v-card-soft); border: 1px solid var(--line-soft); }
+.kx-tarifs-aside p { margin: 0 0 12px; font-size: 15px; color: var(--ink-soft); line-height: 1.55; }
+.kx-tarifs-aside b { color: var(--ink); }
+.kx-tarifs-note { margin-top: 16px !important; font-size: 13.5px !important; }
+.kx-tarifs-note a { color: var(--ink); font-weight: 600; text-decoration: underline; text-decoration-color: var(--lime-deep); text-underline-offset: 3px; }
+.kx-arriving .kx-price { transform: translate3d(0, 120px, 0); opacity: 0; }
+.kx-arriving.in-view .kx-price { transform: none; opacity: 1; transition: transform 1s var(--v-ease), opacity 0.7s var(--v-ease); }
+.kx-arriving.in-view .kx-price:nth-child(2) { transition-delay: 0.07s; }
+.kx-arriving.in-view .kx-price:nth-child(3) { transition-delay: 0.14s; }
+.kx-arriving.in-view .kx-price:nth-child(4) { transition-delay: 0.21s; }
+.kx-arriving.in-view .kx-price:hover { transform: translateY(-4px); transition-delay: 0s; }
+@media (max-width: 1060px) {
+  .kx-prices { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .kx-tarifs-foot { grid-template-columns: 1fr; }
+}
+@media (max-width: 560px) {
+  .kx-prices { grid-template-columns: 1fr; gap: 12px; }
+  .kx-price-range { min-height: 0; margin-bottom: 14px; }
+  .kx-price-amount { margin-bottom: 16px; }
+}
+@media (prefers-reduced-motion: reduce) { .kx-price { transition: none; } }
+
 /* Les cartes qui n'ont pas encore « atterri » attendent décalées de côté
    (--dx). html { overflow-x: hidden } ne suffit pas sur mobile : le viewport
    de mise en page s'élargissait jusqu'à 432 px, et la barre de navigation fixe

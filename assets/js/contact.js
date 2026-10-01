@@ -28,6 +28,12 @@
   // Même règle qu'UI.apiOrigin() (ui.js), que la landing ne charge pas.
   function origineApi() {
     var h = window.location.hostname;
+    // Servi par le backend lui-même (port 5001, origine unique depuis le 29/09) :
+    // l'API est sur la MÊME origine, quel que soit le nom d'hôte. Sans ce cas,
+    // une page ouverte sur http://127.0.0.1:5001 appelait http://localhost:5001 —
+    // une autre origine pour le navigateur : appel bloqué (CORS), inscription et
+    // connexion impossibles, « serveur injoignable » (constaté le 01/10/2026).
+    if (window.location.port === "5001") return "";
     if (h === "localhost" || h === "127.0.0.1" || h === "" || h === "::1") return "http://localhost:5001";
     if (window.location.port === "4173") return window.location.protocol + "//" + h + ":5001";
     return "";

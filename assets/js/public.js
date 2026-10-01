@@ -19,6 +19,7 @@
     { href: "index.html#produit", label: "Le logiciel" },
     { href: "index.html#vision", label: "Fonctionnement" },
     { href: "index.html#a-propos", label: "À propos" },
+    { href: "index.html#tarifs", label: "Tarifs" },
     { href: "aide.html", label: "Centre d'aide" },
     { href: "index.html#faq", label: "FAQ" },
     { href: "index.html#contact", label: "Contact" },
@@ -76,7 +77,7 @@
   // le vide vaut moins que pas de lien du tout : il fait douter du reste.
   function footer() {
     var cols = [
-      ["Klassio", [["index.html#a-propos", "À propos"], ["index.html#produit", "Le logiciel"], ["demo.html", "Démonstration"], ["index.html#contact", "Contact"]]],
+      ["Klassio", [["index.html#a-propos", "À propos"], ["index.html#produit", "Le logiciel"], ["index.html#tarifs", "Tarifs"], ["demo.html", "Démonstration"], ["index.html#contact", "Contact"], ["https://wa.me/243971839237", "WhatsApp : +243 971 839 237"]]],
       ["Pour qui", [["index.html#roles", "Direction"], ["index.html#roles", "Professeurs"], ["index.html#roles", "Parents"], ["index.html#roles", "Directeur des disciplines"]]],
       ["Ressources", [["aide.html", "Centre d'aide"], ["index.html#faq", "FAQ"], ["securite.html", "Sécurité"], ["app/inscription.html", "Créer un espace"]]],
       ["Légal", [["confidentialite.html", "Confidentialité"], ["cgu.html", "Conditions générales"], ["mentions.html", "Mentions légales"], ["confidentialite.html#suppression", "Suppression du compte"]]],
@@ -86,7 +87,7 @@
       '<p class="footer-tag">La clarté derrière chaque établissement. Klassio réunit élèves, résultats, présence, discipline et finances autour d\'un dossier unique par élève.</p></div>' +
       '<div class="footer-cols">' + cols.map(function (c) {
         return '<div class="footer-col"><h5>' + c[0] + "</h5>" +
-          c[1].map(function (l) { return '<a href="' + l[0] + '">' + l[1] + "</a>"; }).join("") + "</div>";
+          c[1].map(function (l) { return '<a href="' + l[0] + '"' + (/^https?:/.test(l[0]) ? ' target="_blank" rel="noopener"' : "") + ">" + l[1] + "</a>"; }).join("") + "</div>";
       }).join("") + "</div></div>" +
       '<div class="footer-bottom"><span>© 2026 Klassio. Tous droits réservés.</span><span>Kinshasa, République démocratique du Congo</span></div>' +
       "</div></footer>";
@@ -97,6 +98,17 @@
     if (hoteNav) hoteNav.outerHTML = nav();
     var hotePied = document.getElementById("pubFooter");
     if (hotePied) hotePied.outerHTML = footer();
+    // WhatsApp, toujours à portée — même bouton que sur la landing (cine.css).
+    if (!document.querySelector(".kx-wa")) {
+      var wa = document.createElement("a");
+      wa.className = "kx-wa";
+      wa.href = "https://wa.me/243971839237?text=" + encodeURIComponent("Bonjour, je souhaite en savoir plus sur Klassio pour mon école.");
+      wa.target = "_blank";
+      wa.rel = "noopener";
+      wa.setAttribute("aria-label", "Écrire à Klassio sur WhatsApp");
+      wa.innerHTML = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 17.4 3.8 20.2l3.6-1.2A8.2 8.2 0 1 0 5 17.4z"/><path d="M9.2 9.4c.2 2.4 2.8 5 5.4 5.4l1.2-1.2-1.8-.9-.8.8c-1-.4-2.1-1.5-2.5-2.5l.8-.8-.9-1.8z"/></svg><span>WhatsApp</span>';
+      document.body.appendChild(wa);
+    }
 
     // La lampe est placée APRÈS l'injection : avant, il n'y a pas d'onglet
     // à mesurer.
