@@ -136,6 +136,25 @@
     // le premier calcul : on remesure à ces deux moments, pas à chaque image.
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(mesurer).catch(function () {});
     window.addEventListener("load", mesurer);
+
+    // LA PAGE CHANGE DE HAUTEUR APRÈS « load ». Les photos de la galerie sont
+    // en chargement différé, sans hauteur réservée : elles arrivent quand on
+    // s'en approche, et tout ce qui est en dessous descend — FAQ, contact,
+    // pied de page. Le rideau gardait l'ancienne position du pied de page : il
+    // se levait 300 px trop tôt, hors de l'écran, et on arrivait sur un pied
+    // de page déjà posé — l'effet de fin avait « disparu » (constaté le 01/10).
+    // On remesure donc à chaque changement de hauteur du document.
+    if ("ResizeObserver" in window) {
+      var hauteur = document.documentElement.scrollHeight;
+      var reMesure = null;
+      new ResizeObserver(function () {
+        var h = document.documentElement.scrollHeight;
+        if (Math.abs(h - hauteur) < 2) return;
+        hauteur = h;
+        if (reMesure) clearTimeout(reMesure);
+        reMesure = setTimeout(function () { reMesure = null; mesurer(); }, 120);
+      }).observe(document.body);
+    }
   }
 
   function hautDoc(el) {

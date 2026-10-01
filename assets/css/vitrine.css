@@ -930,10 +930,32 @@
 .kx-top-btn:hover, .kx-top-btn:focus-visible { background: rgba(238, 244, 234, 0.14); transform: translateY(-3px); }
 .kx-top-btn .kx-ic { width: 20px; height: 20px; }
 
-/* Petits écrans ou écrans bas : le rideau suppose que tout le pied de page
-   tienne dans la hauteur de l'écran — il est fixe, on ne peut pas y défiler.
-   Sinon, il redevient un bloc ordinaire, dans le flux. */
-@media (max-width: 760px), (max-height: 680px) {
+/* Le rideau suppose que tout le pied de page tienne dans la hauteur de
+   l'écran : il est fixe, on ne peut pas y défiler. Le seuil était trop
+   prudent (680 px de haut, et tous les téléphones) : dans une fenêtre de
+   MacBook — ~640 px utiles une fois la barre du navigateur ôtée — et sur
+   téléphone, l'effet de fin disparaissait alors que le contenu réel n'occupe
+   que ~375 px (mesuré le 01/10). On resserre donc la mise en page sur les
+   écrans bas et étroits, et on ne garde le bloc ordinaire que là où il ne
+   tiendrait vraiment pas. */
+@media (max-height: 760px) {
+  .kx-foot-center { padding-top: 96px; padding-bottom: 12px; }
+  .kx-foot-center h2 { font-size: clamp(40px, 7vw, 92px); margin-bottom: 10px; }
+  .kx-foot-center > p { margin-bottom: 22px; font-size: 15px; }
+  .kx-pills.small { margin-top: 12px; }
+  .kx-foot-bar { padding-top: 14px; padding-bottom: 14px; }
+}
+@media (max-width: 760px) {
+  .kx-foot-marquee { top: 70px; }
+  .kx-foot-center { padding: 112px 16px 8px; }
+  .kx-foot-center h2 { font-size: clamp(38px, 11vw, 52px); }
+  .kx-foot-center > p { font-size: 14px; margin-bottom: 18px; }
+  .kx-foot-center .kx-pills:not(.small) .kx-pill { padding: 12px 20px; }
+  .kx-pills.small { gap: 8px; margin-top: 12px; }
+  .kx-pills.small .kx-pill { padding: 7px 13px; font-size: 12px; }
+  .kx-foot-bar { gap: 8px; padding-top: 12px; padding-bottom: 14px; }
+}
+@media (max-height: 559px), (max-width: 760px) and (max-height: 699px) {
   .kx-foot-curtain { height: auto; clip-path: none; }
   .kx-foot { position: relative; height: auto; min-height: 100svh; }
   .kx-foot-center { padding-top: 140px; padding-bottom: 60px; }
