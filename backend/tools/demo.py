@@ -27,6 +27,7 @@ ces comptes ne doit exister ailleurs que sur une machine de développement — e
 pourquoi seed_echelle.py refuse désormais toute base PostgreSQL distante.
 """
 import argparse
+import time
 import json
 import os
 import sys
@@ -110,9 +111,20 @@ def main(argv=None):
                  (SUFFIXE_NOM, "%" + SUFFIXE_NOM))
     conn.commit()
     nom = conn.execute("SELECT name FROM tenants LIMIT 1").fetchone()[0]
+    comptes = env["etablissements"][0]["comptes"]
+    # Le compte Direction reçoit aussi l'accès PLATEFORME, pour qu'un testeur
+    # puisse éprouver le parcours payant jusqu'au bout : une école s'inscrit,
+    # choisit son offre, déclare son paiement — et quelqu'un doit le confirmer
+    # ou le rejeter (écran Plateforme). Sans ce compte, cette moitié du
+    # parcours restait intestable sur une machine de développement. Base
+    # fictive et locale seulement : ce script refuse toute base distante.
+    directeur = conn.execute("SELECT id FROM users WHERE lower(email)=?", (comptes["directeur"].lower(),)).fetchone()
+    if directeur:
+        conn.execute("INSERT INTO platform_admins (user_id, created_at) VALUES (?,?) ON CONFLICT DO NOTHING",
+                     (directeur[0], str(time.time())))
+        conn.commit()
     conn.close()
 
-    comptes = env["etablissements"][0]["comptes"]
     libelles = {"directeur": "Direction", "discipline": "Directeur des disciplines",
                 "professeur": "Professeur", "parent": "Parent"}
     print()
@@ -123,10 +135,13 @@ def main(argv=None):
     for role in ("directeur", "discipline", "professeur", "parent"):
         print(f"    {libelles[role]:<27} {comptes[role]}")
     print(f"\n    Mot de passe, pour tous : {env['mot_de_passe']}")
+    print("    Le compte Direction a aussi l'accès Plateforme (confirmer les paiements).")
+    # UN SEUL SERVEUR depuis le 29/09 : le backend sert les pages et l'API sur
+    # le port 5001. L'ancien conseil (« python -m http.server 4173 ») renvoyait
+    # les testeurs vers le montage à deux serveurs qui les faisait échouer.
     print("\n  Ensuite, depuis la racine du dépôt :")
-    print("    python backend/app.py            (API, port 5001 — laissez tourner)")
-    print("    python -m http.server 4173       (dans un second terminal)")
-    print("    → http://localhost:4173/app/connexion.html")
+    print("    ./demarrer.sh --testeur          (Windows : voir README, « Pas à pas »)")
+    print("    → http://localhost:5001/app/connexion.html")
     return 0
 
 

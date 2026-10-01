@@ -4,79 +4,85 @@ Plateforme de gestion financière et administrative pour établissements scolair
 
 ## Démarrer — pour un développeur qui découvre Klassio
 
-Tout ce qui suit a été rejoué sur un clone vierge, le 25/09/2026 (macOS,
-Python 3.9). **Rien ne demande une clé, un compte ou un accès à la
-production** : le dépôt n'en contient aucun, et l'environnement de développement
-n'en a pas besoin.
+Tout ce qui suit a été rejoué sur un clone vierge du dépôt GitHub, le
+01/10/2026 (macOS, Python 3.9). **Rien ne demande une clé, un compte ou un accès
+à la production** : le dépôt n'en contient aucun, et l'environnement de
+développement n'en a pas besoin.
 
 ### L'architecture en une minute
 
 | | En développement | En production |
 |---|---|---|
-| **API** — Flask, `backend/app.py` | `http://localhost:5001` | Render (`render.yaml`, `Procfile`) |
-| **Pages** — HTML et JavaScript, **sans étape de build** | `http://localhost:4173` | Vercel (`vercel.json`) |
-| **Base** | SQLite, un fichier local | PostgreSQL |
+| **Un seul serveur** — Flask, `backend/app.py` : il sert les pages **et** l'API | `http://localhost:5001` | Render (`render.yaml`, `Procfile`) |
+| **Pages** — HTML et JavaScript, **sans étape de build** | servies par ce même serveur | idem |
+| **Base** | SQLite, un fichier local (`backend/klassio_demo.db`) | PostgreSQL |
 | **E-mail** | capturé, rien ne part | Brevo |
 
-Le frontend est servi tel qu'il est dans le dépôt : ni bundle ni source map, et
-aucune variable d'environnement ne lui parvient. Il ne connaît qu'une adresse,
-celle de l'API. Le schéma vit dans `backend/schema.sql` (`schema_postgres.sql`
-en est **généré**) ; les migrations sont additives (`db._migrate()`) et
-s'appliquent à chaque démarrage.
+> Il n'y a **plus** de second serveur de pages sur le port 4173 (retiré le
+> 29/09) : ce montage faisait échouer les testeurs — appels perdus, « serveur
+> injoignable », 504 derrière un proxy. Tout passe par `http://localhost:5001`.
 
-### Pas à pas
+Le frontend est servi tel qu'il est dans le dépôt : ni bundle ni source map. Le
+schéma vit dans `backend/schema.sql` (`schema_postgres.sql` en est **généré**) ;
+les migrations sont additives (`db._migrate()`) et s'appliquent à chaque
+démarrage.
+
+### Pas à pas — macOS et Linux
 
 ```bash
-# 1. Cloner
 git clone https://github.com/Yversplayer/klassio-saas.git
 cd klassio-saas
+./installer.sh              # Python, dépendances, configuration, école fictive — ~2 min
+./demarrer.sh --testeur     # lance Klassio ; Ctrl-C pour l'arrêter
+```
 
-# 2. Installer — l'application et les outils de test
-python3 -m venv backend_venv
-source backend_venv/bin/activate            # Windows : backend_venv\Scripts\activate
+Ouvrez **http://localhost:5001** (le site) ou **http://localhost:5001/app/connexion.html**.
+
+- `./demarrer.sh --reseau --testeur` : accessible aussi depuis un téléphone sur
+  le même Wi-Fi (l'adresse s'affiche au démarrage).
+- `./installer.sh --recreer` : remet l'école fictive à zéro.
+
+### Pas à pas — Windows
+
+```bat
+git clone https://github.com/Yversplayer/klassio-saas.git
+cd klassio-saas
+python -m venv backend_venv
+backend_venv\Scripts\activate
 pip install -r requirements-dev.txt
-
-# 3–4. Configurer — le modèle est déjà complet, il n'y a rien à remplir
-cp backend/.env.example backend/.env        # Windows : copy backend\.env.example backend\.env
-
-# 5–7. Créer la base, appliquer schéma et migrations, charger les données fictives
-python backend/tools/demo.py
-
-# 8. Lancer l'API — laissez ce terminal ouvert
-python backend/app.py
-
-# 9. Servir les pages — dans un SECOND terminal, à la racine du dépôt
-python -m http.server 4173
+copy backend\.env.example backend\.env
+python backend\tools\demo.py
+set KLASSIO_CONTOURNER_ABONNEMENT=1
+python backend\app.py
 ```
 
-**10.** Ouvrez **http://localhost:4173/app/connexion.html**.
+Puis **http://localhost:5001**. (PowerShell : `$env:KLASSIO_CONTOURNER_ABONNEMENT="1"` au lieu de `set`.)
 
-**Tester une inscription sans payer.** Il n'existe pas de mode gratuit : une
-école créée par « Créer mon espace » reste fermée jusqu'au choix de son offre
-et à la confirmation de son premier paiement. Pour essayer le logiciel de bout
-en bout sans payer, lancez le serveur en **mode testeur** :
+### Le mode testeur — pourquoi `--testeur`
+
+Il n'existe **pas de mode gratuit** : une école créée par « Créer mon espace »
+dépose ses fichiers Excel, choisit son offre, et ne s'ouvre qu'une fois son
+premier paiement déclaré (ouverture provisoire de 72 h) puis confirmé par la
+plateforme. Le mode testeur (`KLASSIO_CONTOURNER_ABONNEMENT=1`) lève ces
+blocages pour tester le reste du logiciel : l'étape « Votre offre » affiche
+alors « Entrer sans payer (testeur) ». C'est un réglage du **serveur**, refusé
+si la base visée n'est pas sur votre machine. Lancez sans `--testeur` pour
+éprouver le vrai parcours payant (voir plus bas).
+
+Au démarrage, le serveur écrit la base qu'il utilise. Vérifiez que c'est
+`backend/klassio_demo.db` : c'est la preuve que vous êtes sur les données
+fictives.
+
+### Les tests automatiques
 
 ```bash
-./demarrer.sh --testeur              # ou KLASSIO_CONTOURNER_ABONNEMENT=1 python backend/app.py
-```
-
-L'étape « Votre offre » affiche alors « Entrer sans payer (testeur) ». Ce mode
-est refusé si la base visée n'est pas sur votre machine. Les comptes de
-démonstration (`demo.py`) sont déjà ouverts : ils n'en ont pas besoin.
-
-**11.** Les tests :
-
-```bash
-python -m unittest discover -s backend/tests -t backend    # ~3 min, SQLite
-python backend/tools/pg_tests.py                            # la même suite sur un vrai PostgreSQL 16
+backend_venv/bin/python -m unittest discover -s backend/tests -t backend    # ~3 min, SQLite
+backend_venv/bin/python backend/tools/pg_tests.py                            # la même suite sur un vrai PostgreSQL 16
 ```
 
 Le second démarre un PostgreSQL local et jetable, sans Docker, sans droits
 administrateur et sans réseau, puis le détruit. Les deux doivent être verts.
-
-Au démarrage, l'API écrit la base qu'elle utilise. Vérifiez que c'est
-`backend/klassio_demo.db` : c'est la preuve que vous êtes sur les données
-fictives.
+(Windows : `backend_venv\Scripts\python` au lieu de `backend_venv/bin/python`.)
 
 ### Les comptes de démonstration
 
@@ -107,6 +113,41 @@ même en appelant l'API à la main.
 `python backend/tools/demo.py --recreer` reconstruit la base à l'identique. Il
 refuse d'effacer un fichier qui contiendrait un seul compte hors du domaine
 fictif.
+
+Le compte **Direction** a aussi l'accès **Plateforme** (rubrique Plateforme de
+la barre latérale) : c'est lui qui confirme ou rejette les paiements déclarés.
+
+### Tester Klassio de fond en comble
+
+Une heure suffit pour tout voir. Cochez au fur et à mesure ; ce qui doit être
+**refusé** compte autant que ce qui doit marcher.
+
+**1. Le site et la démo** — http://localhost:5001
+- [ ] La landing défile jusqu'au pied de page (rideau « Prêt à commencer ? »), sur ordinateur puis en format téléphone.
+- [ ] Tarifs : quatre offres ; « Choisir École » ouvre l'inscription avec École présélectionnée.
+- [ ] La démo (`/demo.html`) : l'appel, le portail, le dossier en coupe, le mur d'écrans, puis la visite interactive.
+
+**2. Chaque rôle, avec les comptes ci-dessus**
+- [ ] Direction : élèves, classes, présences, résultats (import Excel, proclamation, bulletins PDF), finances, reçus, rapports, exports, équipe et invitations, assistant.
+- [ ] Directeur des disciplines : « Aujourd'hui », pointage au portail, incidents, convocations, registres.
+- [ ] Professeur : ses classes seulement, l'appel, le cahier de communication, livres et devoirs.
+- [ ] Parent : ses enfants seulement, présences, résultats proclamés, frais et reçus, boutique, justifier une absence.
+- [ ] **Refusé** : les rapports en parent, le dossier d'un enfant qui n'est pas le sien, l'équipe en professeur — même en appelant l'API à la main.
+
+**3. Une nouvelle école, en mode testeur** (`./demarrer.sh --testeur`)
+- [ ] « Créer mon espace » → importer `docs/exemples/Complexe_Scolaire_La_Reference_export.xlsx` (2 371 élèves **fictifs**, générés par script) → « Votre offre » propose Complexe (l'effectif dépasse 1 000) → « Entrer sans payer (testeur) ».
+- [ ] Inviter un professeur et un parent (le lien d'invitation s'affiche à l'écran — aucun e-mail ne part en développement), se connecter avec eux.
+
+**4. Le vrai parcours payant** (`./demarrer.sh`, **sans** `--testeur`)
+- [ ] Créer une école : l'espace est **fermé** (toute page renvoie vers Abonnement).
+- [ ] Choisir une offre → une facture apparaît → déclarer une référence de paiement : l'espace **s'ouvre** (72 h), bandeau « Paiement en cours de vérification ».
+- [ ] Se connecter en Direction de l'école fictive → Plateforme → **confirmer** le paiement : l'école reste ouverte. Ou **annuler** la facture : elle se referme, et une nouvelle déclaration ne la rouvre plus.
+
+**Repartir de zéro** : `./installer.sh --recreer` (l'école fictive), et supprimez
+les écoles de test créées à la main en recréant la base de la même façon.
+
+Un défaut ? Notez la page, le rôle, ce que vous attendiez, ce qui s'est passé,
+et le contenu de `/tmp/klassio.log` (macOS/Linux) au même moment.
 
 ### Variables d'environnement
 
