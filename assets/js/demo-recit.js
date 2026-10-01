@@ -75,8 +75,8 @@
     },
     results: {
       n: "07",
-      titre: "Saisir n'est pas proclamer",
-      texte: "Les notes existent dès la saisie pour le personnel. Les parents "
+      titre: "Importer n'est pas proclamer",
+      texte: "Les résultats existent dès l'import pour le personnel. Les parents "
            + "ne les voient qu'après la proclamation de la période — une "
            + "décision distincte, avec son audience, calculée par le serveur.",
     },

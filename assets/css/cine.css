@@ -767,13 +767,17 @@
 .kx-roles.kx-live .kx-laptop {
   --lo: clamp(0, calc((var(--p) - 0.02) / 0.15), 1);
   --loe: calc(var(--lo) * (2 - var(--lo)));
-  --pt: clamp(0, calc((var(--p) - 0.5) / 0.18), 1);
+  /* Trois étapes depuis le 01/10 (Direction, Parent, DD) : l'étape du
+     professeur, qui montrait une saisie de notes, est retirée — ce n'est pas
+     une fonction du logiciel ; les résultats entrent par l'import. Le
+     téléphone du parent arrive donc au tiers de la piste, plus à la moitié. */
+  --pt: clamp(0, calc((var(--p) - 0.33) / 0.18), 1);
   --kx-lid: calc(-88deg + var(--loe) * 100deg);
   --kx-tilt: calc(-26deg + var(--loe) * 12deg);
   --kx-turn: calc(-24deg + var(--loe) * 20deg + var(--pt) * 9deg);
 }
 .kx-roles.kx-live .kx-phone-rig {
-  --pe: clamp(0, calc((var(--p) - 0.47) / 0.15), 1);
+  --pe: clamp(0, calc((var(--p) - 0.3) / 0.15), 1);
   --pee: calc(var(--pe) * (2 - var(--pe)));
   opacity: var(--pe);
   transform:
@@ -784,7 +788,7 @@
 
 /* ===========================================================================
    3. « Une journée à l'école »
-   Quatre plans, un seul défilement : on glisse d'un moment de la journée au
+   Trois plans, un seul défilement : on glisse d'un moment de la journée au
    suivant, l'heure court, le téléphone montre ce qui se passe à ce moment-là.
    Le mouvement de caméra lent sur les photos (--p) donne la sensation d'un
    plan filmé ; les fondus se font à chaque étape.
