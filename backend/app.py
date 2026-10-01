@@ -278,6 +278,10 @@ def register_school():
     conn.execute("INSERT INTO academic_years (id, tenant_id, label, created_at) VALUES (?,?,?,?)",
                  (year_id, tenant_id, "Année en cours", now))
     conn.commit()
+    # Pas d'essai gratuit : l'espace naît EN ATTENTE D'OFFRE. Il ne s'ouvre
+    # qu'après le choix de l'offre et la confirmation du premier paiement
+    # (api_billing) ; l'import de départ, lui, reste possible.
+    api_billing.ensure_subscription(conn, tenant_id)
     token = security.create_session(conn, user_id, tenant_id)
     conn.close()
     audit(tenant_id, user_id, "tenant.created", "tenant", tenant_id, "success", after={"school_name": school_name, "slug": slug})
@@ -355,7 +359,8 @@ def me():
     membership = conn.execute("SELECT title, scope_cycles FROM memberships WHERE tenant_id=? AND user_id=?", (g.ctx["tenant_id"], g.ctx["user_id"])).fetchone()
     sub = api_billing.summary(conn, g.ctx["tenant_id"])
     extra["subscription"] = {"status": sub["status"], "attention": sub["attention"] if g.ctx["role"] == "directeur" else None,
-                             "read_only": sub["read_only"], "days_left": sub["days_left"]}
+                             "read_only": sub["read_only"], "days_left": sub["days_left"],
+                             "locked": sub["locked"], "bypass": sub["bypass"]}
     extra["is_platform_admin"] = api_billing.is_platform_admin(conn, g.ctx["user_id"])
     extra["title"] = membership["title"] if membership else None
     if g.ctx["role"] == "discipline":
@@ -2397,6 +2402,9 @@ def _startup_banner():
     """Dire au démarrage où vont réellement les données. Aucune clé affichée."""
     import supabase_client
     print(f"Klassio — moteur de données : {config.DB_BACKEND}")
+    if config.CONTOURNER_ABONNEMENT:
+        print("  ⚠  MODE TESTEUR : abonnement contourné (KLASSIO_CONTOURNER_ABONNEMENT).")
+        print("     Les espaces s'ouvrent sans paiement. Jamais en production.")
     if config.DB_BACKEND == "sqlite":
         print(f"  base locale : {db.DB_PATH}")
     elif config.postgres_est_local():

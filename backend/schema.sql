@@ -884,7 +884,7 @@ CREATE TABLE IF NOT EXISTS plans (
 CREATE TABLE IF NOT EXISTS subscriptions (
   tenant_id TEXT PRIMARY KEY REFERENCES tenants(id),
   plan_code TEXT NOT NULL REFERENCES plans(code),
-  status TEXT NOT NULL DEFAULT 'trial', -- trial | active | past_due | suspended | cancelled
+  status TEXT NOT NULL DEFAULT 'trial', -- awaiting_plan | awaiting_payment | active | past_due | suspended | cancelled (trial : écoles d'avant le 01/10/2026)
   trial_ends_at TEXT,
   current_period_start TEXT,
   current_period_end TEXT,

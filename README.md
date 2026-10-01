@@ -51,6 +51,19 @@ python -m http.server 4173
 
 **10.** Ouvrez **http://localhost:4173/app/connexion.html**.
 
+**Tester une inscription sans payer.** Il n'existe pas de mode gratuit : une
+école créée par « Créer mon espace » reste fermée jusqu'au choix de son offre
+et à la confirmation de son premier paiement. Pour essayer le logiciel de bout
+en bout sans payer, lancez le serveur en **mode testeur** :
+
+```bash
+./demarrer.sh --testeur              # ou KLASSIO_CONTOURNER_ABONNEMENT=1 python backend/app.py
+```
+
+L'étape « Votre offre » affiche alors « Entrer sans payer (testeur) ». Ce mode
+est refusé si la base visée n'est pas sur votre machine. Les comptes de
+démonstration (`demo.py`) sont déjà ouverts : ils n'en ont pas besoin.
+
 **11.** Les tests :
 
 ```bash
@@ -170,7 +183,7 @@ Fonctionnel et testé : authentification, isolation multi-tenant, RBAC, Financia
 - **importer un fichier Excel/CSV réel** (`backend/ingestion.py` + `POST /api/onboarding/analyze-import` puis `/confirm-import`) : détection de colonnes par motifs, détection de doublons et d'anomalies financières, aperçu complet, rien n'est écrit avant confirmation explicite ;
 - **inviter professeurs et parents** (`app/invitations.html`, table `invitations`) : lien à usage unique, expirant sous 7 jours, révocable, le rôle est toujours déterminé par l'invitation et jamais par un choix du client. Le parent accepte via `app/invitation.html`, qui affiche uniquement l'établissement et le(s) enfant(s) associés à cette invitation précise — jamais une recherche libre. Partage du lien par copie ou WhatsApp (lien `wa.me` prérempli — pas d'envoi automatique, aucun fournisseur SMS/WhatsApp n'est connecté).
 
-Non implémenté (documenté comme tel, jamais simulé — la liste qui fait foi est `AGENTS.md` §9) : envoi automatique d'OTP par SMS/WhatsApp (nécessite un fournisseur externe non connecté — la sécurité de l'invitation repose sur le token à usage unique), Store parent, pricing par palier d'élèves, Command Bar/IA réelle, rôles Caissier/Responsable financier, compte Élève (retiré intentionnellement — voir point 2 de la refonte), états de paiement avancés (remboursements, échecs).
+Non implémenté (documenté comme tel, jamais simulé — la liste qui fait foi est `AGENTS.md` §9) : envoi automatique d'OTP par SMS/WhatsApp (nécessite un fournisseur externe non connecté — la sécurité de l'invitation repose sur le token à usage unique), Command Bar/IA réelle, rôles Caissier/Responsable financier, compte Élève (retiré intentionnellement — voir point 2 de la refonte), états de paiement avancés (remboursements, échecs).
 
 ## Documents de référence (`docs/`)
 

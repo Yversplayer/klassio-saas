@@ -171,3 +171,31 @@ def summary():
         "pg_schema": PG_SCHEMA or "public",
         "env_file": ENV_PATH if os.path.exists(ENV_PATH) else "absent",
     }
+
+
+# ---------------------------------------------------------------------------
+# Contournement de l'abonnement — POUR LES TESTEURS UNIQUEMENT
+# ---------------------------------------------------------------------------
+#
+# Il n'existe pas de mode gratuit (décision du propriétaire, 01/10/2026) : une
+# école ne s'ouvre qu'après le choix de son offre ET la confirmation de son
+# premier paiement. Un développeur qui clone Klassio doit pourtant pouvoir
+# tout essayer sans payer : KLASSIO_CONTOURNER_ABONNEMENT=1 lève les blocages
+# d'abonnement (espace en attente d'activation, lecture seule pour retard).
+#
+# Un réglage côté SERVEUR, jamais un paramètre ni un bouton du navigateur : le
+# navigateur ne décide de rien. Et refusé net si la base visée n'est pas sur
+# cette machine — même logique que les autres garde-fous : on ne se fie pas à
+# une étiquette d'environnement, on regarde où vont les données. Un .env de
+# développement recopié sur le serveur d'une école n'ouvre donc rien.
+
+def verifier_contournement(actif, db_backend, url=None):
+    if actif and db_backend != "sqlite" and not postgres_est_local(url):
+        raise ValueError(
+            "KLASSIO_CONTOURNER_ABONNEMENT est réservé aux bases locales de test : "
+            "la base PostgreSQL visée est distante (%s). Retirez ce réglage." % hote_postgres(url))
+    return actif
+
+
+CONTOURNER_ABONNEMENT = verifier_contournement(
+    get_bool("KLASSIO_CONTOURNER_ABONNEMENT", False), DB_BACKEND)

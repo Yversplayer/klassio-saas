@@ -168,6 +168,8 @@
       }
       var s = res.body, plan = s.plan || null;
       var ETATS = {
+        awaiting_plan: ["warn", "Offre à choisir"],
+        awaiting_payment: ["warn", "En attente du paiement"],
         trial: ["ok", "Période d'essai"],
         active: ["ok", "Actif"],
         past_due: ["warn", "Facture en retard"],

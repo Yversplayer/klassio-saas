@@ -12,6 +12,7 @@
     document.getElementById("step-account").hidden = true;
     document.getElementById("step-import").hidden = false;
     document.querySelectorAll("#stepDots span").forEach(function (d) { d.classList.toggle("active", d.dataset.step === "2"); });
+    document.getElementById("step-offre").hidden = true;
     document.querySelector("#step-import .auth-kicker").textContent = "Import";
     document.querySelector("#step-import h1").textContent = "Importer un fichier dans " + (res.body.tenant_name || "votre établissement");
     document.getElementById("skipImportBtn").textContent = "Retour à mon espace";

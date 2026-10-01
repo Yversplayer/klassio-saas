@@ -7,6 +7,7 @@ import unittest, sys, os, io, json, time
 from datetime import date, datetime, timedelta
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+import config  # noqa: E402
 import db  # noqa: E402
 db.DB_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "klassio_test.db"))
 import app as flask_app_module  # noqa: E402
@@ -360,18 +361,61 @@ class LotsTests(unittest.TestCase):
         self.assertEqual(a["student"]["first_name"], "Kevin"); self.assertEqual(a["school"]["name"], "École des Lots"); self.assertEqual(a["director"], "Marie Dir")
         self.assertEqual(self.c.get(f"/api/students/{self.kevin['id']}/attestation", headers=self.pj_h).status_code, 404)
 
-    # ---------------- Abonnement : essai → facture → paiement → suspension → reprise ----------------
+    # ---------------- Abonnement : offre → paiement → ouverture → renouvellement → suspension → reprise ----------------
+    # Règle du 01/10/2026 : PAS de mode gratuit. L'école naît en attente
+    # d'offre ; elle ne s'ouvre qu'après le choix de l'offre et la confirmation
+    # du premier paiement. Le reste du module travaille abonnement contourné
+    # (tests/__init__.py) ; ce test-ci remet la vraie règle.
     def test_12_subscription_lifecycle_and_read_only(self):
+        config.CONTOURNER_ABONNEMENT = False
+        try:
+            self._cycle_abonnement()
+        finally:
+            config.CONTOURNER_ABONNEMENT = True
+
+    def _cycle_abonnement(self):
         s = self.c.get("/api/subscription", headers=self.dir_h).get_json()
-        self.assertEqual(s["status"], "trial"); self.assertEqual(s["plan"]["code"], "essentiel"); self.assertEqual(s["estimated_amount"], 49.0)
+        self.assertEqual(s["status"], "awaiting_plan"); self.assertTrue(s["locked"]); self.assertIsNone(s["trial_ends_at"])
+        self.assertEqual(s["required_plan"]["code"], "essentiel"); self.assertEqual(s["estimated_amount"], 99.9)
         self.assertEqual(self.c.get("/api/subscription", headers=self.prof_a_h).status_code, 403)
         self.assertEqual([p["code"] for p in self.c.get("/api/plans").get_json()], ["essentiel", "ecole", "complexe", "reseau"])
-        # Fin d'essai simulée → facture émise, statut actif, Direction notifiée
-        conn = db.get_connection()
-        conn.execute("UPDATE subscriptions SET trial_ends_at=? WHERE tenant_id=?", (str(time.time() - 3600), self.tenant_id)); conn.commit(); conn.close()
+        self.assertEqual([p["base_price"] for p in self.c.get("/api/plans").get_json()], [99.9, 149.9, 249.9, 0.0])
+        # Espace fermé : même la LECTURE répond 402, pour tous les rôles ; la session, elle, répond.
+        self.assertEqual(self.c.get("/api/students", headers=self.dir_h).status_code, 402)
+        self.assertEqual(self.c.get(f"/api/classes/{self.cA['id']}/attendance", headers=self.prof_a_h).status_code, 402)
+        self.assertTrue(self.c.get("/api/me", headers=self.dir_h).get_json()["subscription"]["locked"])
+        # Choix de l'offre → première facture émise aussitôt, espace toujours fermé
+        r = self.c.post("/api/subscription/choose", json={"plan_code": "essentiel"}, headers=self.dir_h)
+        self.assertEqual(r.status_code, 200, r.get_data(as_text=True))
         s = self.c.get("/api/subscription", headers=self.dir_h).get_json()
-        self.assertEqual(s["status"], "active"); self.assertIsNotNone(s["open_invoice"]); self.assertRegex(s["open_invoice"]["number"], r"^INV-\d{4}-\d{4}$")
-        self.assertEqual(s["open_invoice"]["amount"], 49.0)
+        self.assertEqual(s["status"], "awaiting_payment"); self.assertTrue(s["locked"])
+        self.assertRegex(s["open_invoice"]["number"], r"^INV-\d{4}-\d{4}$"); self.assertEqual(s["open_invoice"]["amount"], 99.9)
+        self.assertEqual(self.c.get("/api/students", headers=self.dir_h).status_code, 402)
+        first_id = s["open_invoice"]["id"]
+        r = self.c.post("/api/subscription/pay", json={"invoice_id": first_id, "method": "mobile_money", "reference": "MP-2026-01"}, headers=self.dir_h)
+        self.assertEqual(r.status_code, 200, r.get_data(as_text=True)); self.assertEqual(r.get_json()["status"], "pending")
+        self.assertEqual(self.c.get("/api/students", headers=self.dir_h).status_code, 402)  # déclaré n'est pas confirmé
+        # Plateforme : refus sans droit ; confirmation par l'admin → l'espace s'ouvre
+        self.assertEqual(self.c.get("/api/platform/overview", headers=self.dir_h).status_code, 403)
+        admin_id = self.c.get("/api/me", headers=self.dir_h).get_json()["user_id"]
+        # `INSERT OR IGNORE` est du SQLite pur : ce montage tombait dès qu'on
+        # exécutait la suite contre PostgreSQL. `ON CONFLICT DO NOTHING` dit la
+        # même chose sur les deux moteurs — c'est déjà la forme utilisée partout
+        # dans le backend.
+        conn = db.get_connection(); conn.execute("INSERT INTO platform_admins (user_id, created_at) VALUES (?,?) ON CONFLICT DO NOTHING", (admin_id, str(time.time()))); conn.commit(); conn.close()
+        ov = self.c.get("/api/platform/overview", headers=self.dir_h).get_json()
+        self.assertTrue(any(t["name"] == "École des Lots" for t in ov["tenants"])); self.assertEqual(len(ov["pending_invoices"]), 1)
+        self.assertEqual(self.c.post(f"/api/platform/invoices/{first_id}/confirm", headers=self.dir_h).status_code, 200)
+        me = self.c.get("/api/me", headers=self.dir_h).get_json()
+        self.assertEqual(me["subscription"]["status"], "active"); self.assertFalse(me["subscription"]["locked"])
+        self.assertEqual(self.c.get("/api/students", headers=self.dir_h).status_code, 200)
+        self.assertTrue(any("Paiement confirmé" in t for t in self._titles(self.dir_h)))
+        # Fin de période simulée → facture de renouvellement, sur l'offre choisie
+        conn = db.get_connection()
+        conn.execute("UPDATE subscriptions SET current_period_end=? WHERE tenant_id=?", (str(time.time() - 3600), self.tenant_id)); conn.commit(); conn.close()
+        s = self.c.get("/api/subscription", headers=self.dir_h).get_json()
+        self.assertEqual(s["status"], "active"); self.assertIsNotNone(s["open_invoice"]); self.assertNotEqual(s["open_invoice"]["id"], first_id)
+        self.assertEqual(s["open_invoice"]["amount"], 99.9)
         # Une facture ouverte est ce qui amène la Direction sur l'écran d'abonnement.
         me = self.c.get("/api/me", headers=self.dir_h).get_json()
         self.assertIn("Facture", me["subscription"]["attention"] or "")
@@ -389,22 +433,11 @@ class LotsTests(unittest.TestCase):
         self.assertEqual(self.c.get("/api/students", headers=self.dir_h).status_code, 200)
         r = self.c.post("/api/subscription/pay", json={"invoice_id": inv_id, "method": "mobile_money", "reference": "MP-2026-77"}, headers=self.dir_h)
         self.assertEqual(r.status_code, 200, r.get_data(as_text=True)); self.assertEqual(r.get_json()["status"], "pending")
-        # Plateforme : refus sans droit ; confirmation par l'admin → actif, écriture rétablie
-        self.assertEqual(self.c.get("/api/platform/overview", headers=self.dir_h).status_code, 403)
-        admin_id = self.c.get("/api/me", headers=self.dir_h).get_json()["user_id"]
-        # `INSERT OR IGNORE` est du SQLite pur : ce montage tombait dès qu'on
-        # exécutait la suite contre PostgreSQL. `ON CONFLICT DO NOTHING` dit la
-        # même chose sur les deux moteurs — c'est déjà la forme utilisée partout
-        # dans le backend.
-        conn = db.get_connection(); conn.execute("INSERT INTO platform_admins (user_id, created_at) VALUES (?,?) ON CONFLICT DO NOTHING", (admin_id, str(time.time()))); conn.commit(); conn.close()
-        ov = self.c.get("/api/platform/overview", headers=self.dir_h).get_json()
-        self.assertTrue(any(t["name"] == "École des Lots" for t in ov["tenants"])); self.assertEqual(len(ov["pending_invoices"]), 1)
         self.assertEqual(self.c.post(f"/api/platform/invoices/{inv_id}/confirm", headers=self.dir_h).status_code, 200)
         me = self.c.get("/api/me", headers=self.dir_h).get_json()
         self.assertEqual(me["subscription"]["status"], "active"); self.assertFalse(me["subscription"]["read_only"])
         self.assertEqual(self.c.post("/api/students", json={"first_name": "Libre", "last_name": "X", "academic_year_id": self.year}, headers=self.dir_h).status_code, 201)
-        self.assertTrue(any("Paiement confirmé" in t for t in self._titles(self.dir_h)))
-        # Palier automatique selon les élèves actifs
+        # Les paliers restent modifiables par l'administration de la plateforme
         self.assertEqual(self.c.put("/api/platform/plans/ecole", json={"per_student": 0.25}, headers=self.dir_h).status_code, 200)
         conn = db.get_connection(); conn.execute("DELETE FROM platform_admins WHERE user_id=?", (admin_id,)); conn.commit(); conn.close()
 

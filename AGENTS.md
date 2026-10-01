@@ -276,9 +276,20 @@ fichier créé uniquement dans le miroir sera perdu** — c'est déjà arrivé.
 - **Pas de notifications de calendrier.**
 - **Sauvegardes jamais restaurées** : RPO et RTO non établis.
 - **Jamais déployé.**
-- **Tarifs non tranchés.** `plans` et `api_billing` facturent 49 $ / 60 $+0,30 $
-  par élève / 120 $+0,20 $ ; d'autres prix ont été évoqués sans décision. Le
-  propriétaire n'a pas arbitré : **ne modifie aucun prix**.
+- **Tarifs ARRÊTÉS le 01/10/2026 par le propriétaire** : Essentiel 99,90 $
+  (≤ 300 élèves), École 149,90 $ (301–1 000), Complexe 249,90 $ (1 001–3 000),
+  Réseau sur devis — par mois, toutes les fonctionnalités dans chaque offre.
+  Ils vivent à DEUX endroits qui doivent rester identiques : `PLANS_2026_10`
+  (backend/db.py, ce que le serveur facture) et la section `#tarifs` de la
+  landing. **Ne modifie aucun prix sans le propriétaire.**
+- **Pas de mode gratuit.** Une école naît fermée (`awaiting_plan`) ; elle dépose
+  ses fichiers Excel, choisit son offre (obligatoire), et ne s'ouvre qu'à la
+  confirmation de son premier paiement par la plateforme. Les testeurs lèvent
+  ce blocage avec `./demarrer.sh --testeur` (`KLASSIO_CONTOURNER_ABONNEMENT=1`,
+  réglage serveur, refusé sur une base distante) ; la suite de tests l'active
+  dans `tests/__init__.py`, et `test_abonnement.py` éprouve la vraie règle.
+  Aucun paiement n'est encaissé par Klassio : la Direction déclare sa
+  référence, un administrateur de la plateforme confirme.
 
 Ne transforme pas une simulation en fonctionnalité dans un rapport.
 

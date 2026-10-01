@@ -3,6 +3,10 @@
 #
 #   ./demarrer.sh              n'écoute que sur cette machine
 #   ./demarrer.sh --reseau     écoute aussi sur le réseau local
+#   ./demarrer.sh --testeur    abonnement contourné : un espace créé s'ouvre
+#                              sans paiement (KLASSIO_CONTOURNER_ABONNEMENT=1).
+#                              Pour TESTER le code — refusé sur une base distante.
+#   Les deux options se combinent : ./demarrer.sh --reseau --testeur
 #
 # UN SEUL SERVEUR. Le backend Flask sert désormais lui-même les pages et les
 # ressources (backend/app.py, routes `/` et `/<path:chemin>`).
@@ -27,9 +31,17 @@ PY="backend_venv/bin/python"
 API_PORT=5001
 HOTE="127.0.0.1"
 RESEAU=0
-if [ "${1:-}" = "--reseau" ]; then
-  HOTE="0.0.0.0"
-  RESEAU=1
+TESTEUR=0
+for arg in "$@"; do
+  case "$arg" in
+    --reseau) HOTE="0.0.0.0"; RESEAU=1 ;;
+    --testeur) TESTEUR=1 ;;
+    *) echo "Option inconnue : $arg (options : --reseau, --testeur)"; exit 1 ;;
+  esac
+done
+if [ "$TESTEUR" = "1" ]; then
+  export KLASSIO_CONTOURNER_ABONNEMENT=1
+  echo "⚠  Mode testeur : l'abonnement est contourné, les espaces s'ouvrent sans paiement."
 fi
 
 port_occupe() { lsof -nP -iTCP:"$1" -sTCP:LISTEN >/dev/null 2>&1; }

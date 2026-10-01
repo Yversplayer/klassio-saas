@@ -172,6 +172,19 @@
       try { if (b.slug) localStorage.setItem("klassio_portal", b.slug); } catch (e) {}
       document.title = document.title.replace(/— Klassio.*$/, "— " + (ctx.tenant_name || "Klassio"));
 
+      // ESPACE PAS ENCORE OUVERT (offre non choisie, ou premier paiement non
+      // confirmé — il n'existe pas de mode gratuit). Le serveur répond 402 à
+      // tout le reste : plutôt que des écrans qui échouent un par un, la
+      // Direction est menée à l'écran Abonnement, le seul qui serve alors.
+      // Ce n'est pas la redirection commerciale retirée plus bas : un espace
+      // fermé n'a rien d'autre à montrer. « locked » vient du serveur, qui
+      // le lève lui-même en mode testeur.
+      if (ctx.subscription && ctx.subscription.locked && current !== "abonnement") {
+        if (ctx.role === "directeur") { window.location.replace("abonnement.html"); return new Promise(function () {}); }
+        var corps = document.querySelector(".dash-body");
+        if (corps) corps.innerHTML = UI.emptyState("L'espace n'est pas encore ouvert", "Votre établissement finalise son abonnement Klassio. Vous pourrez y accéder dès son ouverture.", "", "lock");
+        return new Promise(function () {});
+      }
       wireNotifications(ctx);
       wireSubscriptionBanner(ctx, current);
       cloturerAccueil(ctx);

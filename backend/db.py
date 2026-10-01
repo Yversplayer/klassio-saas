@@ -448,6 +448,17 @@ def _unicite_periodes(conn):
     conn.execute("PRAGMA foreign_keys=ON")
 
 
+# Les offres Klassio (décision du propriétaire, 01/10/2026). Il n'existe pas
+# de mode gratuit ; chaque offre contient toutes les fonctionnalités, seule la
+# taille de l'école change le prix.
+PLANS_2026_10 = [
+    ("essentiel", "Essentiel", 0, 300, 99.9, 0.0, "USD", "Jusqu'à 300 élèves — toutes les fonctionnalités.", 1),
+    ("ecole", "École", 301, 1000, 149.9, 0.0, "USD", "De 301 à 1 000 élèves — toutes les fonctionnalités.", 2),
+    ("complexe", "Complexe", 1001, 3000, 249.9, 0.0, "USD", "De 1 001 à 3 000 élèves — toutes les fonctionnalités.", 3),
+    ("reseau", "Réseau", 3001, None, 0.0, 0.0, "USD", "Plusieurs établissements ou plus de 3 000 élèves — sur devis.", 4),
+]
+
+
 def _migrate(conn):
     """Migrations additives non destructives (ALTER TABLE ... ADD COLUMN).
 
@@ -631,13 +642,20 @@ def _migrate(conn):
     if not conn.execute("SELECT 1 FROM plans LIMIT 1").fetchone():
         conn.executemany(
             "INSERT INTO plans (code, name, min_students, max_students, base_price, per_student, currency, description, sort, active) VALUES (?,?,?,?,?,?,?,?,?,1)",
-            [
-                ("essentiel", "Essentiel", 0, 300, 49.0, 0.0, "USD", "Jusqu'à 300 élèves — forfait fixe, toutes les fonctionnalités.", 1),
-                ("ecole", "École", 301, 1000, 60.0, 0.30, "USD", "301 à 1 000 élèves — forfait + 0,30 $ par élève actif et par mois.", 2),
-                ("complexe", "Complexe", 1001, 3000, 120.0, 0.20, "USD", "1 001 à 3 000 élèves — forfait + 0,20 $ par élève actif (dégressif).", 3),
-                ("reseau", "Réseau", 3001, None, 0.0, 0.0, "USD", "Plusieurs établissements ou plus de 3 000 élèves — sur devis.", 4),
-            ],
+            PLANS_2026_10,
         )
+    # Tarifs arrêtés par le propriétaire le 01/10/2026 : 99,90 $ / 149,90 $ /
+    # 249,90 $ par mois selon la taille de l'école, puis sur devis — toutes les
+    # fonctionnalités dans chaque offre. Une base créée avant porte encore les
+    # anciens tarifs de travail (49 $ ; 60 $ + 0,30 $/élève ; 120 $ + 0,20 $) :
+    # on les remplace UNE fois, et seulement s'ils sont restés tels quels — un
+    # tarif modifié par l'administration de la plateforme n'est jamais écrasé.
+    anciens = conn.execute("SELECT code, base_price, per_student FROM plans").fetchall()
+    defauts = {"essentiel": (49.0, 0.0), "ecole": (60.0, 0.30), "complexe": (120.0, 0.20), "reseau": (0.0, 0.0)}
+    if anciens and all(r["code"] in defauts and (round(float(r["base_price"]), 4), round(float(r["per_student"]), 4)) == defauts[r["code"]] for r in anciens):
+        for code, name, mini, maxi, base, per, cur, desc, sort in PLANS_2026_10:
+            conn.execute("UPDATE plans SET name=?, min_students=?, max_students=?, base_price=?, per_student=?, currency=?, description=?, sort=? WHERE code=?",
+                         (name, mini, maxi, base, per, cur, desc, sort, code))
     conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_phone ON users(phone)")
     conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_tenants_slug ON tenants(slug)")
 

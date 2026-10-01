@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;1,500;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../assets/css/style.css?v=1791100001" />
+<link rel="stylesheet" href="../assets/css/style.css?v=1791400002" />
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' http://localhost:5001; base-uri 'self'; form-action 'self'">
 <script src="../assets/js/theme.js?v=1790200001"></script>
 <link rel="icon" href="../favicon.ico" sizes="any">
@@ -27,7 +27,7 @@
       <!-- ÉTAPE 1 — le directeur crée l'espace. Professeurs, DD et parents
            rejoignent ensuite uniquement par invitation. -->
       <div class="auth-step" id="step-account">
-        <span class="auth-kicker">Étape 1 sur 3</span>
+        <span class="auth-kicker">Étape 1 sur 4</span>
         <h1>Créer l'espace de votre établissement</h1>
         <p class="sub">Vous créez ici le compte Direction. Vos professeurs, votre directeur des disciplines et les parents rejoindront votre espace par invitation, une fois celui-ci prêt.</p>
         <div class="field"><label for="schoolInput">Nom de l'établissement</label><input type="text" id="schoolInput" placeholder="Ex. Complexe Scolaire La Référence" /></div>
@@ -44,7 +44,7 @@
 
       <!-- ÉTAPE 2 — import réel : rien n'est écrit avant confirmation explicite. -->
       <div class="auth-step" id="step-import" hidden>
-        <span class="auth-kicker">Étape 2 sur 3</span>
+        <span class="auth-kicker">Étape 2 sur 4</span>
         <h1>Importez vos données existantes</h1>
         <p class="sub">Un fichier Excel ou CSV d'élèves ? Klassio l'analyse, vous montre exactement ce qu'il a compris et ce qu'il va créer — avant toute écriture.</p>
 
@@ -82,7 +82,16 @@
         <div class="auth-actions" id="importSkipRow"><button class="auth-back" id="skipImportBtn">Passer cette étape — j'ajouterai mes élèves plus tard</button></div>
       </div>
 
-      <!-- ÉTAPE 3 — espace révélé -->
+      <!-- ÉTAPE 3 — l'offre, OBLIGATOIRE (01/10/2026 : pas de mode gratuit).
+           Le serveur décide : offre adaptée à l'effectif importé, facture,
+           ouverture de l'espace à la confirmation du paiement (offres.js). -->
+      <div class="auth-step" id="step-offre" hidden>
+        <span class="auth-kicker">Étape 3 sur 4</span>
+        <h1>Choisissez l'offre de votre établissement</h1>
+        <p class="sub">Toutes les offres contiennent toutes les fonctionnalités ; seul l'effectif change le prix. Votre espace s'ouvre dès la confirmation du premier paiement — vos données importées vous attendent.</p>
+        <div id="offreHost" aria-live="polite"></div>
+      </div>
+      <!-- ÉTAPE 4 — espace créé (ouvert, ou en attente de confirmation) -->
       <div class="auth-step space-reveal" id="step-reveal" hidden>
         <div class="check"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></div>
         <h1 id="revealTitle">Votre espace Klassio est prêt</h1>
@@ -100,14 +109,15 @@
         <div class="auth-actions" style="justify-content:center; margin-top:30px;"><a href="dashboard.html" class="btn btn-lime" id="goDashboard">Entrer dans mon espace</a></div>
       </div>
 
-      <div class="step-dots" id="stepDots"><span class="active" data-step="1"></span><span data-step="2"></span><span data-step="3"></span></div>
+      <div class="step-dots" id="stepDots"><span class="active" data-step="1"></span><span data-step="2"></span><span data-step="3"></span><span data-step="4"></span></div>
     </div>
   </div>
 </div>
 
-<script src="../assets/js/ui.js?v=1790697855"></script>
+<script src="../assets/js/ui.js?v=1791400003"></script>
 <script src="../assets/js/loader.js?v=1789400003"></script>
-<script src="../assets/js/app.js?v=1790400041"></script>
-<script src="../assets/js/page-inscription.js?v=1789100000"></script>
+<script src="../assets/js/offres.js?v=1791400002"></script>
+<script src="../assets/js/app.js?v=1791400001"></script>
+<script src="../assets/js/page-inscription.js?v=1791400001"></script>
 </body>
 </html>

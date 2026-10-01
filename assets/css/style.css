@@ -3476,6 +3476,32 @@ footer { border-top: 1px solid var(--line-soft); padding: 56px 0 40px; }
 .plan-card.current { border-color: var(--lime-deep); box-shadow: 0 0 0 1px var(--lime-deep); }
 .plan-card h3 { margin: 0; font-size: 16px; } .plan-card .pc-range { font-size: 12px; color: var(--ink-faint); } .plan-card .pc-price { font-size: 22px; font-weight: 800; letter-spacing: -0.02em; } .plan-card .pc-price small { font-size: 12px; font-weight: 500; color: var(--ink-faint); }
 .plan-card p { margin: 4px 0 0; font-size: 12.5px; color: var(--ink-soft); line-height: 1.5; }
+/* ---- Le choix de l'offre (offres.js) — inscription et espace pas encore ouvert ----
+   Préfixe of- : ces règles ne touchent aucun autre écran. */
+.of-grid { margin-top: 4px; }
+.of-card { position: relative; cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s; }
+.of-card input[type="radio"] { position: absolute; top: 16px; right: 16px; width: 18px; height: 18px; accent-color: var(--lime-deep); }
+.of-card .pc-range { color: var(--ink-soft); }
+.of-card .btn { margin-top: 8px; align-self: flex-start; }
+.of-card.of-off { cursor: not-allowed; opacity: 0.55; }
+.of-note { font-size: 12px; font-weight: 600; color: var(--bad); }
+.of-actions { display: flex; justify-content: flex-end; margin-top: 18px; }
+.of-tester { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 12px 14px; margin-bottom: 16px; border-radius: 12px; border: 1px dashed var(--line); background: var(--surface-soft); font-size: 13px; color: var(--ink-soft); }
+.of-tester span { flex: 1; min-width: 220px; }
+.of-pay { margin-top: 18px; padding: 18px; border-radius: 16px; border: 1px solid var(--lime-deep); background: var(--surface); }
+.of-pay-head strong { font-size: 24px; font-weight: 800; letter-spacing: -0.02em; }
+.of-pay-head small { color: var(--ink-soft); }
+.of-kicker { display: block; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-soft); }
+.of-steps { margin: 12px 0 14px; padding-left: 20px; font-size: 13.5px; line-height: 1.6; color: var(--ink-soft); }
+.of-steps a { color: var(--ink); font-weight: 700; text-decoration: underline; }
+.of-form { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) auto; gap: 12px; align-items: end; }
+.of-form .field { margin: 0; }
+.of-wait { display: flex; gap: 14px; padding: 18px; border-radius: 16px; border: 1px solid var(--line); background: var(--surface); }
+.of-wait-ic { flex: none; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: var(--surface-soft); color: var(--ink); }
+.of-wait > div { min-width: 0; }
+.of-wait p { margin: 6px 0 12px; font-size: 13.5px; color: var(--ink-soft); line-height: 1.55; overflow-wrap: anywhere; }
+.of-wait .btn { white-space: normal; text-align: left; }
+@media (max-width: 640px) { .of-form { grid-template-columns: 1fr; } }
 .status-hero { display: flex; align-items: center; gap: 18px; padding: 22px; border-radius: 20px; background: var(--forest); color: #fff; margin-bottom: 20px; flex-wrap: wrap; }
 .status-hero .sh-main strong { display: block; font-size: 22px; letter-spacing: -0.02em; } .status-hero .sh-main span { color: rgba(231,239,227,0.75); font-size: 13.5px; }
 .status-hero .sh-badge { padding: 6px 14px; border-radius: 100px; font-size: 12.5px; font-weight: 800; background: rgba(159,227,0,0.18); color: var(--lime); }

@@ -285,8 +285,9 @@ def resolve_session(conn, token: str):
     }
 
 
-# Garde d'écriture (abonnement suspendu) : fonction(conn, ctx, path, method) → bool,
-# branchée par app.py. None = aucune garde (tests unitaires des modules isolés).
+# Garde d'abonnement : fonction(conn, ctx, path, method) → None (passe) ou le
+# message du refus (402) — espace pas encore activé, ou suspendu pour retard.
+# Branchée par app.py. None = aucune garde (tests unitaires des modules isolés).
 WRITE_GUARD = None
 
 
@@ -296,13 +297,14 @@ def require_auth(fn):
         token = request.headers.get("Authorization", "").replace("Bearer ", "").strip()
         conn = db.get_connection()
         ctx = resolve_session(conn, token)
-        blocked = bool(ctx and WRITE_GUARD and WRITE_GUARD(conn, ctx, request.path, request.method))
+        blocked = WRITE_GUARD(conn, ctx, request.path, request.method) if (ctx and WRITE_GUARD) else None
         conn.close()
         if not ctx:
             return jsonify({"error": "Non authentifié"}), 401
         if blocked:
             audit(ctx["tenant_id"], ctx["user_id"], "write.blocked_suspended", status="denied")
-            return jsonify({"error": "Espace en lecture seule : l'abonnement de l'établissement est en attente de règlement. Vos données sont intactes."}), 402
+            return jsonify({"error": blocked if isinstance(blocked, str) else
+                            "Espace en lecture seule : l'abonnement de l'établissement est en attente de règlement. Vos données sont intactes."}), 402
         g.ctx = ctx
         return fn(*args, **kwargs)
     return wrapper

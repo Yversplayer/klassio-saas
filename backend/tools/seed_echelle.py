@@ -81,6 +81,13 @@ def creer_ecole(conn, indice, nb_eleves, jours, alea):
                  (tenant_id, nom_ecole, maintenant, etiquette))
     conn.execute("INSERT INTO academic_years (id, tenant_id, label, is_active, created_at) VALUES (?,?,?,1,?)",
                  (annee_id, tenant_id, "2026-2027", maintenant))
+    # École SYNTHÉTIQUE (démonstration, campagne de charge) : son abonnement
+    # est ouvert d'office. Sans cela, depuis qu'il n'existe plus de mode
+    # gratuit (01/10/2026), chaque appel répondrait 402 « en attente
+    # d'activation ». Ce script refuse toute base distante : aucune vraie
+    # école ne peut être ouverte ainsi.
+    conn.execute("INSERT INTO subscriptions (tenant_id, plan_code, status, created_at, updated_at) VALUES (?,?,'active',?,?)",
+                 (tenant_id, "essentiel", maintenant, maintenant))
 
     # ---- comptes : un par rôle, plus des professeurs et des parents ----
     empreinte = hash_password(MOT_DE_PASSE)

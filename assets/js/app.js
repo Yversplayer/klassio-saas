@@ -163,8 +163,36 @@
     wirePasswordRules(document.getElementById("passwordInput"), document.getElementById("pwRules"));
 
     function goStep(n) {
-      ["step-account", "step-import", "step-reveal"].forEach(function (id, i) { document.getElementById(id).hidden = i !== n - 1; });
+      ["step-account", "step-import", "step-offre", "step-reveal"].forEach(function (id, i) { document.getElementById(id).hidden = i !== n - 1; });
       dots.forEach(function (d) { d.classList.toggle("active", parseInt(d.dataset.step, 10) === n); });
+      if (n === 3) chargerOffre();
+    }
+
+    // ÉTAPE 3 — l'offre, obligatoire : il n'existe pas de mode gratuit. Une
+    // offre choisie depuis la page Tarifs du site (?offre=ecole) est
+    // présélectionnée ; le serveur la refuse si elle ne couvre pas l'effectif.
+    var offreDemandee = (location.search.match(/[?&]offre=([a-z]+)/) || [])[1] || null;
+    function chargerOffre() {
+      var host = document.getElementById("offreHost");
+      host.innerHTML = UI.skeleton ? UI.skeleton("card", 2) : "";
+      apiFetch("/subscription").then(function (res) {
+        if (!res.ok) { host.innerHTML = '<p class="form-error">' + escapeHtml(res.body.error || "Impossible de charger les offres.") + "</p>"; return; }
+        window.KlassioOffres.render(host, res.body, {
+          preselect: offreDemandee,
+          reload: chargerOffre,
+          onDeclared: function () { espaceEnAttente(); goStep(4); },
+          onBypass: function () { goStep(4); },
+        });
+      }).catch(function () { host.innerHTML = '<p class="form-error">Le serveur Klassio est momentanément injoignable.</p>'; });
+    }
+    // Un paiement déclaré n'est pas un paiement confirmé : l'étape 4 dit
+    // « créé », pas « prêt », et mène à l'abonnement plutôt qu'au tableau de bord.
+    function espaceEnAttente() {
+      document.getElementById("revealTitle").textContent = "Votre espace Klassio est créé";
+      document.getElementById("revealSummary").textContent = "Il s'ouvrira dès que Klassio aura confirmé votre paiement. Vos élèves et vos classes importés vous y attendent.";
+      var go = document.getElementById("goDashboard");
+      go.textContent = "Suivre mon abonnement";
+      go.setAttribute("href", "abonnement.html");
     }
     function showError(id, msg) { var el = document.getElementById(id); el.textContent = msg; el.hidden = !msg; }
 
@@ -267,7 +295,7 @@
           if (window.KlassioLoader) window.KlassioLoader.setSteps([
             { label: "Fichier analysé", state: "done" }, { label: r.students_count + " dossiers élèves et " + r.classes_count + " classes créés", state: "done" },
             { label: r.guardians_count + " responsables rattachés", state: "done" }, { label: r.obligations_count + " obligations et " + r.payments_count + " paiements intégrés", state: "done" },
-            { label: "Espace prêt", state: "done" }]);
+            { label: "Données intégrées à votre espace", state: "done" }]);
           document.getElementById("revealSummary").textContent = r.message;
           setTimeout(function () { if (window.KlassioLoader) window.KlassioLoader.hide(); UI.btnState(btn, "idle"); goStep(3); }, 900);
         }).catch(function () { UI.btnState(btn, "idle"); if (window.KlassioLoader) window.KlassioLoader.hide(); showError("importError", "Le serveur Klassio est momentanément injoignable."); });
@@ -277,6 +305,8 @@
       document.getElementById("revealSummary").textContent = "Vous pourrez importer un fichier ou ajouter vos élèves à tout moment depuis Élèves.";
       goStep(3);
     });
+    // L'import (ou son report) mène à l'OFFRE, étape 3 — plus directement à
+    // l'espace : on ne l'ouvre qu'une fois l'offre choisie et payée.
 
     var revealObserver = new MutationObserver(function () {
       var step = document.getElementById("step-reveal");
