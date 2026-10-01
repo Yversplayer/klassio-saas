@@ -638,6 +638,12 @@ def _migrate(conn):
     # d'e-mail, son identifiant dans l'établissement ne bouge pas.
     _add_column_if_missing(conn, "memberships", "staff_code", "TEXT")
 
+    # Ouverture provisoire (01/10/2026) : une école qui DÉCLARE son premier
+    # paiement entre aussitôt, le temps que la plateforme le vérifie (72 h, une
+    # seule fois par école). NULL = jamais accordée ; une date passée = déjà
+    # consommée — c'est ce qui empêche une fausse référence de rouvrir l'espace.
+    _add_column_if_missing(conn, "subscriptions", "provisional_until", "TEXT")
+
     # Plans d'abonnement par défaut (modifiables par l'administration de la plateforme).
     if not conn.execute("SELECT 1 FROM plans LIMIT 1").fetchone():
         conn.executemany(

@@ -504,3 +504,34 @@ surpaiements, écritures de l'assistant. `finance.js` : 1 071 paiements
 concurrents, aucun double comptage. `recus.js` : 1 105 paiements confirmés,
 aucun sans reçu, aucun 500. `verifier_invariants.py` sur le jeu d'échelle :
 26 invariants, aucun violé.
+
+## 12. Le site sur un téléphone en 3G — 2026-10-01
+
+Mesuré dans un navigateur en format téléphone (375 × 812), à travers un relais
+local qui impose **750 kbit/s et 300 ms d'aller-retour**, débit partagé entre
+toutes les connexions. Premier chargement, cache vide. Les polices Google ne
+passent pas par le relais : en conditions réelles, compter **+1 à 2 s** pour
+elles (192 Ko pour les quatre fichiers latins, affichage en `swap` : le texte
+apparaît d'abord dans une police système).
+
+| Page | Avant | Après |
+|---|---|---|
+| Landing — octets transférés | 564 Ko | **205 Ko** |
+| Landing — styles prêts (premier affichage possible) | 5,2 s | **2,0 s** |
+| Landing — page complète | 8,3 s | **4,4 s** |
+| Démo — octets / styles prêts / complète | 562 Ko · 5,6 s · 9,0 s | **163 Ko · 1,7 s · 3,9 s** |
+| Landing — visite suivante | ~13 allers-retours « inchangé » | **0 Ko, 0,5 s** (17/17 en cache) |
+
+**La cause** : le filtre de compression de `app.py` sautait les réponses en
+`direct_passthrough` — c'est-à-dire tous les fichiers du site, servis par
+`send_from_directory`. Le JSON de l'API était compressé, pas une seule page,
+feuille de style ou script. Et tout repartait en `no-cache`. Corrigé :
+compression des pages, styles, scripts et SVG ; cache d'un an (`immutable`)
+pour toute ressource appelée avec `?v=` ; un jour pour les images sans version ;
+les pages HTML ne sont jamais figées. Tests : `test_production.py`, 35 à 38.
+
+**Ce qui reste, non traité (choix visuels)** : `style.css` (206 Ko brut, 48 Ko
+compressé) sert les 29 écrans alors que la landing n'en utilise qu'une partie ;
+la police Archivo (87 Ko) porte l'effet cinétique des titres et la grande
+horloge en graisse 800 — la réduire changerait l'image. À reconsidérer avec
+le propriétaire si les mesures sur un vrai réseau le demandent.

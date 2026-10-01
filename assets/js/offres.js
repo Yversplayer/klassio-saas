@@ -17,7 +17,12 @@
 // du serveur, et rien ne prétend qu'un paiement est confirmé avant qu'il le soit.
 (function () {
   "use strict";
-  var UI = window.KlassioUI, api = window.KlassioApi;
+  var UI = window.KlassioUI;
+  // Résolu À L'USAGE, pas au chargement : sur l'inscription, ce fichier est
+  // chargé avant app.js, qui définit KlassioApi. Capturé ici, il valait
+  // undefined — le bouton « Choisir cette offre » restait figé sur
+  // « Enregistrement… » sans rien envoyer (constaté le 01/10/2026).
+  var api = { fetch: function (chemin, opts) { return window.KlassioApi.fetch(chemin, opts); } };
   var WHATSAPP = "243971839237";
 
   function wa(texte) { return "https://wa.me/" + WHATSAPP + "?text=" + encodeURIComponent(texte); }
@@ -47,9 +52,12 @@
     }
 
     if (inv && inv.status === "pending") {
-      html += '<div class="of-wait"><span class="of-wait-ic">' + UI.icon("clock", 20) + "</span><div><strong>Paiement déclaré — en attente de confirmation</strong>" +
-        "<p>Facture " + UI.escapeHtml(inv.number) + " · " + montant(inv.amount, inv.currency) + " · référence " + UI.escapeHtml(inv.reference || "—") +
-        ". Votre espace s'ouvre dès que Klassio a vérifié le paiement.</p>" +
+      // Ouverture provisoire (72 h, une fois) : le SERVEUR dit si elle court.
+      var jusqua = S.provisional && S.provisional_until ? new Date(parseFloat(S.provisional_until) * 1000) : null;
+      html += '<div class="of-wait"><span class="of-wait-ic">' + UI.icon("clock", 20) + "</span><div><strong>Paiement déclaré — " + (jusqua ? "en cours de vérification" : "en attente de confirmation") + "</strong>" +
+        "<p>Facture " + UI.escapeHtml(inv.number) + " · " + montant(inv.amount, inv.currency) + " · référence " + UI.escapeHtml(inv.reference || "—") + ". " +
+        (jusqua ? "Votre espace est ouvert pendant la vérification, jusqu'au " + jusqua.toLocaleDateString("fr-FR", { day: "numeric", month: "long" }) + " à " + jusqua.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }) + "." : "Votre espace s'ouvre dès que Klassio a vérifié le paiement.") + "</p>" +
+        (jusqua ? '<a class="btn btn-lime btn-sm" href="dashboard.html">Entrer dans mon espace</a> ' : "") +
         '<a class="btn btn-ghost btn-sm" target="_blank" rel="noopener" href="' + wa("Bonjour, je viens de déclarer le paiement de la facture " + inv.number + " pour " + (S.school_name || "mon établissement") + ".") + '">' + UI.icon("phone", 15) + "Prévenir Klassio sur WhatsApp</a></div></div>";
       host.innerHTML = html;
       wireBypass(host, opts);

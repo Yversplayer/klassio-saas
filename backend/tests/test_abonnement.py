@@ -155,10 +155,10 @@ class AbonnementTests(unittest.TestCase):
 
     def test_contournement_refuse_sur_une_base_distante(self):
         with self.assertRaises(ValueError):
-            config.verifier_contournement(True, "postgres", "postgresql://u:p@db.ecole-exemple.cd:5432/klassio")
-        self.assertTrue(config.verifier_contournement(True, "postgres", "postgresql://u:p@localhost:5432/klassio"))
+            config.verifier_contournement(True, "postgres", "postgresql://db.ecole-exemple.cd:5432/klassio")
+        self.assertTrue(config.verifier_contournement(True, "postgres", "postgresql://localhost:5432/klassio"))
         self.assertTrue(config.verifier_contournement(True, "sqlite"))
-        self.assertFalse(config.verifier_contournement(False, "postgres", "postgresql://u:p@db.ecole-exemple.cd:5432/klassio"))
+        self.assertFalse(config.verifier_contournement(False, "postgres", "postgresql://db.ecole-exemple.cd:5432/klassio"))
 
     def test_lecture_seule_bloque_aussi_le_cahier_de_communication(self):
         """« /api/me » était testé comme un début de chaîne : il laissait passer
@@ -173,6 +173,56 @@ class AbonnementTests(unittest.TestCase):
         self.assertEqual(r.status_code, 402, r.get_data(as_text=True))
         # La vraie route « /api/me/… », elle, reste ouverte (ici : refus de validation, pas 402).
         self.assertNotEqual(self.c.post("/api/me/password", json={}, headers=h).status_code, 402)
+
+    # ---- Ouverture provisoire : une école qui a payé ne reste pas à la porte ----
+    def _declarer(self, h, plan="essentiel", ref="MP-1"):
+        inv = self.c.post("/api/subscription/choose", json={"plan_code": plan}, headers=h).get_json()["invoice"]
+        r = self.c.post("/api/subscription/pay", json={"invoice_id": inv["id"], "method": "mobile_money", "reference": ref}, headers=h)
+        self.assertEqual(r.status_code, 200, r.get_data(as_text=True))
+        return inv, r.get_json()
+
+    def test_paiement_declare_ouvre_provisoirement(self):
+        tid, h = self._ecole()
+        self.assertEqual(self.c.get("/api/students", headers=h).status_code, 402)
+        inv, rep = self._declarer(h)
+        self.assertIn("provisional_until", rep)
+        s = self.c.get("/api/subscription", headers=h).get_json()
+        self.assertEqual(s["status"], "awaiting_payment")
+        self.assertTrue(s["provisional"]); self.assertFalse(s["locked"])
+        self.assertIn("vérification", s["attention"])
+        self.assertEqual(self.c.get("/api/students", headers=h).status_code, 200)
+        self.assertTrue(self.c.get("/api/me", headers=h).get_json()["subscription"]["provisional"])
+        # ~72 h : ni plus, ni moins
+        conn = db.get_connection()
+        jusqua = float(conn.execute("SELECT provisional_until FROM subscriptions WHERE tenant_id=?", (tid,)).fetchone()["provisional_until"])
+        conn.close()
+        self.assertAlmostEqual(jusqua - time.time(), 72 * 3600, delta=120)
+
+    def test_ouverture_provisoire_expiree_referme(self):
+        tid, h = self._ecole()
+        self._declarer(h)
+        conn = db.get_connection()
+        conn.execute("UPDATE subscriptions SET provisional_until=? WHERE tenant_id=?", (str(time.time() - 60), tid)); conn.commit(); conn.close()
+        self.assertEqual(self.c.get("/api/students", headers=h).status_code, 402)
+        s = self.c.get("/api/subscription", headers=h).get_json()
+        self.assertTrue(s["locked"]); self.assertFalse(s["provisional"])
+
+    def test_reference_rejetee_referme_et_ne_rouvre_jamais(self):
+        tid, h = self._ecole()
+        inv, _ = self._declarer(h, ref="FAUSSE-REF")
+        uid = self._admin(h)
+        self.assertEqual(self.c.post(f"/api/platform/invoices/{inv['id']}/void", headers=h).status_code, 200)
+        self.assertEqual(self.c.get("/api/students", headers=h).status_code, 402)
+        titres = [n["title"] for n in self.c.get("/api/notifications", headers=h).get_json()]
+        self.assertTrue(any("Paiement non retrouvé" in t for t in titres))
+        # Nouvelle déclaration : pas de seconde ouverture provisoire.
+        inv2, rep2 = self._declarer(h, ref="AUTRE-REF")
+        self.assertNotIn("provisional_until", rep2)
+        self.assertEqual(self.c.get("/api/students", headers=h).status_code, 402)
+        # La confirmation, elle, ouvre toujours.
+        self.assertEqual(self.c.post(f"/api/platform/invoices/{inv2['id']}/confirm", headers=h).status_code, 200)
+        self.assertEqual(self.c.get("/api/students", headers=h).status_code, 200)
+        conn = db.get_connection(); conn.execute("DELETE FROM platform_admins WHERE user_id=?", (uid,)); conn.commit(); conn.close()
 
     def test_prix_des_offres(self):
         plans = {p["code"]: p for p in self.c.get("/api/plans").get_json()}

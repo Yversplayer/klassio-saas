@@ -269,6 +269,10 @@
     // l'espace passe en LECTURE SEULE, il faut dire pourquoi. Sans ce bandeau,
     // l'utilisateur verrait ses enregistrements échouer sans explication.
     var text = null, cls = "warn";
+    // Ouverture provisoire : la Direction sait que l'espace se refermera si le
+    // paiement n'est pas retrouvé. Information, pas alarme ; les autres rôles
+    // n'ont pas à porter ce sujet.
+    if (sub.provisional && ctx.role === "directeur") { text = "Paiement en cours de vérification par Klassio : votre espace est ouvert en attendant."; cls = "warn"; }
     if (sub.read_only) { text = ctx.role === "directeur" ? "Espace en lecture seule — facture d'abonnement en attente. Vos données sont intactes." : "L'espace de l'établissement est temporairement en lecture seule (abonnement). Consultation possible, enregistrement suspendu."; cls = "bad"; }
     if (!text) return;
     var bar = document.createElement("div");

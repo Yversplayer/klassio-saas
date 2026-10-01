@@ -133,17 +133,32 @@ COMPRESSION_SEUIL_OCTETS = 1024   # en dessous, l'en-tête coûterait plus que l
 COMPRESSION_NIVEAU = 6            # au-delà, le temps CPU dépasse le gain de transfert
 
 
+# Les fichiers du site (pages, styles, scripts) partent par send_from_directory,
+# en « direct_passthrough » : la première version de ce filtre les sautait, et
+# TOUT le frontend voyageait non compressé — 564 Ko pour la landing là où 205
+# suffisent, 5,2 s avant le premier affichage en 3G au lieu de 2 (mesuré le
+# 01/10/2026 à 750 kbit/s, 300 ms). Ces fichiers sont petits et sans secret :
+# on lit leur contenu pour le compresser. Les autres passages directs
+# (téléchargements, PDF, exports) restent intacts.
+TYPES_STATIQUES_COMPRESSIBLES = ("text/html", "text/css", "application/javascript", "text/javascript", "image/svg+xml")
+
+
 @app.after_request
 def compresser_les_reponses(resp):
-    if resp.direct_passthrough or resp.status_code >= 300:
+    if resp.status_code >= 300:
         return resp
+    if resp.direct_passthrough:
+        type_statique = (resp.headers.get("Content-Type") or "").split(";")[0].strip()
+        if request.path.startswith("/api/") or type_statique not in TYPES_STATIQUES_COMPRESSIBLES:
+            return resp
+        resp.direct_passthrough = False
     if "gzip" not in request.headers.get("Accept-Encoding", "").lower():
         return resp
     if resp.headers.get("Content-Encoding"):
         return resp
     type_contenu = (resp.headers.get("Content-Type") or "").split(";")[0].strip()
     if type_contenu not in ("application/json", "text/html", "text/css",
-                            "application/javascript", "text/plain"):
+                            "application/javascript", "text/javascript", "image/svg+xml", "text/plain"):
         return resp
     donnees = resp.get_data()
     if len(donnees) < COMPRESSION_SEUIL_OCTETS:
@@ -157,6 +172,24 @@ def compresser_les_reponses(resp):
     # Sans Vary, un cache intermédiaire servirait du gzip à un client qui n'en
     # veut pas — ou l'inverse.
     resp.headers["Vary"] = (resp.headers.get("Vary") + ", Accept-Encoding") if resp.headers.get("Vary") else "Accept-Encoding"
+    return resp
+
+
+# Mise en cache des ressources du site. Chaque page référence ses styles et
+# scripts avec « ?v=… », incrémenté à chaque modification (AGENTS.md §8) : à
+# version égale, le fichier ne change JAMAIS — le navigateur peut le garder un
+# an sans redemander. Avant, tout repartait en « no-cache » : à chaque visite,
+# une question au serveur par fichier — sur un réseau mobile à 300 ms d'aller-
+# retour, des secondes perdues à se faire répondre « inchangé ». Les images
+# sans version gardent un jour ; les pages HTML, elles, ne sont jamais figées.
+@app.after_request
+def mettre_en_cache_les_ressources(resp):
+    if resp.status_code != 200 or not request.path.startswith("/assets/"):
+        return resp
+    if request.args.get("v"):
+        resp.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+    else:
+        resp.headers["Cache-Control"] = "public, max-age=86400"
     return resp
 
 
@@ -360,7 +393,8 @@ def me():
     sub = api_billing.summary(conn, g.ctx["tenant_id"])
     extra["subscription"] = {"status": sub["status"], "attention": sub["attention"] if g.ctx["role"] == "directeur" else None,
                              "read_only": sub["read_only"], "days_left": sub["days_left"],
-                             "locked": sub["locked"], "bypass": sub["bypass"]}
+                             "locked": sub["locked"], "bypass": sub["bypass"],
+                             "provisional": sub["provisional"], "provisional_until": sub["provisional_until"]}
     extra["is_platform_admin"] = api_billing.is_platform_admin(conn, g.ctx["user_id"])
     extra["title"] = membership["title"] if membership else None
     if g.ctx["role"] == "discipline":

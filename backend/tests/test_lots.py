@@ -394,7 +394,10 @@ class LotsTests(unittest.TestCase):
         first_id = s["open_invoice"]["id"]
         r = self.c.post("/api/subscription/pay", json={"invoice_id": first_id, "method": "mobile_money", "reference": "MP-2026-01"}, headers=self.dir_h)
         self.assertEqual(r.status_code, 200, r.get_data(as_text=True)); self.assertEqual(r.get_json()["status"], "pending")
-        self.assertEqual(self.c.get("/api/students", headers=self.dir_h).status_code, 402)  # déclaré n'est pas confirmé
+        # Déclaré n'est pas confirmé — mais l'école entre pendant la vérification
+        # (ouverture provisoire de 72 h, une seule fois : test_abonnement.py).
+        self.assertEqual(self.c.get("/api/students", headers=self.dir_h).status_code, 200)
+        self.assertTrue(self.c.get("/api/subscription", headers=self.dir_h).get_json()["provisional"])
         # Plateforme : refus sans droit ; confirmation par l'admin → l'espace s'ouvre
         self.assertEqual(self.c.get("/api/platform/overview", headers=self.dir_h).status_code, 403)
         admin_id = self.c.get("/api/me", headers=self.dir_h).get_json()["user_id"]

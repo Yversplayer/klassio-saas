@@ -297,6 +297,47 @@ class CompressionTests(unittest.TestCase):
         self.assertIsNone(r.headers.get("Content-Encoding"))
 
 
+class RessourcesDuSiteTests(unittest.TestCase):
+    """Les fichiers du site partent en « direct_passthrough » : la compression
+    les sautait, et tout le frontend voyageait brut — 564 Ko pour la landing
+    au lieu de 205, 5,2 s avant le premier affichage en 3G au lieu de 2
+    (mesuré le 01/10/2026). Et tout repartait en « no-cache » : une question
+    au serveur par fichier, à chaque visite."""
+
+    def setUp(self):
+        self.client = flask_app_module.app.test_client()
+
+    def test_35_une_feuille_de_style_est_compressee_et_intacte(self):
+        brut = self.client.get("/assets/css/style.css?v=1", headers={"Accept-Encoding": "identity"})
+        comp = self.client.get("/assets/css/style.css?v=1", headers={"Accept-Encoding": "gzip"})
+        self.assertEqual(comp.status_code, 200)
+        self.assertEqual(comp.headers.get("Content-Encoding"), "gzip")
+        self.assertEqual(gzip.decompress(comp.get_data()), brut.get_data())
+        self.assertLess(len(comp.get_data()), len(brut.get_data()) // 3)
+
+    def test_36_pages_et_scripts_compresses(self):
+        for chemin in ("/", "/index.html", "/assets/js/cine.js?v=1", "/app/connexion.html"):
+            r = self.client.get(chemin, headers={"Accept-Encoding": "gzip"})
+            self.assertEqual(r.status_code, 200, chemin)
+            self.assertEqual(r.headers.get("Content-Encoding"), "gzip", chemin)
+
+    def test_37_cache_long_seulement_pour_une_ressource_versionnee(self):
+        r = self.client.get("/assets/css/cine.css?v=1791400003")
+        self.assertIn("immutable", r.headers.get("Cache-Control", ""))
+        self.assertIn("max-age=31536000", r.headers.get("Cache-Control", ""))
+        r = self.client.get("/assets/logo.png")
+        self.assertEqual(r.headers.get("Cache-Control"), "public, max-age=86400")
+        # Une page n'est jamais figée : elle porte les numéros de version.
+        r = self.client.get("/index.html")
+        self.assertNotIn("immutable", r.headers.get("Cache-Control", "") or "")
+        self.assertNotIn("max-age=31536000", r.headers.get("Cache-Control", "") or "")
+
+    def test_38_une_image_n_est_pas_recompressee(self):
+        r = self.client.get("/assets/logo.png", headers={"Accept-Encoding": "gzip"})
+        self.assertEqual(r.status_code, 200)
+        self.assertIsNone(r.headers.get("Content-Encoding"))
+
+
 class PurgeDesSessionsTests(unittest.TestCase):
     """Une session expirée n'était effacée que si quelqu'un présentait son
     jeton — ce qui n'arrive jamais. La table grossissait indéfiniment et

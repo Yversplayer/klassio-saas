@@ -180,13 +180,23 @@
         window.KlassioOffres.render(host, res.body, {
           preselect: offreDemandee,
           reload: chargerOffre,
-          onDeclared: function () { espaceEnAttente(); goStep(4); },
+          onDeclared: function (rep) {
+            // Premier paiement déclaré : le serveur ouvre l'espace le temps de
+            // la vérification (72 h). Sinon, l'étape 4 dit « créé », pas « prêt ».
+            if (rep && rep.provisional_until) espaceOuvertProvisoirement(rep.message);
+            else espaceEnAttente();
+            goStep(4);
+          },
           onBypass: function () { goStep(4); },
         });
       }).catch(function () { host.innerHTML = '<p class="form-error">Le serveur Klassio est momentanément injoignable.</p>'; });
     }
     // Un paiement déclaré n'est pas un paiement confirmé : l'étape 4 dit
     // « créé », pas « prêt », et mène à l'abonnement plutôt qu'au tableau de bord.
+    function espaceOuvertProvisoirement(message) {
+      document.getElementById("revealTitle").textContent = "Votre espace Klassio est ouvert";
+      document.getElementById("revealSummary").textContent = message || "Klassio vérifie votre paiement ; vous pouvez déjà travailler.";
+    }
     function espaceEnAttente() {
       document.getElementById("revealTitle").textContent = "Votre espace Klassio est créé";
       document.getElementById("revealSummary").textContent = "Il s'ouvrira dès que Klassio aura confirmé votre paiement. Vos élèves et vos classes importés vous y attendent.";

@@ -891,7 +891,8 @@ CREATE TABLE IF NOT EXISTS subscriptions (
   current_period_end TEXT,
   grace_days INTEGER NOT NULL DEFAULT 15,
   created_at TEXT NOT NULL,
-  updated_at TEXT NOT NULL
+  updated_at TEXT NOT NULL,
+  provisional_until TEXT          -- ouverture provisoire pendant la vérification du 1er paiement (NULL = jamais accordée)
 );
 
 CREATE TABLE IF NOT EXISTS invoices (

@@ -41,6 +41,12 @@ AWAITING_STATUSES = ("awaiting_plan", "awaiting_payment")
 AWAITING_ALLOWLIST_PREFIXES = ("/api/subscription", "/api/plans", "/api/auth/", "/api/me", "/api/onboarding/", "/api/platform", "/api/notifications")
 MSG_AWAITING = ("Espace en attente d'activation : choisissez votre offre et réglez la première facture. "
                 "Vos données importées sont conservées.")
+# Une école qui a DÉCLARÉ son premier paiement entre aussitôt, le temps que la
+# plateforme le vérifie : la faire attendre (parfois une nuit, un week-end)
+# avant d'importer ou d'inviter son équipe, c'est la perdre au moment où elle
+# vient de payer. Une seule fois par école : une fausse référence ne rouvre
+# jamais l'espace. Rejet ou délai dépassé → l'espace se referme, rien n'est perdu.
+PROVISIONAL_HOURS = 72
 MSG_SUSPENDED = "Espace en lecture seule : l'abonnement de l'établissement est en attente de règlement. Vos données sont intactes."
 
 
@@ -57,6 +63,17 @@ def _autorise(path, entrees):
         elif path == e or path.startswith(e + "/"):
             return True
     return False
+
+
+def provisoire(conn, sub):
+    """Vrai pendant l'ouverture provisoire : premier paiement déclaré (facture
+    « pending »), fenêtre de 72 h non écoulée."""
+    if sub is None or sub["status"] != "awaiting_payment":
+        return False
+    jusqua = sub["provisional_until"] if "provisional_until" in sub.keys() else None
+    if not jusqua or datetime.now() >= _dt(jusqua):
+        return False
+    return bool(conn.execute("SELECT 1 FROM invoices WHERE tenant_id=? AND status='pending'", (sub["tenant_id"],)).fetchone())
 
 
 def bypass_active():
@@ -192,8 +209,12 @@ def summary(conn, tenant_id):
     now = datetime.now()
     days_left = None
     attention = None
+    ouvert_provisoirement = provisoire(conn, sub)
     if sub["status"] == "awaiting_plan":
         attention = "Choisissez l'offre de votre établissement pour ouvrir votre espace."
+    elif ouvert_provisoirement:
+        attention = ("Paiement en cours de vérification : votre espace est ouvert jusqu'au "
+                     + _dt(sub["provisional_until"]).strftime("%d/%m à %H:%M") + ".")
     elif sub["status"] == "awaiting_payment":
         attention = "Votre espace s'ouvrira dès la confirmation du premier paiement."
     elif sub["status"] == "trial":
@@ -218,7 +239,9 @@ def summary(conn, tenant_id):
         # Espace fermé tant que la première facture n'est pas confirmée —
         # sauf contournement testeur (réglage serveur, jamais navigateur).
         "awaiting": sub["status"] in AWAITING_STATUSES,
-        "locked": sub["status"] in AWAITING_STATUSES and not bypass_active(),
+        "locked": sub["status"] in AWAITING_STATUSES and not bypass_active() and not ouvert_provisoirement,
+        "provisional": ouvert_provisoirement,
+        "provisional_until": sub.get("provisional_until") if ouvert_provisoirement else None,
         "bypass": bypass_active(),
         "required_plan": requis,
     }
@@ -237,14 +260,14 @@ def write_blocked(conn, ctx, path, method):
     - Contournement testeur : aucune garde."""
     if bypass_active():
         return None
-    sub = conn.execute("SELECT status FROM subscriptions WHERE tenant_id=?", (ctx["tenant_id"],)).fetchone()
+    sub = conn.execute("SELECT * FROM subscriptions WHERE tenant_id=?", (ctx["tenant_id"],)).fetchone()
     if sub is None:
         # École sans ligne d'abonnement (créée par un outil, ou avant le
         # module) : on la crée — en attente d'offre — plutôt que de la
         # laisser ouverte par omission.
         sub = ensure_subscription(conn, ctx["tenant_id"])
     if sub["status"] in AWAITING_STATUSES:
-        if _autorise(path, AWAITING_ALLOWLIST_PREFIXES):
+        if _autorise(path, AWAITING_ALLOWLIST_PREFIXES) or provisoire(conn, sub):
             return None
         return MSG_AWAITING
     if method in ("GET", "OPTIONS", "HEAD"):
@@ -345,9 +368,19 @@ def declare_payment():
         conn.close()
         return jsonify({"error": "Facture introuvable ou déjà réglée."}), 404
     conn.execute("UPDATE invoices SET status='pending', method=?, reference=? WHERE id=?", (method, reference, inv["id"]))
+    sub = ensure_subscription(conn, g.ctx["tenant_id"])
+    ouverture = None
+    if sub["status"] == "awaiting_payment" and not (sub["provisional_until"] if "provisional_until" in sub.keys() else None):
+        ouverture = datetime.now() + timedelta(hours=PROVISIONAL_HOURS)
+        conn.execute("UPDATE subscriptions SET provisional_until=?, updated_at=? WHERE tenant_id=?",
+                     (_ts(ouverture), str(time.time()), g.ctx["tenant_id"]))
     conn.commit()
     conn.close()
     audit(g.ctx["tenant_id"], g.ctx["user_id"], "billing.payment_declared", "invoice", inv["id"], "success", after={"method": method})
+    if ouverture:
+        return jsonify({"ok": True, "status": "pending", "provisional_until": _ts(ouverture),
+                        "message": "Paiement déclaré. Votre espace est ouvert pendant que Klassio le vérifie (jusqu'au "
+                                   + ouverture.strftime("%d/%m à %H:%M") + ")."})
     return jsonify({"ok": True, "status": "pending", "message": "Paiement déclaré — il sera confirmé par Klassio après vérification."})
 
 
@@ -435,6 +468,15 @@ def void_invoice(invoice_id):
         conn.close()
         return jsonify({"error": "Facture introuvable."}), 404
     conn.execute("UPDATE invoices SET status='void' WHERE id=?", (invoice_id,))
+    sub = ensure_subscription(conn, inv["tenant_id"])
+    if sub["status"] in AWAITING_STATUSES:
+        # Référence non retrouvée : l'ouverture provisoire s'arrête MAINTENANT
+        # (date passée, et non NULL : elle ne sera pas accordée une seconde fois).
+        conn.execute("UPDATE subscriptions SET provisional_until=?, updated_at=? WHERE tenant_id=?",
+                     (str(time.time()), str(time.time()), inv["tenant_id"]))
+        conn.commit()
+        notif_module.on_subscription_notice(conn, inv["tenant_id"], f"Paiement non retrouvé — {inv['number']}",
+                                            "Klassio n'a pas retrouvé ce paiement. Votre espace est refermé, vos données sont intactes : vérifiez la référence ou écrivez-nous.")
     conn.commit()
     compute_state(conn, inv["tenant_id"])
     conn.close()

@@ -284,7 +284,10 @@ fichier créé uniquement dans le miroir sera perdu** — c'est déjà arrivé.
   landing. **Ne modifie aucun prix sans le propriétaire.**
 - **Pas de mode gratuit.** Une école naît fermée (`awaiting_plan`) ; elle dépose
   ses fichiers Excel, choisit son offre (obligatoire), et ne s'ouvre qu'à la
-  confirmation de son premier paiement par la plateforme. Les testeurs lèvent
+  confirmation de son premier paiement par la plateforme — avec UNE ouverture
+  provisoire de 72 h dès qu'elle DÉCLARE ce paiement (référence Mobile Money ou
+  virement), le temps de la vérification ; rejet ou délai dépassé → l'espace se
+  referme, jamais rouvert une seconde fois (`provisional_until`). Les testeurs lèvent
   ce blocage avec `./demarrer.sh --testeur` (`KLASSIO_CONTOURNER_ABONNEMENT=1`,
   réglage serveur, refusé sur une base distante) ; la suite de tests l'active
   dans `tests/__init__.py`, et `test_abonnement.py` éprouve la vraie règle.
