@@ -409,7 +409,7 @@ publique (`public.js`) pointe vers les ancres et n'a **pas d'onglet
 deux fois. Curseur personnalisé et aimantation des boutons : **retirés**, à
 sa demande ; ne pas les remettre.
 
-**La démo** (`demo.html`, à modifier directement) s'ouvre sur un récit en quatre scènes,
+**`index.html` et `demo.html` se modifient directement** : les scripts qui les ont générés le 30/09 vivaient dans le dossier temporaire d'une session et n'existent plus. **La démo** s'ouvre sur un récit en quatre scènes,
 puis la visite interactive (`.demo-shell`, inchangée). L'appel utilise les
 séquences de `cine.js` (`data-kx-seq` : un élève et sa ligne sur le
 téléphone partagent un `data-kx-i`). Les destinataires montrés sont ceux de

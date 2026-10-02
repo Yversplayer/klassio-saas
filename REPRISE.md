@@ -8,11 +8,125 @@ Ce fichier existe pour qu'une nouvelle conversation reprenne sans rien
 redécouvrir. Lisez-le en entier : il contient tout ce qui n'est pas déductible
 du code.
 
-Dernière mise à jour : 2026-09-17 (espace professeur, invitations, calendrier, discipline §11, audit, paiement parent, site public + révocation d'accès + abonnement). §0 consolidé — il donne l'état courant, pas le journal des sessions.
+Dernière mise à jour : **2026-10-02**. **Commencez par §00 ci-dessous** : il donne l'état courant. Le §0 et la suite sont l'historique (17/09 et avant), toujours vrai sauf là où §00 le corrige.
 
 ---
 
-## 0. REPRISE IMMÉDIATE — état au 17/09
+## 00. REPRISE IMMÉDIATE — état au 02/10/2026
+
+> **Nouvelle discussion ?** Lisez `AGENTS.md` (les règles), puis cette section
+> (l'état). Elle suffit pour reprendre ; le reste du fichier est l'historique.
+> Dépôt : https://github.com/Yversplayer/klassio-saas — branche `main`, à jour.
+
+### En une phrase
+
+Klassio est un logiciel de gestion scolaire complet et testé (**502 tests**
+SQLite, **27/27 modules** PostgreSQL), avec une vitrine commerciale (landing +
+démo immersive), des **tarifs arrêtés**, une **offre obligatoire** (pas de mode
+gratuit) et une installation en une commande pour les testeurs. **Jamais
+déployé** : c'est le prochain grand chantier.
+
+### Lancer, tester
+
+```bash
+./installer.sh                 # première fois : Python, dépendances, école fictive (300 élèves)
+./demarrer.sh                  # mode normal : parcours payant réel
+./demarrer.sh --testeur        # abonnement contourné, pour tester sans payer
+./demarrer.sh --reseau         # accessible depuis un téléphone du même Wi-Fi
+```
+
+Site : http://localhost:5001 · Connexion : http://localhost:5001/app/connexion.html.
+Comptes de démonstration (mot de passe `ChargeKlassio2026!`) :
+`direction@ecole1.charge.test` (a aussi l'accès **Plateforme** : confirmer les
+paiements), `discipline@…`, `prof0@…`, `parent0@…`. Liste de parcours à cocher :
+README, « Tester Klassio de fond en comble ».
+
+Tests, **l'un après l'autre** :
+`backend_venv/bin/python -m unittest discover -s backend/tests -t backend` puis
+`backend_venv/bin/python backend/tools/pg_tests.py`.
+
+### Ce qui a été fait du 30/09 au 02/10 (commits sur `main`)
+
+| Commit | Ce qui a changé |
+|---|---|
+| `8f77bda` | **Landing « vitrine »** : identité (sur-titres dorés, serif, cartes photo), mot KLASSIO en volume 3D, entrée dans le « O » conservée, vision en 3D au défilement, manifeste, devise, galerie, pied de page en rideau. **À propos, FAQ, Contact fusionnés dans la landing** (leurs pages redirigent). Barre : un seul bouton « Voir la démo », pas d'onglet Démo. **Effets de souris retirés** (demandé). |
+| `f1862e7` | **Démo** : récit en 4 scènes (l'appel en classe — élèves de dos, mains levées une à une ; le portail et le DD ; le dossier de l'élève en coupe 3D par rôle ; le mur d'écrans « HeroParallax ») puis la visite interactive d'origine. |
+| `12eefc3` | Manifeste : « Votre école sait déjà tout. Klassio fait en sorte que **chacun** le sache — au bon moment, et sans jamais rien recopier. » |
+| `d2ba0e3` | Retiré du site : la **saisie des notes par les professeurs** (pas une fonction du produit — les résultats entrent par l'import de la Direction). |
+| `34a48e9` | Le site montre **tout** le logiciel : section « Le logiciel, au complet » (32 fonctions, 6 familles), mur de **24 écrans** dans la démo. |
+| `f10a16d` | Le rideau de fin revient sur MacBook et téléphone (seuil de hauteur trop prudent). |
+| `c74f02d` | **Pas de mode gratuit** : nouveaux tarifs, offre obligatoire à l'inscription, espace fermé jusqu'au paiement ; mode testeur ; 2 défauts corrigés (`/api/me` laissait passer `/api/messages` en lecture seule ; 127.0.0.1 bloqué par CORS). |
+| `236a892` | **Tarifs** sur la landing (`#tarifs`), **WhatsApp** partout (bouton fixe en bas à gauche), e-mail de contact. |
+| `b14ecf7` | **Ouverture provisoire 72 h** dès que le premier paiement est DÉCLARÉ ; **3G** : pages, styles et scripts enfin compressés + cache d'un an des fichiers `?v=` (landing 564 → 205 Ko ; 8,3 → 4,4 s). |
+| `7490382` | **Testeurs** : `installer.sh`, README réécrit (un seul serveur, port 5001), compte Plateforme de démo, liste de tests. Rejoué sur un clone vierge de GitHub. |
+| `afb417e` | **« Proposer un mot de passe »** à la création d'un compte : phrase de passe de 4 mots + un nombre (`motdepasse.js`). |
+
+### Décisions du propriétaire — ne pas rouvrir
+
+- **Tarifs** (par mois, toutes les fonctionnalités dans chaque offre) :
+  Essentiel **99,90 $** (≤ 300 élèves) · École **149,90 $** (301–1 000) ·
+  Complexe **249,90 $** (1 001–3 000) · Réseau **sur devis**. Deux endroits à
+  garder identiques : `PLANS_2026_10` (`backend/db.py`) et `#tarifs` (`index.html`).
+- **Pas de mode gratuit.** Inscription → dépôt des fichiers Excel → **offre
+  obligatoire** → facture → la Direction déclare sa référence de paiement →
+  **ouverture provisoire 72 h, une seule fois** → la plateforme confirme
+  (espace ouvert) ou annule (espace refermé, jamais rouvert par une seconde
+  déclaration). Aucun paiement n'est encaissé par Klassio.
+- **Le site et la démo montrent TOUT le logiciel, et RIEN d'autre.** Seule
+  tolérance : Mobile Money, présenté tel qu'il est (le parent annonce, l'école
+  confirme). Une fonction ajoutée au logiciel s'ajoute à `#fonctions` et au mur
+  d'écrans.
+- **Les professeurs ne saisissent pas les notes** (pour le propriétaire). Mais
+  le code contient encore une route `POST /api/classes/<id>/grades`
+  (`api_school.py`) et un onglet dans l'écran Classe : **à trancher** (cacher
+  ou retirer) — pas fait, en attente de sa décision.
+- **Contact public** : WhatsApp **+243 971 839 237**, e-mail
+  **mudeyimusimwa@gmail.com** (en attendant `contact@klassio.app`).
+- Landing : l'entrée dans le « O » est la signature, **conservée** ; pas
+  d'effets de souris ; un seul bouton vers la démo.
+
+### Ce qui reste à faire — dans l'ordre du propriétaire
+
+1. **Déploiement** (aucune URL publique aujourd'hui) — avec le domaine.
+2. **Coordonnées de paiement Klassio** (numéro Mobile Money, compte bancaire)
+   à afficher à l'étape « Votre offre » ; aujourd'hui : « demandez-les sur WhatsApp ».
+3. **École pilote** : vraies photos, un témoignage, un chiffre réel.
+4. **Mobile Money pour les frais scolaires des parents** — à faire avec 1 à 3.
+5. **Envoi d'e-mails** : `EMAIL_MODE=capture`, rien ne part (compte fournisseur
+   + SPF/DKIM du domaine) ; le formulaire de contact enregistre sans prévenir.
+6. Trancher la route de saisie des notes (voir plus haut).
+
+Backlog : alléger `style.css` pour la landing ; polices Google (Archivo 87 Ko,
+non allégée car elle porte l'effet cinétique et l'horloge) ; tester sur un vrai
+réseau 3G après déploiement ; `installer.sh` non essayé sous Windows ; photo
+`d1000` inutilisée ; plusieurs `<h1>` dans la visite interactive.
+
+### Pièges et méthode — ce qui fait perdre du temps
+
+- **`index.html` et `demo.html` se modifient DIRECTEMENT.** Ils ont été produits
+  le 30/09 par des scripts de génération rangés dans le dossier temporaire de
+  la session ; ces scripts n'existent plus. Les fichiers du dépôt font foi.
+- **Fichiers de la vitrine** : `assets/css/vitrine.css` (landing, préfixe `kx-`),
+  `assets/css/cine.css` (couche cinématique + LQIP), `assets/css/demo-cine.css`
+  (démo, préfixe `kd-`), `assets/js/cine.js` (moteur des scènes : `--p`,
+  `data-beat`, séquences `data-kx-seq`), `entree.js`, `contact.js`. Côté
+  application : `offres.js` (choix d'offre), `motdepasse.js`.
+- **Incrémenter `?v=`** de chaque fichier modifié, dans toutes les pages qui le
+  chargent — sinon le cache d'un an garde l'ancienne version.
+- **Tests** : les deux suites, **l'une après l'autre** ; pour un correctif,
+  neutraliser le code et voir le test échouer. `tests/__init__.py` active le
+  mode testeur ; `test_abonnement.py` remet la vraie règle.
+- **Serveur** : ne pas le laisser tourner sans le « go » du propriétaire ; au
+  go, `./demarrer.sh --reseau`, `caffeinate`, et calculer l'autonomie batterie.
+  L'adresse Wi-Fi du Mac change (vue en `.102` puis `.106`).
+- **Volet navigateur** : `resize_window` avant toute capture ; volet masqué =
+  pas d'animation, mesurer par JavaScript.
+- **Miroir** : `rsync` vers `~/Desktop/klassio-saas` (AGENTS.md §7) ; le
+  propriétaire demande le Bureau puis GitHub après chaque lot validé.
+- **Higgsfield** : 6,10 crédits restants ; seul `z_image` est disponible
+  (0,15 crédit l'image).
+
+## 0. HISTORIQUE — état au 17/09 (conservé ; §00 fait foi en cas de conflit)
 
 > **Agents IA : lisez `AGENTS.md` d'abord**, puis cette section. Elle remplace
 > le journal des sessions précédentes : tout ce qui suit est encore vrai.
