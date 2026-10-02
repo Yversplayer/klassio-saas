@@ -3476,6 +3476,35 @@ footer { border-top: 1px solid var(--line-soft); padding: 56px 0 40px; }
 .plan-card.current { border-color: var(--lime-deep); box-shadow: 0 0 0 1px var(--lime-deep); }
 .plan-card h3 { margin: 0; font-size: 16px; } .plan-card .pc-range { font-size: 12px; color: var(--ink-faint); } .plan-card .pc-price { font-size: 22px; font-weight: 800; letter-spacing: -0.02em; } .plan-card .pc-price small { font-size: 12px; font-weight: 500; color: var(--ink-faint); }
 .plan-card p { margin: 4px 0 0; font-size: 12.5px; color: var(--ink-soft); line-height: 1.5; }
+/* ---- Proposer un mot de passe (motdepasse.js) — préfixe pws- ----
+   Sous chaque champ « nouveau mot de passe » : proposer une phrase de passe,
+   afficher / masquer, copier. Rien ici ne touche un autre écran. */
+.pws-bar { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.pws-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 99px;
+  border: 1px solid var(--line);
+  background: var(--surface-soft);
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+.pws-btn:hover, .pws-btn:focus-visible { border-color: var(--lime-deep); }
+.pws-proposer { border-color: var(--lime-deep); }
+.pws-panel { margin-top: 10px; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--lime-deep); background: var(--surface); }
+.pws-kicker { display: block; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-soft); }
+.pws-valeur { display: block; margin: 6px 0 10px; font: 700 16px/1.4 ui-monospace, "SFMono-Regular", Menlo, monospace; letter-spacing: 0.02em; color: var(--ink); overflow-wrap: anywhere; user-select: all; }
+.pws-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.pws-msg { font-size: 12.5px; font-weight: 600; color: var(--ink-soft); }
+.pws-panel p { margin: 10px 0 0; font-size: 12.5px; line-height: 1.5; color: var(--ink-soft); }
+@media (prefers-reduced-motion: reduce) { .pws-btn { transition: none; } }
+
 /* ---- Le choix de l'offre (offres.js) — inscription et espace pas encore ouvert ----
    Préfixe of- : ces règles ne touchent aucun autre écran. */
 .of-grid { margin-top: 4px; }

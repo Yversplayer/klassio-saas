@@ -137,6 +137,7 @@ Une heure suffit pour tout voir. Cochez au fur et à mesure ; ce qui doit être
 **3. Une nouvelle école, en mode testeur** (`./demarrer.sh --testeur`)
 - [ ] « Créer mon espace » → importer `docs/exemples/Complexe_Scolaire_La_Reference_export.xlsx` (2 371 élèves **fictifs**, générés par script) → « Votre offre » propose Complexe (l'effectif dépasse 1 000) → « Entrer sans payer (testeur) ».
 - [ ] Inviter un professeur et un parent (le lien d'invitation s'affiche à l'écran — aucun e-mail ne part en développement), se connecter avec eux.
+- [ ] Partout où l'on crée un mot de passe : « Proposer un mot de passe » donne une phrase de passe (quatre mots et un nombre), « Copier », « Un autre », « Afficher / Masquer ».
 
 **4. Le vrai parcours payant** (`./demarrer.sh`, **sans** `--testeur`)
 - [ ] Créer une école : l'espace est **fermé** (toute page renvoie vers Abonnement).
