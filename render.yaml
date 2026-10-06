@@ -1,4 +1,5 @@
-# Klassio — l'API sur Render. Le frontend, lui, est chez Vercel.
+# Klassio — l'API sur Render. Les pages sont chez Cloudflare (wrangler.jsonc),
+# qui relaie /api ici : le navigateur ne voit qu'un domaine.
 #
 # POURQUOI FRANKFURT. Ce n'est pas pour rapprocher le serveur de Kinshasa —
 # aucune région Render ne le ferait vraiment. C'est pour le rapprocher de SA
@@ -45,31 +46,13 @@ services:
       - key: KLASSIO_DB_BACKEND
         value: postgres
 
-      # Les origines autorisées à appeler cette API. Sans cette valeur, le
-      # navigateur refuse les réponses : le frontend est sur un autre domaine.
-      - key: KLASSIO_ALLOWED_ORIGINS
-        value: https://klassio-saas.vercel.app
+      # Pas de KLASSIO_ALLOWED_ORIGINS : le Worker Cloudflare relaie /api depuis
+      # le domaine des pages, le navigateur ne fait donc aucun appel croisé.
 
-      # La base est déclarée plus bas, dans le même fichier. Render injecte sa
-      # chaîne de connexion INTERNE : elle ne sort jamais de son réseau, et
-      # rien n'est à recopier à la main. Aucun secret dans ce dépôt public.
+      # LA BASE : Supabase, projet en région Francfort (eu-central-1), à côté
+      # de ce service. `sync: false` : Render demande la valeur à la création,
+      # elle ne vit jamais dans ce dépôt public. Prendre la chaîne du POOLER
+      # (Supavisor, port 5432 « session ») : la connexion directe de Supabase
+      # n'a qu'une adresse IPv6, que Render ne sait pas joindre.
       - key: DATABASE_URL
-        fromDatabase:
-          name: klassio-db
-          property: connectionString
-
-# LA BASE. Même région que l'API, et c'est tout l'intérêt : application et
-# base côte à côte, ~1 ms entre les deux. Les 28 requêtes du tableau de bord
-# coûtent alors ~30 ms au total, contre 7,5 s si l'application tournait à
-# Kinshasa face à une base en Europe.
-#
-# ⚠️ LE PALIER GRATUIT EST SUPPRIMÉ PAR RENDER AU BOUT DE 30 JOURS. Tenable
-# pour une démonstration, intenable dès la première école réelle : passer en
-# payant AVANT d'y mettre des élèves. Une base d'école qui s'efface toute
-# seule, c'est le genre d'incident dont on ne se relève pas commercialement.
-databases:
-  - name: klassio-db
-    databaseName: klassio
-    user: klassio
-    region: frankfurt
-    plan: free
+        sync: false

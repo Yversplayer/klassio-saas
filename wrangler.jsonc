@@ -1,0 +1,27 @@
+// Klassio sur Cloudflare Workers — les pages, et le relais de /api vers Render.
+// Voir cloudflare/worker.js pour le pourquoi.
+//
+// Déploiement (Workers & Pages → importer le dépôt GitHub) :
+//   commande de build   : sh cloudflare/construire.sh
+//   commande de deploy  : npx wrangler deploy
+// Variables du Worker, à régler dans le tableau de bord (jamais ici, le dépôt
+// est public) : KLASSIO_API_ORIGIN (adresse Render) et, en secret,
+// KLASSIO_RELAIS_SECRET (la même valeur que côté Render).
+{
+  "name": "klassio",
+  "main": "cloudflare/worker.js",
+  "compatibility_date": "2026-09-01",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    // Le Worker passe en premier partout : il pose les en-têtes de cache et de
+    // sécurité, et relaie /api.
+    "run_worker_first": true,
+    // Les liens du site pointent vers `demo.html`, `app/connexion.html`… Le
+    // réglage par défaut les redirigerait vers `/demo` : un aller-retour de
+    // plus à chaque page, sur un réseau mobile à 300 ms. On sert tel quel.
+    "html_handling": "none",
+    "not_found_handling": "404-page"
+  },
+  "observability": { "enabled": true }
+}
