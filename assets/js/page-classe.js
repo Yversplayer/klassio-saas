@@ -414,7 +414,7 @@
         var url = api.base + "/classes/" + classId + "/bulletins/pdf" + (periode ? "?period=" + encodeURIComponent(periode) : "");
         var nom = "Bulletins_" + (C ? C.name : "classe") + (periode ? "_" + periode : "") + ".pdf";
         UI.btnState(pPdf, "loading", "Génération...");
-        fetch(url, { headers: { "Authorization": "Bearer " + api.getToken() } })
+        fetch(url, { credentials: "same-origin" })
           .then(function (res) {
             if (!res.ok) throw new Error("Échec du téléchargement");
             return res.blob();

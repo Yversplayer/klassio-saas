@@ -251,6 +251,111 @@ def create_session(conn, user_id: str, tenant_id: str) -> str:
 INVITATION_TTL_SECONDS = 60 * 60 * 24 * 7  # 7 jours
 
 
+# ---------------------------------------------------------------------------
+# Où vit le token de session : un cookie HttpOnly, pas le JavaScript
+#
+# Jusqu'au 06/10/2026, le frontend gardait le token dans localStorage et
+# l'envoyait en « Authorization: Bearer ». Une XSS qui passait la CSP pouvait
+# donc LIRE le token et l'emporter : la session était usurpable depuis
+# n'importe où, pendant 12 h, même après la fermeture de l'onglet. Signalé par
+# un testeur ingénieur avant la première école.
+#
+# Désormais le navigateur reçoit le token dans un cookie :
+#   HttpOnly        — aucun script ne peut le lire (document.cookie ne le voit pas) ;
+#   SameSite=Strict — il ne part jamais avec une requête initiée par un autre site ;
+#   Secure          — en HTTPS (la production), jamais en clair ;
+#   Max-Age         — la durée de la session serveur, pas plus.
+# HttpOnly n'empêche pas une XSS d'AGIR dans la page : la CSP et escapeHtml
+# restent la défense contre l'XSS elle-même. Il empêche le VOL du token.
+#
+# « Authorization: Bearer » reste accepté pour les clients qui ne sont pas un
+# navigateur (outils, suite de tests) : un navigateur ne l'envoie jamais de
+# lui-même, il n'ouvre donc aucune faille CSRF.
+#
+# CSRF. Un cookie part tout seul : dès qu'il porte la session, une page tierce
+# pourrait tenter d'écrire au nom de l'utilisateur. Toute requête d'écriture
+# authentifiée par cookie doit donc présenter, dans l'en-tête X-CSRF-Token, un
+# jeton dérivé de la session. Il est déposé dans un second cookie, lisible par
+# le script de la page (il ne permet rien sans la session) et illisible pour
+# un autre site. Le serveur le RECALCULE depuis le cookie de session : un jeton
+# planté ou deviné ne correspond à rien.
+# ---------------------------------------------------------------------------
+SESSION_COOKIE = "klassio_session"
+CSRF_COOKIE = "klassio_csrf"
+CSRF_HEADER = "X-CSRF-Token"
+METHODES_MUTANTES = frozenset({"POST", "PUT", "PATCH", "DELETE"})
+
+
+def csrf_pour(token: str) -> str:
+    """Jeton CSRF d'une session. Préfixe distinct de `hash_session_token` : le
+    jeton CSRF est lisible par la page, il ne doit jamais égaler l'empreinte
+    stockée en base."""
+    return hashlib.sha256(("klassio-csrf:" + token).encode()).hexdigest()
+
+
+def jeton_de_la_requete():
+    """(token, origine) — origine vaut "bearer", "cookie" ou None.
+
+    Un en-tête Authorization PRÉSENT fait foi, même vide ou mal formé : le
+    client a choisi ce mode. Le premier jet retombait sur le cookie quand
+    l'en-tête était vide — « Bearer  » (jeton vide) passait alors pour une
+    session valide dès que le navigateur portait aussi le cookie
+    (test_release_gate.test_05)."""
+    if "Authorization" in request.headers:
+        entete = request.headers.get("Authorization", "")
+        jeton = entete[7:].strip() if entete.startswith("Bearer ") else ""
+        return jeton, "bearer"
+    jeton = request.cookies.get(SESSION_COOKIE, "")
+    return (jeton, "cookie") if jeton else ("", None)
+
+
+def csrf_valide(token: str) -> bool:
+    recu = request.headers.get(CSRF_HEADER, "")
+    return bool(recu) and hmac.compare_digest(recu.encode(), csrf_pour(token).encode())
+
+
+def _en_https() -> bool:
+    return request.is_secure or request.headers.get("X-Forwarded-Proto", "") == "https"
+
+
+def requete_de_navigateur() -> bool:
+    """Tout navigateur actuel envoie Sec-Fetch-Site sur un fetch : c'est à lui
+    qu'on ne remet JAMAIS le token dans le corps de la réponse."""
+    return "Sec-Fetch-Site" in request.headers
+
+
+def poser_session(resp, token: str):
+    secure = _en_https()
+    resp.set_cookie(SESSION_COOKIE, token, max_age=SESSION_TTL_SECONDS, path="/",
+                    secure=secure, httponly=True, samesite="Strict")
+    resp.set_cookie(CSRF_COOKIE, csrf_pour(token), max_age=SESSION_TTL_SECONDS, path="/",
+                    secure=secure, httponly=False, samesite="Strict")
+    return resp
+
+
+def effacer_session(resp):
+    secure = _en_https()
+    resp.delete_cookie(SESSION_COOKIE, path="/", secure=secure, httponly=True, samesite="Strict")
+    resp.delete_cookie(CSRF_COOKIE, path="/", secure=secure, httponly=False, samesite="Strict")
+    return resp
+
+
+def repondre_avec_session(corps: dict, token: str, statut: int = 200):
+    """Réponse d'une route qui ouvre une session (inscription, connexion,
+    invitation acceptée, mot de passe changé ou réinitialisé).
+
+    Le navigateur reçoit le token dans le cookie HttpOnly et NULLE PART
+    AILLEURS : s'il figurait aussi dans le corps JSON, un script injecté qui
+    écoute les réponses le lirait là, et le cookie ne protégerait plus rien.
+    Les clients non-navigateurs (outils, tests) le reçoivent dans le corps."""
+    corps = {k: v for k, v in corps.items() if k != "token"}
+    if not requete_de_navigateur():
+        corps["token"] = token
+    resp = jsonify(corps)
+    resp.status_code = statut
+    return poser_session(resp, token)
+
+
 def generate_invitation_token() -> str:
     return secrets.token_urlsafe(32)
 
@@ -320,13 +425,22 @@ WRITE_GUARD = None
 def require_auth(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
-        token = request.headers.get("Authorization", "").replace("Bearer ", "").strip()
+        token, origine = jeton_de_la_requete()
         conn = db.get_connection()
         ctx = resolve_session(conn, token)
-        blocked = WRITE_GUARD(conn, ctx, request.path, request.method) if (ctx and WRITE_GUARD) else None
-        conn.close()
         if not ctx:
-            return jsonify({"error": "Non authentifié"}), 401
+            conn.close()
+            resp = jsonify({"error": "Non authentifié"})
+            resp.status_code = 401
+            # Un cookie expiré ou révoqué ne doit pas rester dans le navigateur.
+            return effacer_session(resp) if origine == "cookie" else resp
+        if origine == "cookie" and request.method in METHODES_MUTANTES and not csrf_valide(token):
+            conn.close()
+            audit(ctx["tenant_id"], ctx["user_id"], "auth.csrf_refused", "request", request.path, "denied")
+            return jsonify({"error": "Requête refusée : jeton de sécurité absent ou invalide. "
+                                     "Rechargez la page, puis réessayez."}), 403
+        blocked = WRITE_GUARD(conn, ctx, request.path, request.method) if WRITE_GUARD else None
+        conn.close()
         if blocked:
             audit(ctx["tenant_id"], ctx["user_id"], "write.blocked_suspended", status="denied")
             return jsonify({"error": blocked if isinstance(blocked, str) else

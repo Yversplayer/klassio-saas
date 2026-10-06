@@ -23,18 +23,40 @@
     });
   }
 
-  function getToken() { try { return localStorage.getItem("klassio_token"); } catch (e) { return null; } }
+  // LE TOKEN DE SESSION N'EST PLUS ICI. Depuis le 06/10/2026, le serveur le
+  // dépose dans un cookie HttpOnly que ce script ne peut pas lire — c'est tout
+  // l'intérêt : une XSS qui passerait la CSP ne pourrait plus l'emporter
+  // (backend/security.py, « Où vit le token de session »). Le navigateur
+  // joint le cookie tout seul aux appels de la même origine.
+  //
+  // Un ancien token resté dans localStorage (version précédente) est effacé
+  // au premier chargement : il n'a plus à traîner dans le navigateur.
+  try { localStorage.removeItem("klassio_token"); } catch (e) {}
+
+  function lireCookie(nom) {
+    var m = document.cookie.match(new RegExp("(?:^|; )" + nom + "=([^;]*)"));
+    return m ? decodeURIComponent(m[1]) : "";
+  }
+  // Le jeton CSRF, lui, est lisible : il ne permet rien sans le cookie de
+  // session, et un autre site ne peut pas le lire. Sa présence sert aussi
+  // d'indice « une session est ouverte » — un indice d'affichage seulement :
+  // c'est le serveur qui tranche, par un 401.
+  function estConnecte() { return !!lireCookie("klassio_csrf"); }
 
   function apiFetch(path, options) {
     options = options || {};
     options.headers = options.headers || {};
     if (!(options.body instanceof FormData)) options.headers["Content-Type"] = "application/json";
-    var token = getToken();
-    if (token) options.headers["Authorization"] = "Bearer " + token;
+    var methode = (options.method || "GET").toUpperCase();
+    // Toute écriture porte le jeton CSRF : sans lui, le serveur la refuse (403).
+    if (methode !== "GET" && methode !== "HEAD") {
+      var csrf = lireCookie("klassio_csrf");
+      if (csrf) options.headers["X-CSRF-Token"] = csrf;
+    }
+    options.credentials = "same-origin";
     return fetch(API_BASE + path, options).then(function (res) {
       return res.json().catch(function () { return null; }).then(function (body) {
         if (res.status === 401 && document.body.dataset.page !== "connexion") {
-          try { localStorage.removeItem("klassio_token"); } catch (e) {}
           window.location.href = "connexion.html?expired=1";
         }
         // UNE RÉPONSE QUI N'EST PAS DU JSON NE VIENT PAS DE L'API KLASSIO.
@@ -80,7 +102,8 @@
 
   function storeSession(body, extra) {
     try {
-      localStorage.setItem("klassio_token", body.token);
+      // Le token n'est PAS recopié : il est dans le cookie HttpOnly. Ne restent
+      // ici que des indications d'affichage (nom, rôle, portail).
       localStorage.setItem("klassio_tenant_id", body.tenant_id);
       localStorage.setItem("klassio_role", body.role);
       localStorage.setItem("klassio_name", body.name || (extra && extra.name) || "");
@@ -367,10 +390,10 @@
 
   window.KlassioApi = {
     fetch: apiFetch, roleMenus: ROLE_MENUS, platformMenu: PLATFORM_MENU, roleLabels: ROLE_LABELS, firstName: firstName,
-    passwordMeetsRules: passwordMeetsRules, wirePasswordRules: wirePasswordRules, storeSession: storeSession, getToken: getToken,
+    passwordMeetsRules: passwordMeetsRules, wirePasswordRules: wirePasswordRules, storeSession: storeSession, estConnecte: estConnecte,
     // Origine de l'API, pour les rares appels qui ne passent pas par
     // apiFetch — un téléchargement de fichier, qui doit lire un blob et non
-    // du JSON, tout en portant le même en-tête d'authentification.
+    // du JSON. Le cookie de session part de lui-même (même origine).
     base: API_BASE,
     homeFor: UI.homeFor,
   };

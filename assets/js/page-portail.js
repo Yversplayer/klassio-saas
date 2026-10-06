@@ -39,7 +39,7 @@
       if (!res.ok) { show("stNotFound"); document.getElementById("nfText").textContent = res.body.error || "Établissement introuvable."; return; }
       applyBranding(res.body);
       show("stLogin");
-      if (api.getToken()) document.getElementById("alreadyIn").hidden = false;
+      if (api.estConnecte()) document.getElementById("alreadyIn").hidden = false;
     }).catch(function () { show("stNotFound"); document.getElementById("nfText").textContent = "Le serveur Klassio est momentanément injoignable."; });
   }
 

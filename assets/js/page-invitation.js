@@ -307,7 +307,7 @@
     // et l'audit. Ce qui suit n'est que de la mise en scène.
     var m = mots();
     try {
-      localStorage.setItem("klassio_token", corps.token);
+      // La session est dans le cookie HttpOnly posé par le serveur.
       localStorage.setItem("klassio_tenant_id", corps.tenant_id);
       localStorage.setItem("klassio_role", corps.role);
       localStorage.setItem("klassio_name", corps.name || "");

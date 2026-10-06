@@ -2153,5 +2153,6 @@ def reset_apply():
     conn.close()
     audit(row["tenant_id"], row["user_id"], "password_reset.applied", "user", row["user_id"], "success")
     security.clear_attempts("reset_apply", security.client_ip())
-    return jsonify({"token": token, "tenant_id": row["tenant_id"], "role": membership["role"] if membership else None,
-                    "name": user["name"], "slug": tenant["slug"] if tenant else None})
+    return security.repondre_avec_session(
+        {"tenant_id": row["tenant_id"], "role": membership["role"] if membership else None,
+         "name": user["name"], "slug": tenant["slug"] if tenant else None}, token)

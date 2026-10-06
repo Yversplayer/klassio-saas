@@ -114,11 +114,11 @@
   }
 
   function telecharger(id) {
-    // Le téléchargement porte le jeton : la route revérifie l'établissement.
-    // On passe par fetch plutôt qu'un lien direct, sinon l'en-tête
-    // d'authentification ne serait pas envoyé.
+    // Le cookie de session part avec la requête : la route revérifie
+    // l'établissement. On garde fetch pour lire le nom du fichier et
+    // afficher un échec dans la page plutôt qu'une page d'erreur brute.
     fetch(api.base + "/exports/" + id + "/download", {
-      headers: { Authorization: "Bearer " + api.getToken() },
+      credentials: "same-origin",
     }).then(function (r) {
       if (!r.ok) throw new Error("refus");
       var nom = "export.zip";

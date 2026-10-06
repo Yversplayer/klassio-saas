@@ -34,7 +34,7 @@
     UI.btnState(btn, "loading", "Mise à jour…");
     api.fetch("/me/password", { method: "POST", body: JSON.stringify({ current_password: document.getElementById("pwCurrent").value, new_password: next }) }).then(function (res) {
       if (!res.ok) { UI.btnState(btn, "error"); msg.textContent = res.body.error || "Impossible de changer le mot de passe."; msg.className = "form-msg error"; return; }
-      try { if (res.body.token) localStorage.setItem("klassio_token", res.body.token); } catch (err) {}
+      // La nouvelle session est déjà dans le cookie, posée par le serveur.
       document.getElementById("pwForm").reset();
       UI.btnState(btn, "success", "Mis à jour");
       msg.textContent = "Mot de passe mis à jour. Vos autres sessions ont été déconnectées."; msg.className = "form-msg success";

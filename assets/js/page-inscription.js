@@ -4,9 +4,7 @@
 (function () {
   "use strict";
   if (location.hash !== "#import") return;
-  var token = null;
-  try { token = localStorage.getItem("klassio_token"); } catch (e) {}
-  if (!token) return;
+  if (!window.KlassioApi.estConnecte()) return;
   window.KlassioApi.fetch("/me").then(function (res) {
     if (!res.ok || res.body.role !== "directeur") return;
     document.getElementById("step-account").hidden = true;

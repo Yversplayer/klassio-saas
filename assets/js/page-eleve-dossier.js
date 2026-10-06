@@ -380,7 +380,7 @@
       var url = api.base + "/students/" + studentId + "/bulletin/pdf" + (period ? "?period=" + encodeURIComponent(period) : "");
       var nom = "Bulletin_" + (D.student.code || studentId) + "_" + (period || "officiel") + ".pdf";
       UI.btnState(pPdf, "loading", "Téléchargement...");
-      fetch(url, { headers: { "Authorization": "Bearer " + api.getToken() } })
+      fetch(url, { credentials: "same-origin" })
         .then(function (res) {
           if (!res.ok) throw new Error("Échec du téléchargement");
           return res.blob();

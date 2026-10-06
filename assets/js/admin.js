@@ -6,10 +6,11 @@
   var UI = window.KlassioUI, api = window.KlassioApi;
 
   function initShell(activePage) {
-    var token = api.getToken();
     // Sans session : redirection, et une promesse qui ne se résout jamais (la page
     // est en train de partir) — plutôt qu'un rejet non capturé dans la console.
-    if (!token) { window.location.href = "connexion.html"; return new Promise(function () {}); }
+    // L'indice vient du cookie CSRF (le token, HttpOnly, est illisible ici) ;
+    // une session expirée malgré l'indice est rattrapée par le 401 de /me.
+    if (!api.estConnecte()) { window.location.href = "connexion.html"; return new Promise(function () {}); }
 
     var sidebar = document.getElementById("sidebar");
     var toggle = document.getElementById("sidebarToggle");
@@ -332,7 +333,7 @@
 
     document.getElementById("logoutBtn").addEventListener("click", function () {
       api.fetch("/auth/logout", { method: "POST" }).finally(function () {
-        try { ["klassio_token", "klassio_role", "klassio_name", "klassio_tenant_id"].forEach(function (k) { localStorage.removeItem(k); }); } catch (e) {}
+        try { ["klassio_role", "klassio_name", "klassio_tenant_id"].forEach(function (k) { localStorage.removeItem(k); }); } catch (e) {}
         window.location.href = "connexion.html";
       });
     });

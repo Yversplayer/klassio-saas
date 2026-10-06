@@ -92,6 +92,44 @@ ALLOWED_ORIGINS = _DEV_ORIGINS | {
 }
 
 
+# ---------------------------------------------------------------------------
+# Écritures venues d'un autre site : refusées avant toute route
+#
+# Depuis que la session voyage dans un cookie, une page tierce pourrait tenter
+# un POST vers /api au nom de l'utilisateur. Le jeton CSRF (security.py) l'en
+# empêche pour toute route authentifiée ; ce filtre ajoute une seconde ligne,
+# qui couvre AUSSI les routes publiques (connexion, inscription, contact) :
+# une page tierce ne peut pas connecter le visiteur au compte de l'attaquant.
+#
+# Sec-Fetch-Site est posé par le navigateur lui-même, une page ne peut pas le
+# falsifier. Derrière le Worker Cloudflare, page et API partagent l'origine :
+# le navigateur annonce « same-origin ». À défaut (navigateur ancien), on
+# compare Origin. Une requête sans aucun des deux ne vient pas d'un navigateur
+# (outil, test) : elle n'a pas de cookie à détourner, on la laisse au reste.
+# ---------------------------------------------------------------------------
+def _origine_autorisee(origine):
+    if origine in ALLOWED_ORIGINS:
+        return True
+    return origine == request.host_url.rstrip("/")
+
+
+@app.before_request
+def refuser_ecritures_intersites():
+    if not request.path.startswith("/api/") or request.method not in security.METHODES_MUTANTES:
+        return None
+    site = request.headers.get("Sec-Fetch-Site")
+    origine = request.headers.get("Origin")
+    if site in ("same-origin", "none"):
+        return None
+    if site is None and origine is None:
+        return None
+    if origine and _origine_autorisee(origine):
+        return None
+    security.audit(None, None, "request.cross_site_refused", "request", request.path, "denied",
+                   after={"origin": (origine or "")[:200], "sec_fetch_site": site})
+    return jsonify({"error": "Requête refusée : elle ne vient pas de Klassio."}), 403
+
+
 @app.after_request
 def add_security_headers(resp):
     origin = request.headers.get("Origin")
@@ -318,7 +356,8 @@ def register_school():
     token = security.create_session(conn, user_id, tenant_id)
     conn.close()
     audit(tenant_id, user_id, "tenant.created", "tenant", tenant_id, "success", after={"school_name": school_name, "slug": slug})
-    return jsonify({"token": token, "tenant_id": tenant_id, "role": "directeur", "name": name, "slug": slug}), 201
+    return security.repondre_avec_session(
+        {"tenant_id": tenant_id, "role": "directeur", "name": name, "slug": slug}, token, 201)
 
 
 @app.post("/api/auth/login")
@@ -362,19 +401,22 @@ def login():
     token = security.create_session(conn, user["id"], membership["tenant_id"])
     tenant = conn.execute("SELECT slug FROM tenants WHERE id=?", (membership["tenant_id"],)).fetchone()
     conn.close()
-    return jsonify({"token": token, "tenant_id": membership["tenant_id"], "role": membership["role"], "name": user["name"],
-                    "slug": tenant["slug"] if tenant else None})
+    return security.repondre_avec_session(
+        {"tenant_id": membership["tenant_id"], "role": membership["role"], "name": user["name"],
+         "slug": tenant["slug"] if tenant else None}, token)
 
 
 @app.post("/api/auth/logout")
 @require_auth
 def logout():
-    token = request.headers.get("Authorization", "").replace("Bearer ", "").strip()
+    token, _ = security.jeton_de_la_requete()
     conn = db.get_connection()
     conn.execute("DELETE FROM sessions WHERE token = ?", (security.hash_session_token(token),))
     conn.commit()
     conn.close()
-    return jsonify({"ok": True})
+    # La session est détruite côté serveur ; le cookie, lui, est retiré du
+    # navigateur — sinon il resterait présenté, en vain, jusqu'à son expiration.
+    return security.effacer_session(jsonify({"ok": True}))
 
 
 @app.get("/api/me")
@@ -435,7 +477,7 @@ def change_password():
     conn.commit()
     conn.close()
     audit(g.ctx["tenant_id"], g.ctx["user_id"], "user.password_changed", "user", g.ctx["user_id"], "success")
-    return jsonify({"ok": True, "token": new_token})
+    return security.repondre_avec_session({"ok": True}, new_token)
 
 
 # ---------------------------------------------------------------------------
@@ -999,9 +1041,10 @@ def delete_my_account():
     conn.close()
     audit(tenant_id, user_id, "account.deleted", "user", user_id, "success",
           after={"role": g.ctx["role"]})
-    return jsonify({"ok": True, "message": "Votre compte a été supprimé. Les données de l'établissement, "
-                                           "les dossiers des élèves et les pièces comptables sont conservés "
-                                           "par l'établissement, comme la loi l'exige."})
+    return security.effacer_session(jsonify({
+        "ok": True, "message": "Votre compte a été supprimé. Les données de l'établissement, "
+                               "les dossiers des élèves et les pièces comptables sont conservés "
+                               "par l'établissement, comme la loi l'exige."}))
 
 
 # ---------------------------------------------------------------------------
@@ -2236,15 +2279,15 @@ def accept_invitation():
     # parents d'une même école, qui partagent le wifi de l'établissement, se
     # bloquaient les uns les autres au onzième inscrit.
     security.clear_attempts("invite_accept", security.client_ip())
-    return jsonify({
-        "token": session_token, "tenant_id": tenant_id, "role": role, "name": name,
+    return security.repondre_avec_session({
+        "tenant_id": tenant_id, "role": role, "name": name,
         "staff_code": staff_code,
         "tenant_name": tenant_row["name"] if tenant_row else "",
         "portal": tenant_row["slug"] if tenant_row else None,
         # L'accueil complet ne se joue qu'ici, à la première activation.
         "onboarding_completed": False,
         "confirmed": confirme,
-    }), 201
+    }, session_token, 201)
 
 
 # ---------------------------------------------------------------------------
