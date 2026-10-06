@@ -43,7 +43,12 @@ def main(argv):
         return 1
 
     if action == "grant":
-        conn.execute("INSERT OR IGNORE INTO platform_admins (user_id, created_at) VALUES (?,?)", (user["id"], str(time.time())))
+        # ON CONFLICT, pas INSERT OR IGNORE : ce dernier est du SQLite pur, et
+        # sous PostgreSQL — la production — `grant` tombait en erreur de
+        # syntaxe. Or c'est le seul moyen de créer le premier administrateur
+        # de la plateforme (tests/test_outil_plateforme.py).
+        conn.execute("INSERT INTO platform_admins (user_id, created_at) VALUES (?,?) ON CONFLICT DO NOTHING",
+                     (user["id"], str(time.time())))
         conn.commit()
         print(f"Accès plateforme accordé à {user['name']} <{user['email']}>.")
     elif action == "revoke":
