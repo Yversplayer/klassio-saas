@@ -71,7 +71,11 @@ def _enroler(email, lire, ecrire):
     ecrire("Second facteur — dans Google Authenticator : « + » → « Saisir une clé de configuration »")
     ecrire("  Nom du compte : Klassio (" + email + ")")
     ecrire("  Clé           : " + groupes)
-    ecrire("  Type          : basé sur l'heure")
+    ecrire("  Type          : basé sur l'heure (PAS « basé sur le compteur »)")
+    # Trouvé au premier enrôlement réel (07/10/2026) : trois codes refusés sur
+    # une clé mal recopiée. Le base32 n'a ni 0, ni 1, ni 8, ni 9.
+    ecrire("  Attention     : uniquement des lettres A-Z et des chiffres 2 à 7 — jamais 0, 1, 8 ni 9.")
+    ecrire("                  « O » est la lettre O, « I » la lettre I. Heure du téléphone : automatique.")
     ecrire("  (ou, pour une application qui lit un lien : " + platform_auth.uri_otpauth(email, secret) + ")")
     ecrire("")
     for _ in range(3):
