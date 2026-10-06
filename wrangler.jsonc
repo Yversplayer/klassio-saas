@@ -4,9 +4,11 @@
 // Déploiement (Workers & Pages → importer le dépôt GitHub) :
 //   commande de build   : sh cloudflare/construire.sh
 //   commande de deploy  : npx wrangler deploy
-// Variables du Worker, à régler dans le tableau de bord (jamais ici, le dépôt
-// est public) : KLASSIO_API_ORIGIN (adresse Render) et, en secret,
-// KLASSIO_RELAIS_SECRET (la même valeur que côté Render).
+// KLASSIO_API_ORIGIN est écrite ICI, pas dans le tableau de bord : `wrangler
+// deploy` efface à chaque déploiement les variables en clair posées à la main.
+// Elle n'a rien de secret (l'adresse Render est publique). Le seul secret,
+// KLASSIO_RELAIS_SECRET, se règle dans le tableau de bord, en « Secret » —
+// les secrets, eux, survivent aux déploiements. Même valeur que côté Render.
 {
   "name": "klassio",
   "main": "cloudflare/worker.js",
@@ -22,6 +24,9 @@
     // plus à chaque page, sur un réseau mobile à 300 ms. On sert tel quel.
     "html_handling": "none",
     "not_found_handling": "404-page"
+  },
+  "vars": {
+    "KLASSIO_API_ORIGIN": "https://klassio-api.onrender.com"
   },
   "observability": { "enabled": true }
 }
