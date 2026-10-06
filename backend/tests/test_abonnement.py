@@ -15,6 +15,7 @@ import config  # noqa: E402
 import db  # noqa: E402
 db.DB_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "klassio_test.db"))
 import app as flask_app_module  # noqa: E402
+from tests.outils_plateforme import session_admin  # noqa: E402
 import security  # noqa: E402
 from security import new_id  # noqa: E402
 
@@ -64,19 +65,18 @@ class AbonnementTests(unittest.TestCase):
                          (new_id(), tenant_id, an, f"E{i}", "Test", now))
         conn.commit(); conn.close()
 
-    def _admin(self, h):
-        uid = self.c.get("/api/me", headers=h).get_json()["user_id"]
-        conn = db.get_connection()
-        conn.execute("INSERT INTO platform_admins (user_id, created_at) VALUES (?,?) ON CONFLICT DO NOTHING", (uid, str(time.time())))
-        conn.commit(); conn.close()
-        return uid
+    def _admin(self):
+        """Une session d'ADMINISTRATION de la plateforme : compte à part, second
+        facteur (backend/platform_auth.py). Jusqu'au 06/10/2026, ces tests
+        promouvaient le directeur lui-même — ce qui n'ouvre plus rien."""
+        client, csrf, _ = session_admin(flask_app_module.app)
+        return client, csrf
 
     def _activer(self, h, plan="essentiel"):
         inv = self.c.post("/api/subscription/choose", json={"plan_code": plan}, headers=h).get_json()["invoice"]
         self.assertEqual(self.c.post("/api/subscription/pay", json={"invoice_id": inv["id"], "method": "bank", "reference": "VIR-1"}, headers=h).status_code, 200)
-        uid = self._admin(h)
-        self.assertEqual(self.c.post(f"/api/platform/invoices/{inv['id']}/confirm", headers=h).status_code, 200)
-        conn = db.get_connection(); conn.execute("DELETE FROM platform_admins WHERE user_id=?", (uid,)); conn.commit(); conn.close()
+        admin, csrf = self._admin()
+        self.assertEqual(admin.post(f"/api/platform/invoices/{inv['id']}/confirm", headers=csrf).status_code, 200)
 
     # ------------------------------------------------------------ règles
     def test_ecole_neuve_fermee_sauf_ce_qui_sert_a_l_ouvrir(self):
@@ -210,8 +210,8 @@ class AbonnementTests(unittest.TestCase):
     def test_reference_rejetee_referme_et_ne_rouvre_jamais(self):
         tid, h = self._ecole()
         inv, _ = self._declarer(h, ref="FAUSSE-REF")
-        uid = self._admin(h)
-        self.assertEqual(self.c.post(f"/api/platform/invoices/{inv['id']}/void", headers=h).status_code, 200)
+        admin, csrf = self._admin()
+        self.assertEqual(admin.post(f"/api/platform/invoices/{inv['id']}/void", headers=csrf).status_code, 200)
         self.assertEqual(self.c.get("/api/students", headers=h).status_code, 402)
         titres = [n["title"] for n in self.c.get("/api/notifications", headers=h).get_json()]
         self.assertTrue(any("Paiement non retrouvé" in t for t in titres))
@@ -220,9 +220,8 @@ class AbonnementTests(unittest.TestCase):
         self.assertNotIn("provisional_until", rep2)
         self.assertEqual(self.c.get("/api/students", headers=h).status_code, 402)
         # La confirmation, elle, ouvre toujours.
-        self.assertEqual(self.c.post(f"/api/platform/invoices/{inv2['id']}/confirm", headers=h).status_code, 200)
+        self.assertEqual(admin.post(f"/api/platform/invoices/{inv2['id']}/confirm", headers=csrf).status_code, 200)
         self.assertEqual(self.c.get("/api/students", headers=h).status_code, 200)
-        conn = db.get_connection(); conn.execute("DELETE FROM platform_admins WHERE user_id=?", (uid,)); conn.commit(); conn.close()
 
     def test_prix_des_offres(self):
         plans = {p["code"]: p for p in self.c.get("/api/plans").get_json()}

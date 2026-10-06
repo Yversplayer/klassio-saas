@@ -11,6 +11,7 @@ import config  # noqa: E402
 import db  # noqa: E402
 db.DB_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "klassio_test.db"))
 import app as flask_app_module  # noqa: E402
+from tests.outils_plateforme import session_admin  # noqa: E402
 import security  # noqa: E402
 
 TODAY = date.today().isoformat()
@@ -400,15 +401,12 @@ class LotsTests(unittest.TestCase):
         self.assertTrue(self.c.get("/api/subscription", headers=self.dir_h).get_json()["provisional"])
         # Plateforme : refus sans droit ; confirmation par l'admin → l'espace s'ouvre
         self.assertEqual(self.c.get("/api/platform/overview", headers=self.dir_h).status_code, 403)
-        admin_id = self.c.get("/api/me", headers=self.dir_h).get_json()["user_id"]
-        # `INSERT OR IGNORE` est du SQLite pur : ce montage tombait dès qu'on
-        # exécutait la suite contre PostgreSQL. `ON CONFLICT DO NOTHING` dit la
-        # même chose sur les deux moteurs — c'est déjà la forme utilisée partout
-        # dans le backend.
-        conn = db.get_connection(); conn.execute("INSERT INTO platform_admins (user_id, created_at) VALUES (?,?) ON CONFLICT DO NOTHING", (admin_id, str(time.time()))); conn.commit(); conn.close()
-        ov = self.c.get("/api/platform/overview", headers=self.dir_h).get_json()
+        # Depuis le 06/10/2026, la plateforme a ses propres comptes (second
+        # facteur, session à part) : un directeur promu n'y ouvre plus rien.
+        admin, admin_csrf, _ = session_admin(flask_app_module.app)
+        ov = admin.get("/api/platform/overview").get_json()
         self.assertTrue(any(t["name"] == "École des Lots" for t in ov["tenants"])); self.assertEqual(len(ov["pending_invoices"]), 1)
-        self.assertEqual(self.c.post(f"/api/platform/invoices/{first_id}/confirm", headers=self.dir_h).status_code, 200)
+        self.assertEqual(admin.post(f"/api/platform/invoices/{first_id}/confirm", headers=admin_csrf).status_code, 200)
         me = self.c.get("/api/me", headers=self.dir_h).get_json()
         self.assertEqual(me["subscription"]["status"], "active"); self.assertFalse(me["subscription"]["locked"])
         self.assertEqual(self.c.get("/api/students", headers=self.dir_h).status_code, 200)
@@ -436,13 +434,12 @@ class LotsTests(unittest.TestCase):
         self.assertEqual(self.c.get("/api/students", headers=self.dir_h).status_code, 200)
         r = self.c.post("/api/subscription/pay", json={"invoice_id": inv_id, "method": "mobile_money", "reference": "MP-2026-77"}, headers=self.dir_h)
         self.assertEqual(r.status_code, 200, r.get_data(as_text=True)); self.assertEqual(r.get_json()["status"], "pending")
-        self.assertEqual(self.c.post(f"/api/platform/invoices/{inv_id}/confirm", headers=self.dir_h).status_code, 200)
+        self.assertEqual(admin.post(f"/api/platform/invoices/{inv_id}/confirm", headers=admin_csrf).status_code, 200)
         me = self.c.get("/api/me", headers=self.dir_h).get_json()
         self.assertEqual(me["subscription"]["status"], "active"); self.assertFalse(me["subscription"]["read_only"])
         self.assertEqual(self.c.post("/api/students", json={"first_name": "Libre", "last_name": "X", "academic_year_id": self.year}, headers=self.dir_h).status_code, 201)
         # Les paliers restent modifiables par l'administration de la plateforme
-        self.assertEqual(self.c.put("/api/platform/plans/ecole", json={"per_student": 0.25}, headers=self.dir_h).status_code, 200)
-        conn = db.get_connection(); conn.execute("DELETE FROM platform_admins WHERE user_id=?", (admin_id,)); conn.commit(); conn.close()
+        self.assertEqual(admin.put("/api/platform/plans/ecole", json={"per_student": 0.25}, headers=admin_csrf).status_code, 200)
 
     def test_13_school_life_settings_are_validated_and_scoped(self):
         """Réglages de vie scolaire : enregistrés, validés, réservés à la Direction."""

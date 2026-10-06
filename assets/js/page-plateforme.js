@@ -1,23 +1,66 @@
 // KLASSIO — Administration de la plateforme (rôle global) : établissements,
 // abonnements, factures déclarées à confirmer, paliers.
+//
+// Depuis le 06/10/2026, cette page ne passe plus par la coquille des écoles
+// (admin.js, app.js) : elle parle à l'API avec la SESSION D'ADMINISTRATION
+// (cookie klassio_admin, backend/platform_auth.py), et toute écriture porte le
+// jeton CSRF d'administration. Session absente ou expirée → retour à la
+// connexion (app/admin.html).
 (function () {
   "use strict";
-  var UI = window.KlassioUI, api = window.KlassioApi, admin = window.KlassioAdmin;
-  var ctx = null, O = null;
+  var UI = window.KlassioUI;
+  var BASE = UI.apiOrigin() + "/api";
+  var O = null;
 
-  admin.initShell("plateforme").then(function (c) {
-    ctx = c;
-    if (!c.is_platform_admin) { document.getElementById("platContent").innerHTML = UI.emptyState("Réservé à l'administration Klassio", "", '<a href="dashboard.html" class="btn btn-ghost btn-sm">Retour</a>', "lock"); return; }
+  function lireCookie(nom) {
+    var m = document.cookie.match(new RegExp("(?:^|; )" + nom + "=([^;]*)"));
+    return m ? decodeURIComponent(m[1]) : "";
+  }
+
+  function versConnexion() { window.location.replace("admin.html?expired=1"); }
+
+  // Même forme de réponse que KlassioApi.fetch : { ok, status, body }.
+  function adminFetch(path, options) {
+    options = options || {};
+    options.credentials = "same-origin";
+    options.headers = options.headers || {};
+    options.headers["Content-Type"] = "application/json";
+    var methode = (options.method || "GET").toUpperCase();
+    if (methode !== "GET" && methode !== "HEAD") options.headers["X-CSRF-Token"] = lireCookie("klassio_admin_csrf");
+    return fetch(BASE + path, options).then(function (res) {
+      return res.json().catch(function () { return {}; }).then(function (body) {
+        // 403 sans session d'administration valide : la session a expiré.
+        if (res.status === 403 && !lireCookie("klassio_admin_csrf")) versConnexion();
+        return { ok: res.ok, status: res.status, body: body || {} };
+      });
+    }).catch(function () {
+      return { ok: false, status: 0, body: { error: "Le serveur Klassio est injoignable." } };
+    });
+  }
+
+  function erreur(host, message) {
+    host.innerHTML = UI.emptyState(message, "", '<button type="button" class="btn btn-ghost btn-sm" id="platRetry">Réessayer</button>', "alert");
+    var b = document.getElementById("platRetry");
+    if (b) b.addEventListener("click", load);
+  }
+
+  adminFetch("/admin/session").then(function (res) {
+    if (!res.ok) return versConnexion();
+    document.getElementById("adminName").textContent = res.body.name || "";
     load();
+  });
+
+  document.getElementById("adminLogout").addEventListener("click", function () {
+    adminFetch("/admin/logout", { method: "POST" }).then(function () { window.location.replace("admin.html"); });
   });
 
   function load() {
     var host = document.getElementById("platContent");
     host.innerHTML = '<div class="kpi-grid">' + UI.skeleton("kpi", 4) + "</div>" + UI.skeleton("card", 2);
-    api.fetch("/platform/overview").then(function (res) {
-      if (!res.ok) return admin.loadError(host, load, "Impossible de charger la plateforme");
+    adminFetch("/platform/overview").then(function (res) {
+      if (!res.ok) return erreur(host, res.status === 0 ? "Le serveur Klassio est injoignable" : "Impossible de charger la plateforme");
       O = res.body; render();
-    }).catch(function () { admin.loadError(host, load, "Le serveur Klassio est injoignable"); });
+    });
   }
 
   function render() {
@@ -35,10 +78,10 @@
       '<div class="panel"><div class="panel-head"><h2>Paliers</h2><span class="sub">Modifiables — appliqués aux prochaines factures</span></div><div class="table-wrap"><table class="data-table responsive"><thead><tr><th>Palier</th><th>Élèves</th><th class="num">Forfait</th><th class="num">Par élève</th><th class="actions"></th></tr></thead><tbody>' + O.plans.map(function (p) {
         return '<tr data-code="' + p.code + '"><td data-label="Palier"><span class="cell-main">' + UI.escapeHtml(p.name) + '</span><span class="cell-sub">' + UI.escapeHtml(p.description || "") + '</span></td><td data-label="Élèves">' + p.min_students + (p.max_students ? " – " + p.max_students : " +") + '</td><td data-label="Forfait" class="num"><input type="number" step="0.01" min="0" class="grade-input p-base" value="' + p.base_price + '" style="width:90px" /></td><td data-label="Par élève" class="num"><input type="number" step="0.01" min="0" class="grade-input p-per" value="' + p.per_student + '" style="width:90px" /></td><td class="actions"><button type="button" class="btn btn-ghost btn-xs save-plan">Enregistrer</button></td></tr>';
       }).join("") + "</tbody></table></div></div>";
-    host.querySelectorAll(".conf").forEach(function (b) { b.addEventListener("click", function () { UI.confirm("Confirmer ce paiement ?", "L'établissement repasse « actif » et est notifié.", "Confirmer").then(function (ok) { if (ok) api.fetch("/platform/invoices/" + b.dataset.id + "/confirm", { method: "POST" }).then(function (r) { if (!r.ok) return UI.toast(r.body.error || "Impossible.", "error"); UI.toast("Paiement confirmé.", "success"); load(); }); }); }); });
-    host.querySelectorAll(".void").forEach(function (b) { b.addEventListener("click", function () { UI.confirm("Annuler cette facture ?", "", "Annuler la facture").then(function (ok) { if (ok) api.fetch("/platform/invoices/" + b.dataset.id + "/void", { method: "POST" }).then(function () { UI.toast("Facture annulée.", "success"); load(); }); }); }); });
-    host.querySelectorAll(".ext").forEach(function (b) { b.addEventListener("click", function () { UI.confirm("Prolonger l'essai de 15 jours ?", b.dataset.name, "Prolonger").then(function (ok) { if (ok) api.fetch("/platform/tenants/" + b.dataset.id, { method: "PUT", body: JSON.stringify({ extend_trial_days: 15 }) }).then(function () { UI.toast("Essai prolongé.", "success"); load(); }); }); }); });
-    host.querySelectorAll(".react").forEach(function (b) { b.addEventListener("click", function () { api.fetch("/platform/tenants/" + b.dataset.id, { method: "PUT", body: JSON.stringify({ status: "active" }) }).then(function () { UI.toast("Établissement réactivé.", "success"); load(); }); }); });
-    host.querySelectorAll(".save-plan").forEach(function (b) { b.addEventListener("click", function () { var tr = b.closest("tr"); UI.btnState(b, "loading"); api.fetch("/platform/plans/" + tr.dataset.code, { method: "PUT", body: JSON.stringify({ base_price: parseFloat(tr.querySelector(".p-base").value), per_student: parseFloat(tr.querySelector(".p-per").value) }) }).then(function (r) { if (!r.ok) { UI.btnState(b, "error"); return UI.toast(r.body.error || "Impossible.", "error"); } UI.btnState(b, "success"); }); }); });
+    host.querySelectorAll(".conf").forEach(function (b) { b.addEventListener("click", function () { UI.confirm("Confirmer ce paiement ?", "L'établissement repasse « actif » et est notifié.", "Confirmer").then(function (ok) { if (ok) adminFetch("/platform/invoices/" + b.dataset.id + "/confirm", { method: "POST" }).then(function (r) { if (!r.ok) return UI.toast(r.body.error || "Impossible.", "error"); UI.toast("Paiement confirmé.", "success"); load(); }); }); }); });
+    host.querySelectorAll(".void").forEach(function (b) { b.addEventListener("click", function () { UI.confirm("Annuler cette facture ?", "", "Annuler la facture").then(function (ok) { if (ok) adminFetch("/platform/invoices/" + b.dataset.id + "/void", { method: "POST" }).then(function () { UI.toast("Facture annulée.", "success"); load(); }); }); }); });
+    host.querySelectorAll(".ext").forEach(function (b) { b.addEventListener("click", function () { UI.confirm("Prolonger l'essai de 15 jours ?", b.dataset.name, "Prolonger").then(function (ok) { if (ok) adminFetch("/platform/tenants/" + b.dataset.id, { method: "PUT", body: JSON.stringify({ extend_trial_days: 15 }) }).then(function () { UI.toast("Essai prolongé.", "success"); load(); }); }); }); });
+    host.querySelectorAll(".react").forEach(function (b) { b.addEventListener("click", function () { adminFetch("/platform/tenants/" + b.dataset.id, { method: "PUT", body: JSON.stringify({ status: "active" }) }).then(function () { UI.toast("Établissement réactivé.", "success"); load(); }); }); });
+    host.querySelectorAll(".save-plan").forEach(function (b) { b.addEventListener("click", function () { var tr = b.closest("tr"); UI.btnState(b, "loading"); adminFetch("/platform/plans/" + tr.dataset.code, { method: "PUT", body: JSON.stringify({ base_price: parseFloat(tr.querySelector(".p-base").value), per_student: parseFloat(tr.querySelector(".p-per").value) }) }).then(function (r) { if (!r.ok) { UI.btnState(b, "error"); return UI.toast(r.body.error || "Impossible.", "error"); } UI.btnState(b, "success"); }); }); });
   }
 })();

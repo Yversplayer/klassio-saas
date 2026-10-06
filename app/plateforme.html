@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex, nofollow" />
 <title>Plateforme — Klassio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,43 +12,28 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' http://localhost:5001; base-uri 'self'; form-action 'self'">
 <script src="../assets/js/theme.js?v=1790200001"></script>
 <link rel="icon" href="../favicon.ico" sizes="any">
-<link rel="apple-touch-icon" href="../assets/logo.png">
 </head>
 <body data-page="plateforme">
-
-<div class="app-shell">
-  <aside class="sidebar" id="sidebar" aria-label="Navigation principale">
-    <div class="s-brand"><img src="../assets/logo.png?v=1789183937" class="brand-mark" alt="">Klassio</div>
-    <nav id="sidebarNav"></nav>
-    <div class="s-role" id="roleTag"></div>
-  </aside>
-  <div class="sidebar-scrim" id="sidebarScrim" hidden></div>
-
-  <div class="main-col">
-    <div class="topbar">
-      <div class="topbar-left">
-        <button class="icon-btn" id="sidebarToggle" aria-label="Afficher ou masquer le menu"></button>
-        <nav class="topbar-context" id="topbarContext" aria-label="Fil d'Ariane"></nav>
-      </div>
-      <div class="topbar-right">
-        <button class="icon-btn bell" id="bellBtn" aria-label="Notifications" aria-haspopup="true"></button>
-      </div>
-    </div>
-
-    <div class="dash-body">
-
-      <div class="page-header">
-        <div><h1>Administration Klassio</h1><p id="pageSub">Établissements, abonnements, factures à confirmer, paliers.</p></div>
-      </div>
-      <div id="platContent"></div>
-    </div>
+<!--
+  Administration de la plateforme — HORS de l'interface des écoles depuis le
+  06/10/2026 : aucune barre latérale d'établissement, aucune session d'école.
+  On y entre par app/admin.html (mot de passe + code), et nulle part ailleurs.
+-->
+<div class="auth-topbar" style="max-width:1200px;margin:0 auto;padding:16px 20px;">
+  <span class="brand"><img src="../assets/logo.png?v=1789000492" class="brand-mark" alt="">Klassio · Plateforme</span>
+  <span style="display:flex;gap:12px;align-items:center;">
+    <span class="muted" id="adminName"></span>
+    <button type="button" class="btn btn-ghost btn-sm" id="adminLogout">Se déconnecter</button>
+  </span>
+</div>
+<div class="dash-body" style="max-width:1200px;margin:0 auto;">
+  <div class="page-header">
+    <div><h1>Administration Klassio</h1><p id="pageSub">Établissements, abonnements, factures à confirmer, paliers.</p></div>
   </div>
+  <div id="platContent"></div>
 </div>
 
 <script src="../assets/js/ui.js?v=1791400003"></script>
-<script src="../assets/js/loader.js?v=1789400003"></script>
-<script src="../assets/js/app.js?v=1791600001"></script>
-<script src="../assets/js/admin.js?v=1791600001"></script>
-<script src="../assets/js/page-plateforme.js?v=1791400001"></script>
+<script src="../assets/js/page-plateforme.js?v=1791700001"></script>
 </body>
 </html>

@@ -33,6 +33,7 @@ import api_life
 import api_discipline
 import api_academics
 import api_billing
+import platform_auth
 from security import require_auth, require_permission, new_id, audit
 from validation import (
     ValidationError, json_object, positive_amount, required_text, valid_email, valid_password, valid_phone, valid_hex_color,
@@ -46,6 +47,7 @@ app.register_blueprint(api_life.bp)
 app.register_blueprint(api_discipline.bp)
 app.register_blueprint(api_academics.bp)
 app.register_blueprint(api_billing.bp)
+app.register_blueprint(platform_auth.bp)
 
 # Espace suspendu (abonnement impayé au-delà du délai de grâce) : lecture
 # libre, écriture bloquée — jamais de suppression de données.
@@ -437,7 +439,6 @@ def me():
                              "read_only": sub["read_only"], "days_left": sub["days_left"],
                              "locked": sub["locked"], "bypass": sub["bypass"],
                              "provisional": sub["provisional"], "provisional_until": sub["provisional_until"]}
-    extra["is_platform_admin"] = api_billing.is_platform_admin(conn, g.ctx["user_id"])
     extra["title"] = membership["title"] if membership else None
     if g.ctx["role"] == "discipline":
         extra["scope_cycles"] = school.discipline_scope_cycles(conn, g.ctx)
@@ -1103,14 +1104,10 @@ def public_contact():
 
 
 @app.get("/api/platform/contact-requests")
-@require_auth
+@platform_auth.require_platform_admin
 def list_contact_requests():
     """Lecture des demandes publiques — administration Klassio uniquement."""
     conn = db.get_connection()
-    if not api_billing.is_platform_admin(conn, g.ctx["user_id"]):
-        conn.close()
-        audit(g.ctx["tenant_id"], g.ctx["user_id"], "contact.list", status="denied")
-        return jsonify({"error": "Réservé à l'administration Klassio."}), 403
     rows = [dict(r) for r in conn.execute(
         "SELECT * FROM contact_requests ORDER BY created_at DESC LIMIT 200")]
     conn.close()

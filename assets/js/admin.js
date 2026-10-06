@@ -83,7 +83,6 @@
       try { localStorage.setItem("klassio_role", ctx.role); localStorage.setItem("klassio_name", ctx.user_name || ""); if (ctx.tenant_name) localStorage.setItem("klassio_etablissement", ctx.tenant_name); } catch (e) {}
 
       var menus = (api.roleMenus[ctx.role] || api.roleMenus.parent).slice();
-      if (ctx.is_platform_admin) menus.push(api.platformMenu);
 
       // Une page absorbée par une entrée fusionnée doit ALLUMER cette entrée.
       // Sans cette table, être sur Classes ou Paiements n'éclairait plus rien

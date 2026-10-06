@@ -26,6 +26,7 @@ import db
 import notifications as notif_module
 import school
 from security import require_auth, new_id, audit
+from platform_auth import require_platform_admin, acteur as platform_acteur
 from validation import json_object, ValidationError, required_text
 
 bp = Blueprint("billing", __name__)
@@ -87,10 +88,6 @@ def _ts(dt):
 
 def _dt(ts):
     return datetime.fromtimestamp(float(ts))
-
-
-def is_platform_admin(conn, user_id):
-    return bool(conn.execute("SELECT 1 FROM platform_admins WHERE user_id=?", (user_id,)).fetchone())
 
 
 def active_students(conn, tenant_id):
@@ -388,22 +385,15 @@ def declare_payment():
 # ADMINISTRATION DE LA PLATEFORME (rôle global)
 # ===========================================================================
 
-def _admin_only():
-    conn = db.get_connection()
-    ok = is_platform_admin(conn, g.ctx["user_id"])
-    conn.close()
-    if not ok:
-        audit(g.ctx["tenant_id"], g.ctx["user_id"], "platform.denied", status="denied")
-        return jsonify({"error": "Réservé à l'administration de la plateforme."}), 403
-    return None
+# Depuis le 06/10/2026, ces routes ne s'ouvrent qu'à une session
+# d'administration (platform_auth.require_platform_admin) : compte à part,
+# second facteur, cookie distinct. Une session d'école — même de directeur, même
+# inscrit dans l'ancienne table platform_admins — reçoit 403.
 
 
 @bp.get("/api/platform/overview")
-@require_auth
+@require_platform_admin
 def platform_overview():
-    denied = _admin_only()
-    if denied:
-        return denied
     conn = db.get_connection()
     tenants = []
     mrr = 0.0
@@ -425,11 +415,8 @@ def platform_overview():
 
 
 @bp.post("/api/platform/invoices/<invoice_id>/confirm")
-@require_auth
+@require_platform_admin
 def confirm_invoice(invoice_id):
-    denied = _admin_only()
-    if denied:
-        return denied
     conn = db.get_connection()
     inv = conn.execute("SELECT * FROM invoices WHERE id=?", (invoice_id,)).fetchone()
     if not inv or inv["status"] == "paid":
@@ -452,16 +439,13 @@ def confirm_invoice(invoice_id):
     conn.commit()
     notif_module.on_subscription_notice(conn, inv["tenant_id"], f"Paiement confirmé — {inv['number']}", "Merci. Votre abonnement Klassio est à jour.", priority="NORMAL")
     conn.close()
-    audit(inv["tenant_id"], g.ctx["user_id"], "billing.invoice_confirmed", "invoice", invoice_id, "success")
+    audit(inv["tenant_id"], platform_acteur(), "billing.invoice_confirmed", "invoice", invoice_id, "success")
     return jsonify({"ok": True})
 
 
 @bp.post("/api/platform/invoices/<invoice_id>/void")
-@require_auth
+@require_platform_admin
 def void_invoice(invoice_id):
-    denied = _admin_only()
-    if denied:
-        return denied
     conn = db.get_connection()
     inv = conn.execute("SELECT * FROM invoices WHERE id=?", (invoice_id,)).fetchone()
     if not inv:
@@ -480,16 +464,13 @@ def void_invoice(invoice_id):
     conn.commit()
     compute_state(conn, inv["tenant_id"])
     conn.close()
-    audit(inv["tenant_id"], g.ctx["user_id"], "billing.invoice_voided", "invoice", invoice_id, "success")
+    audit(inv["tenant_id"], platform_acteur(), "billing.invoice_voided", "invoice", invoice_id, "success")
     return jsonify({"ok": True})
 
 
 @bp.put("/api/platform/tenants/<tenant_id>")
-@require_auth
+@require_platform_admin
 def update_tenant_subscription(tenant_id):
-    denied = _admin_only()
-    if denied:
-        return denied
     data = json_object(request.get_json(force=True))
     conn = db.get_connection()
     sub = ensure_subscription(conn, tenant_id)
@@ -513,16 +494,13 @@ def update_tenant_subscription(tenant_id):
     conn.execute(f"UPDATE subscriptions SET {', '.join(fields)} WHERE tenant_id=?", params + [tenant_id])
     conn.commit()
     conn.close()
-    audit(tenant_id, g.ctx["user_id"], "billing.subscription_updated", "tenant", tenant_id, "success", after=data)
+    audit(tenant_id, platform_acteur(), "billing.subscription_updated", "tenant", tenant_id, "success", after=data)
     return jsonify({"ok": True})
 
 
 @bp.put("/api/platform/plans/<code>")
-@require_auth
+@require_platform_admin
 def update_plan(code):
-    denied = _admin_only()
-    if denied:
-        return denied
     data = json_object(request.get_json(force=True))
     conn = db.get_connection()
     if not conn.execute("SELECT 1 FROM plans WHERE code=?", (code,)).fetchone():
@@ -552,5 +530,5 @@ def update_plan(code):
     conn.execute(f"UPDATE plans SET {', '.join(fields)} WHERE code=?", params + [code])
     conn.commit()
     conn.close()
-    audit(None, g.ctx["user_id"], "billing.plan_updated", "plan", code, "success", after=data)
+    audit(None, platform_acteur(), "billing.plan_updated", "plan", code, "success", after=data)
     return jsonify({"ok": True})

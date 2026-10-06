@@ -954,6 +954,39 @@ CREATE TABLE IF NOT EXISTS platform_admins (
   created_at TEXT NOT NULL
 );
 
+-- Administration de la plateforme — comptes À PART (06/10/2026).
+--
+-- Jusque-là, l'accès « plateforme » était un drapeau posé sur le compte d'un
+-- directeur d'école (platform_admins, conservée ci-dessus mais désormais sans
+-- effet) : une session d'école volée ouvrait la facturation de TOUS les
+-- établissements, et l'inscription demandait un nom d'établissement à
+-- l'administrateur. Ces comptes-ci n'appartiennent à aucune école, ne se
+-- créent que depuis le serveur (backend/tools/platform_admin.py, aucune route
+-- HTTP n'écrit cette table) et exigent un second facteur (TOTP, RFC 6238).
+CREATE TABLE IF NOT EXISTS platform_accounts (
+  id TEXT PRIMARY KEY,
+  email TEXT NOT NULL UNIQUE,
+  name TEXT NOT NULL,
+  password_hash TEXT NOT NULL,
+  totp_secret TEXT NOT NULL,
+  -- Dernier pas de 30 s accepté : un code déjà utilisé ne sert jamais deux fois.
+  totp_last_step INTEGER NOT NULL DEFAULT 0,
+  status TEXT NOT NULL DEFAULT 'active', -- active | disabled
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+-- Sessions d'administration : distinctes des sessions d'école (table
+-- `sessions`), plus courtes (30 min d'inactivité, 8 h au plus). Seule
+-- l'empreinte SHA-256 du jeton est stockée.
+CREATE TABLE IF NOT EXISTS platform_sessions (
+  token TEXT PRIMARY KEY,
+  account_id TEXT NOT NULL REFERENCES platform_accounts(id),
+  created_at TEXT NOT NULL,
+  last_seen_at TEXT NOT NULL,
+  expires_at TEXT NOT NULL
+);
+
 CREATE INDEX IF NOT EXISTS idx_calendar_tenant ON calendar_events(tenant_id, starts_on);
 CREATE INDEX IF NOT EXISTS idx_resources_class ON resources(tenant_id, class_id);
 CREATE INDEX IF NOT EXISTS idx_messages_student ON messages(tenant_id, student_id, created_at);

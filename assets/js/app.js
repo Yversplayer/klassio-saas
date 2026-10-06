@@ -162,7 +162,9 @@
       ["ai", "Assistant", "ia.html"],
     ],
   };
-  var PLATFORM_MENU = ["grid", "Plateforme", "plateforme.html"];
+  // L'administration de la plateforme n'a plus d'entrée dans le menu d'une
+  // école (06/10/2026) : elle a ses propres comptes et sa propre connexion
+  // (app/admin.html, backend/platform_auth.py).
   var ROLE_LABELS = { directeur: "Direction", discipline: "Directeur des disciplines", professeur: "Professeur", parent: "Parent" };
 
   // Les civilités ne sont pas des prénoms. Un enseignant invité sous le nom
@@ -389,7 +391,7 @@
   });
 
   window.KlassioApi = {
-    fetch: apiFetch, roleMenus: ROLE_MENUS, platformMenu: PLATFORM_MENU, roleLabels: ROLE_LABELS, firstName: firstName,
+    fetch: apiFetch, roleMenus: ROLE_MENUS, roleLabels: ROLE_LABELS, firstName: firstName,
     passwordMeetsRules: passwordMeetsRules, wirePasswordRules: wirePasswordRules, storeSession: storeSession, estConnecte: estConnecte,
     // Origine de l'API, pour les rares appels qui ne passent pas par
     // apiFetch — un téléchargement de fichier, qui doit lire un blob et non
