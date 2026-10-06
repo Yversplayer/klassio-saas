@@ -1679,10 +1679,10 @@ def update_settings_route():
 def public_portal(slug):
     """Habillage public d'un établissement (nom, logo, photo, couleur) pour
     la page d'atterrissage aux couleurs de l'école. Aucune donnée métier."""
-    allowed, retry_after = security.check_rate_limit("portal", request.remote_addr, 120, 300)
+    allowed, retry_after = security.check_rate_limit("portal", security.client_ip(), 120, 300)
     if not allowed:
         return jsonify({"error": f"Trop de tentatives. Réessayez dans {retry_after} secondes."}), 429
-    security.record_attempt("portal", request.remote_addr)
+    security.record_attempt("portal", security.client_ip())
     conn = db.get_connection()
     tenant = conn.execute("SELECT * FROM tenants WHERE slug=? AND status='active'", (school.slugify(slug),)).fetchone()
     conn.close()
@@ -2033,7 +2033,7 @@ def forgot_password():
     """
     # Même plafond que les autres routes publiques qui gardent un secret, et
     # même règle depuis le 18/09 : seul un échec consomme le budget.
-    allowed, retry_after = security.check_rate_limit("forgot_password", request.remote_addr, 10, 300)
+    allowed, retry_after = security.check_rate_limit("forgot_password", security.client_ip(), 10, 300)
     if not allowed:
         return jsonify({"error": f"Trop de tentatives. Réessayez dans {retry_after} secondes."}), 429
 
@@ -2049,7 +2049,7 @@ def forgot_password():
     })
 
     if not saisie or "@" not in saisie:
-        security.record_attempt("forgot_password", request.remote_addr)
+        security.record_attempt("forgot_password", security.client_ip())
         return reponse
 
     conn = db.get_connection()
@@ -2060,7 +2060,7 @@ def forgot_password():
             # Compte inconnu, ou compte créé au téléphone seul (adresse
             # technique @klassio.invalid). Dans les deux cas : même réponse,
             # et l'échec compte contre le budget anti-énumération.
-            security.record_attempt("forgot_password", request.remote_addr)
+            security.record_attempt("forgot_password", security.client_ip())
             return reponse
 
         membership = conn.execute(
@@ -2070,7 +2070,7 @@ def forgot_password():
         if not membership:
             # Compte sans accès actif : rien à réinitialiser. Un compte révoqué
             # ne doit pas pouvoir se réactiver par ce chemin.
-            security.record_attempt("forgot_password", request.remote_addr)
+            security.record_attempt("forgot_password", security.client_ip())
             return reponse
 
         tenant_id = membership["tenant_id"]
@@ -2099,7 +2099,7 @@ def forgot_password():
         deliveries_module.envoyer_email(conn, tenant_id, livraison, sujet, html, texte)
         audit(tenant_id, user["id"], "password_reset.self_requested", "user", user["id"], "success")
         # Succès : on efface l'ardoise de cette adresse IP (règle du 18/09).
-        security.clear_attempts("forgot_password", request.remote_addr)
+        security.clear_attempts("forgot_password", security.client_ip())
         return reponse
     finally:
         conn.close()
@@ -2107,7 +2107,7 @@ def forgot_password():
 
 @bp.get("/api/password-reset/lookup")
 def reset_lookup():
-    allowed, retry_after = security.check_rate_limit("reset_lookup", request.remote_addr, 20, 300)
+    allowed, retry_after = security.check_rate_limit("reset_lookup", security.client_ip(), 20, 300)
     if not allowed:
         return jsonify({"error": f"Trop de tentatives. Réessayez dans {retry_after} secondes."}), 429
     conn = db.get_connection()
@@ -2115,10 +2115,10 @@ def reset_lookup():
     if not row:
         # Seul l'échec consomme le budget anti-énumération (règle du 18/09) :
         # la clé est l'adresse IP, et toute une école peut partager la sienne.
-        security.record_attempt("reset_lookup", request.remote_addr)
+        security.record_attempt("reset_lookup", security.client_ip())
         conn.close()
         return jsonify({"error": "Lien invalide, expiré ou déjà utilisé — demandez-en un nouveau à votre établissement."}), 404
-    security.clear_attempts("reset_lookup", request.remote_addr)
+    security.clear_attempts("reset_lookup", security.client_ip())
     user = conn.execute("SELECT name FROM users WHERE id=?", (row["user_id"],)).fetchone()
     tenant = conn.execute("SELECT * FROM tenants WHERE id=?", (row["tenant_id"],)).fetchone()
     conn.close()
@@ -2127,7 +2127,7 @@ def reset_lookup():
 
 @bp.post("/api/password-reset")
 def reset_apply():
-    allowed, retry_after = security.check_rate_limit("reset_apply", request.remote_addr, 10, 300)
+    allowed, retry_after = security.check_rate_limit("reset_apply", security.client_ip(), 10, 300)
     if not allowed:
         return jsonify({"error": f"Trop de tentatives. Réessayez dans {retry_after} secondes."}), 429
     data = json_object(request.get_json(force=True))
@@ -2137,7 +2137,7 @@ def reset_apply():
     if not row:
         # Même règle : c'est le jeton faux qui coûte, pas la réinitialisation
         # réussie du parent assis à côté.
-        security.record_attempt("reset_apply", request.remote_addr)
+        security.record_attempt("reset_apply", security.client_ip())
         conn.close()
         return jsonify({"error": "Lien invalide, expiré ou déjà utilisé — demandez-en un nouveau à votre établissement."}), 404
     now = str(time.time())
@@ -2152,6 +2152,6 @@ def reset_apply():
     tenant = conn.execute("SELECT slug FROM tenants WHERE id=?", (row["tenant_id"],)).fetchone()
     conn.close()
     audit(row["tenant_id"], row["user_id"], "password_reset.applied", "user", row["user_id"], "success")
-    security.clear_attempts("reset_apply", request.remote_addr)
+    security.clear_attempts("reset_apply", security.client_ip())
     return jsonify({"token": token, "tenant_id": row["tenant_id"], "role": membership["role"] if membership else None,
                     "name": user["name"], "slug": tenant["slug"] if tenant else None})

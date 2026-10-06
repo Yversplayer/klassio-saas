@@ -279,10 +279,10 @@ def register_school():
     C'est le backend réel derrière le flux "Créer mon espace" déjà présent
     visuellement dans app/inscription.html.
     """
-    allowed, retry_after = security.check_rate_limit("register", request.remote_addr, 5, 300)
+    allowed, retry_after = security.check_rate_limit("register", security.client_ip(), 5, 300)
     if not allowed:
         return jsonify({"error": f"Trop de tentatives. Réessayez dans {retry_after} secondes."}), 429
-    security.record_attempt("register", request.remote_addr)
+    security.record_attempt("register", security.client_ip())
 
     data = json_object(request.get_json(force=True))
     email = valid_email(data.get("email", ""))
@@ -1029,8 +1029,7 @@ def public_contact():
        confirme que la réception — elle ne dit jamais si l'adresse correspond
        à un compte existant, ce qui révélerait qui est client de Klassio.
     """
-    ip = (request.headers.get("X-Forwarded-For", "").split(",")[0].strip()
-          or request.remote_addr or "inconnu")
+    ip = security.client_ip()
     autorise, retry = security.check_rate_limit("contact", ip, 5, 3600)
     if not autorise:
         return jsonify({"error": f"Trop de messages envoyés. Réessayez dans {retry // 60 + 1} minute(s)."}), 429
@@ -1899,7 +1898,7 @@ def lookup_invitation():
     # tenter de deviner des tokens valides sans aucun ralentissement. Le
     # token a 256 bits d'entropie (le brute-force reste infaisable), mais
     # cette limite reste une défense en profondeur peu coûteuse.
-    allowed, retry_after = security.check_rate_limit("invite_lookup", request.remote_addr, 20, 300)
+    allowed, retry_after = security.check_rate_limit("invite_lookup", security.client_ip(), 20, 300)
     if not allowed:
         return jsonify({"error": f"Trop de tentatives. Réessayez dans {retry_after} secondes."}), 429
 
@@ -1913,13 +1912,13 @@ def lookup_invitation():
         # que le jeton existe — donc que la personne l'a bien reçu. Un parent
         # qui rouvre son lien après activation ne doit pas être puni pour ça.
         if etat in ("absent", "inconnue"):
-            security.record_attempt("invite_lookup", request.remote_addr)
+            security.record_attempt("invite_lookup", security.client_ip())
         # `state` permet à l'accueil de dire ce qui s'est réellement passé —
         # notamment de proposer « Se connecter » après une activation réussie
         # plutôt que d'annoncer un lien invalide.
         return jsonify({"error": ETAT_MESSAGES[etat], "state": etat}), 404
     # Jeton valide présenté : cette adresse n'énumère pas. On efface son ardoise.
-    security.clear_attempts("invite_lookup", request.remote_addr)
+    security.clear_attempts("invite_lookup", security.client_ip())
     meta = _invitation_meta(invitation)
     tenant = conn.execute("SELECT * FROM tenants WHERE id=?", (invitation["tenant_id"],)).fetchone()
     result = {"role": invitation["role"], "tenant_name": tenant["name"] if tenant else "", "expires_at": invitation["expires_at"],
@@ -2098,7 +2097,7 @@ def prepare_invitation_whatsapp():
 
 @app.post("/api/invitations/accept")
 def accept_invitation():
-    allowed, retry_after = security.check_rate_limit("invite_accept", request.remote_addr, 10, 300)
+    allowed, retry_after = security.check_rate_limit("invite_accept", security.client_ip(), 10, 300)
     if not allowed:
         return jsonify({"error": f"Trop de tentatives. Réessayez dans {retry_after} secondes."}), 429
 
@@ -2122,7 +2121,7 @@ def accept_invitation():
         # un jeton RÉEL : il n'énumère rien.
         etat, _ = _invitation_state(conn, token)
         if etat in ("absent", "inconnue"):
-            security.record_attempt("invite_accept", request.remote_addr)
+            security.record_attempt("invite_accept", security.client_ip())
         conn.close()
         return jsonify({"error": "Invitation invalide, expirée ou déjà utilisée."}), 404
     if conn.execute("SELECT id FROM users WHERE email=?", (email,)).fetchone():
@@ -2236,7 +2235,7 @@ def accept_invitation():
     # Activation réussie : cette adresse n'énumère pas. Sans cette ligne, les
     # parents d'une même école, qui partagent le wifi de l'établissement, se
     # bloquaient les uns les autres au onzième inscrit.
-    security.clear_attempts("invite_accept", request.remote_addr)
+    security.clear_attempts("invite_accept", security.client_ip())
     return jsonify({
         "token": session_token, "tenant_id": tenant_id, "role": role, "name": name,
         "staff_code": staff_code,

@@ -56,3 +56,11 @@ services:
       # n'a qu'une adresse IPv6, que Render ne sait pas joindre.
       - key: DATABASE_URL
         sync: false
+
+      # Secret partagé avec le Worker Cloudflare (security.client_ip) : sans
+      # lui, tous les visiteurs ont l'adresse du proxy et les limites de
+      # tentatives deviennent des plafonds pour toute la plateforme. Render le
+      # génère ; recopier la même valeur dans le secret KLASSIO_RELAIS_SECRET
+      # du Worker.
+      - key: KLASSIO_RELAIS_SECRET
+        generateValue: true

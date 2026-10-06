@@ -17,6 +17,7 @@ import json
 from functools import wraps
 from flask import request, g, jsonify
 
+import config
 import db
 
 SESSION_TTL_SECONDS = 60 * 60 * 12  # 12h — cohérent avec docs/SECURITE.md §4.3 (courte durée)
@@ -93,6 +94,31 @@ def check_rate_limit(bucket: str, key: str, max_attempts: int, window_seconds: i
         return True, 0
     retry_after = int(window_seconds - (maintenant - float(ligne["plus_ancienne"])))
     return False, max(retry_after, 1)
+
+
+def client_ip() -> str:
+    """Adresse du visiteur, pour compter ses tentatives.
+
+    En production, la requête traverse le Worker Cloudflare puis le routeur de
+    Render : `request.remote_addr` vaut l'adresse du dernier proxy, LA MÊME POUR
+    TOUS. Chaque limite devenait un plafond pour la plateforme entière — 120
+    accès au portail par 5 minutes pour toutes les familles réunies, 5
+    inscriptions d'école par 5 minutes pour tout le pays.
+
+    Le Worker transmet donc l'adresse réelle (CF-Connecting-IP, posée par
+    Cloudflare et non par le navigateur) dans X-Klassio-Client-IP, accompagnée
+    d'un secret partagé. Sans ce secret, l'en-tête n'est pas cru : n'importe qui
+    peut appeler Render directement et l'écrire, et un robot qui change
+    d'adresse à chaque essai ne serait jamais limité. Même raison pour
+    X-Forwarded-For, que le navigateur écrit librement : le formulaire de
+    contact le croyait, il ne le croit plus.
+    """
+    attendu = config.get("KLASSIO_RELAIS_SECRET") or ""
+    recu = request.headers.get("X-Klassio-Relais", "")
+    ip = request.headers.get("X-Klassio-Client-IP", "").strip()
+    if attendu and ip and hmac.compare_digest(recu.encode(), attendu.encode()):
+        return ip[:64]
+    return request.remote_addr or "inconnu"
 
 
 def record_attempt(bucket: str, key: str):
