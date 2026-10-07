@@ -1,0 +1,298 @@
+/* =========================================================
+   KLASSIO — couche visuelle de l'APPLICATION (07/10/2026)
+
+   Chargée par les écrans connectés seulement (app/*.html munis de la
+   coquille). La landing, la démo et les pages publiques ne la chargent pas :
+   rien ici ne peut les atteindre. Préfixe : `ka-`.
+
+   Le pendant JavaScript est assets/js/app-visuel.js, qui pose les classes :
+     html.ka-app          écran de l'application
+     html.ka-anim         animations permises (ni mouvement réduit, ni
+                          Élèves & classes / Mes classes / une classe)
+     html.ka-sans-photo   économie de données ou 2G : aucune photo
+     html.ka-ecole-vide   Direction d'une école sans élève ni classe
+   ========================================================= */
+
+/* ---------- 1. Thème sombre : vert nuit plutôt que noir ----------
+   Le propriétaire trouvait les écrans « tout noirs ». Le fond charbon neutre
+   (#111) devient un vert forêt très sombre, de luminance équivalente : les
+   contrastes ne bougent pas, l'écran cesse d'être un trou noir et rejoint
+   l'identité de la marque (barre latérale, landing).
+
+   --ink-faint est relevé dans les DEUX thèmes. Mesuré avant ce changement :
+   3,8:1 sur les panneaux sombres et 3,2:1 sur le blanc — sous le seuil AA de
+   4,5:1, alors qu'il porte de l'information (sous-titres, compteurs, dates).
+   Après : 5,1 à 6,1:1 en sombre, 4,6 à 5,4:1 en clair. */
+:root[data-theme="dark"] {
+  --bg: #0E1511;
+  --bg-alt: #121A15;
+  --surface: #16201A;
+  --surface-soft: #1C2720;
+  --line: #28342B;
+  --line-soft: #1F2A23;
+  --ink-soft: #B3BAAE;
+  --ink-faint: #8F978B;
+}
+:root:not([data-theme="dark"]) { --ink-faint: #646D62; }
+/* Les liens d'action (« Règles & seuils », « Tout voir ») : le vert lime
+   foncé faisait 3,6:1 sur le blanc. Même teinte, assombrie : 5,7:1. */
+:root:not([data-theme="dark"]) .link-btn { color: #467300; }
+:root[data-theme="dark"] .topbar { background: rgba(14, 21, 17, 0.88); }
+:root[data-theme="dark"] .klassio-loader-overlay { background: rgba(14, 21, 17, 0.92); }
+
+/* Une lueur douce en haut de l'écran, lime et or à quelques pour cent :
+   le noir plat devient une profondeur. Deux dégradés fixes, aucun calcul. */
+:root[data-theme="dark"] .main-col {
+  background:
+    radial-gradient(1100px 460px at 82% -160px, rgba(184, 255, 0, 0.07), transparent 66%),
+    radial-gradient(900px 420px at 6% -140px, rgba(240, 180, 41, 0.06), transparent 62%);
+}
+/* Panneaux et indicateurs : un reflet en haut, comme une carte éclairée. */
+:root[data-theme="dark"] .dash-body .panel,
+:root[data-theme="dark"] .dash-body .kpi-card {
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0) 42%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), var(--shadow-sm);
+}
+
+/* ---------- 2. Bandeau photo en tête d'écran ----------
+   Le `.page-header` existant devient le bandeau : mêmes identifiants, même
+   ordre, mêmes boutons — on habille, on ne reconstruit pas.
+
+   Deux moitiés. À gauche, le titre et les boutons sur le vert forêt plein ;
+   à droite, la photo, qui se fond dans le vert. Une photo pleine largeur
+   mettait le sujet — le directeur, les élèves — exactement derrière le
+   titre ; et le texte n'est jamais posé sur l'image : l'AA ne dépend pas de
+   la photo choisie. */
+.ka-hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 0;
+  min-height: 190px;
+  padding: 30px 30px 26px;
+  border-radius: 24px;
+  color: #fff;
+  background: linear-gradient(125deg, #10261A 0%, #16301F 45%, #274A32 100%);
+  box-shadow: 0 18px 44px rgba(10, 22, 14, 0.28), 0 2px 6px rgba(10, 22, 14, 0.12);
+  perspective: 900px;
+}
+.ka-hero-fond {
+  position: absolute;
+  inset: -10% -5% -10% 36%;
+  z-index: -2;
+  transform-style: preserve-3d;
+  transform:
+    translate3d(var(--ka-px, 0px), var(--ka-py, 0px), 0)
+    rotateX(var(--ka-rx, 0deg)) rotateY(var(--ka-ry, 0deg)) scale(1.04);
+  transition: transform 0.6s var(--ease-out);
+}
+.ka-hero-fond picture { display: block; width: 100%; height: 100%; }
+.ka-hero-img {
+  display: block; width: 100%; height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.9s ease;
+}
+.ka-hero-img.is-loaded { opacity: 1; }
+.ka-hero::before {
+  content: "";
+  position: absolute; inset: 0; z-index: -1;
+  background:
+    linear-gradient(90deg, #10261A 0%, #12291C 38%, rgba(18, 41, 28, 0.86) 47%, rgba(18, 41, 28, 0.38) 62%, rgba(18, 41, 28, 0.08) 82%, rgba(18, 41, 28, 0) 100%),
+    linear-gradient(0deg, rgba(10, 22, 14, 0.4) 0%, rgba(10, 22, 14, 0) 45%);
+}
+.ka-hero-texte { position: relative; max-width: min(600px, 46%); }
+.ka-hero > .row { margin-top: 18px; max-width: 52%; }
+.ka-hero h1 {
+  color: #fff;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(26px, 2.6vw, 34px);
+  letter-spacing: -0.015em;
+  line-height: 1.12;
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.35);
+}
+.ka-hero p { color: rgba(255, 255, 255, 0.88); font-size: 14px; line-height: 1.55; margin-top: 8px; }
+.ka-hero-accroche {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 11px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase;
+  color: #F0C070;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.ka-hero-accroche:empty { display: none; }
+.ka-hero-mention {
+  position: absolute; right: 14px; top: 12px;
+  padding: 3px 9px; border-radius: 100px;
+  font-size: 10.5px; font-weight: 600; letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.92);
+  background: rgba(10, 22, 14, 0.72);
+  pointer-events: none;
+}
+html.ka-sans-photo .ka-hero-mention { display: none; }
+/* Boutons posés sur la photo : un verre sombre, pour que le texte blanc
+   tienne l'AA quelle que soit l'image derrière. */
+.ka-hero .row { position: relative; }
+.ka-hero .btn-ghost {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.34);
+  background: rgba(10, 22, 14, 0.62);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+.ka-hero .btn-ghost::before { background: rgba(255, 255, 255, 0.16); }
+.ka-hero .btn-ghost:hover { color: #fff; border-color: rgba(255, 255, 255, 0.6); }
+.ka-hero .btn-lime { box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28); }
+.ka-hero .wx-arrivee { color: #EEFBCB; background: rgba(184, 255, 0, 0.16); }
+
+/* ---------- 3. Mouvement (html.ka-anim seulement) ---------- */
+@keyframes ka-entree-photo { from { transform: scale(1.14); } to { transform: scale(1); } }
+@keyframes ka-derive {
+  from { transform: scale(1) translate3d(0, 0, 0); }
+  to   { transform: scale(1.07) translate3d(-1.5%, -1%, 0); }
+}
+@keyframes ka-monte {
+  from { opacity: 0; transform: perspective(900px) translate3d(0, 18px, 0) rotateX(8deg); }
+  to   { opacity: 1; transform: none; }
+}
+.ka-anim .ka-hero-fond picture { animation: ka-entree-photo 1.6s var(--ease-out) both; }
+.ka-anim .ka-hero-img.is-loaded { animation: ka-derive 26s ease-in-out 1.6s infinite alternate; }
+.ka-anim .ka-hero-texte > * { animation: ka-monte 0.7s var(--ease-out) backwards; }
+.ka-anim .ka-hero-texte > :nth-child(2) { animation-delay: 0.06s; }
+.ka-anim .ka-hero-texte > :nth-child(3) { animation-delay: 0.12s; }
+.ka-anim .ka-hero > .row { animation: ka-monte 0.7s var(--ease-out) 0.16s backwards; }
+
+/* Entrée des panneaux et des indicateurs à leur apparition. `backwards`, pas
+   `both` : une fois arrivés, ils rendent la main aux styles normaux — sinon
+   le `transform: none` final écraserait le soulèvement au survol. */
+.ka-anim .dash-body .kpi-card,
+.ka-anim .dash-body .panel { animation: ka-monte 0.62s var(--ease-out) backwards; }
+.ka-anim .dash-body .kpi-grid > :nth-child(2) { animation-delay: 0.05s; }
+.ka-anim .dash-body .kpi-grid > :nth-child(3) { animation-delay: 0.1s; }
+.ka-anim .dash-body .kpi-grid > :nth-child(4) { animation-delay: 0.15s; }
+.ka-anim .dash-body .kpi-grid > :nth-child(5) { animation-delay: 0.2s; }
+.ka-anim .dash-body .two-col > :nth-child(2) { animation-delay: 0.08s; }
+
+/* Indicateurs : inclinaison 3D et reflet qui suit le pointeur. */
+.ka-anim .dash-body .kpi-card::after {
+  content: "";
+  position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  opacity: 0; transition: opacity 0.3s ease;
+  background: radial-gradient(260px circle at var(--ka-mx, 50%) var(--ka-my, 50%), rgba(255, 255, 255, 0.11), transparent 62%);
+}
+.ka-anim .dash-body .kpi-card.ka-incline {
+  transform: perspective(800px) rotateX(var(--ka-rx, 0deg)) rotateY(var(--ka-ry, 0deg)) translateY(-2px);
+  transition: transform 0.12s linear, box-shadow 0.25s var(--ease-out), border-color 0.2s ease;
+  box-shadow: var(--shadow-md);
+}
+.ka-anim .dash-body .kpi-card.ka-incline::after { opacity: 1; }
+:root:not([data-theme="dark"]) .ka-anim .dash-body .kpi-card::after {
+  background: radial-gradient(260px circle at var(--ka-mx, 50%) var(--ka-my, 50%), rgba(159, 227, 0, 0.14), transparent 62%);
+}
+
+/* ---------- 4. États vides : une pile de photos en 3D ----------
+   Deux tirages posés l'un sur l'autre, cadre crème comme une photo
+   imprimée ; l'icône de l'état vide devient la pastille lime du coin. */
+.ka-vide-photo { perspective: 900px; padding-top: 30px; }
+.ka-pile {
+  position: relative;
+  width: 200px; height: 142px;
+  margin: 0 auto 22px;
+  transform-style: preserve-3d;
+}
+.ka-carte {
+  position: absolute; inset: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 5px solid #FBF8EE;
+  background: #E9E4D2;
+  box-shadow: 0 18px 38px rgba(10, 22, 14, 0.30), 0 3px 8px rgba(10, 22, 14, 0.18);
+  transition: transform 0.6s var(--ease-out), filter 0.6s ease;
+}
+:root[data-theme="dark"] .ka-carte {
+  border-color: #EFEBDD;
+  box-shadow: 0 20px 44px rgba(0, 0, 0, 0.55), 0 3px 10px rgba(0, 0, 0, 0.35);
+}
+.ka-carte img { display: block; width: 100%; height: 100%; object-fit: cover; }
+/* Le tirage de derrière dépasse en haut à gauche, celui de devant penche à
+   droite : les deux images restent lisibles, la pile a de l'épaisseur. */
+.ka-carte-avant { transform: translate3d(16px, 8px, 24px) rotateY(-16deg) rotateX(8deg) rotateZ(4deg); }
+.ka-carte-arriere {
+  transform: translate3d(-36px, -18px, -40px) rotateY(14deg) rotateX(6deg) rotateZ(-9deg);
+  filter: saturate(0.85) brightness(0.9);
+}
+.ka-pile > .ic {
+  position: absolute; right: -14px; bottom: -14px;
+  width: 44px; height: 44px; padding: 11px;
+  border-radius: 50%;
+  background: var(--lime); color: var(--forest);
+  box-shadow: 0 8px 20px rgba(10, 22, 14, 0.35);
+  transform: translateZ(60px);
+}
+.ka-vide-photo h3 { margin-top: 10px; }
+@keyframes ka-flotte {
+  0%, 100% { transform: translate3d(0, 0, 0) rotateX(0deg); }
+  50%      { transform: translate3d(0, -7px, 0) rotateX(4deg); }
+}
+.ka-anim .ka-pile { animation: ka-flotte 7s ease-in-out infinite; }
+.ka-anim .ka-vide-photo:hover .ka-carte-avant { transform: translate3d(30px, 4px, 44px) rotateY(-6deg) rotateX(3deg) rotateZ(2deg); }
+.ka-anim .ka-vide-photo:hover .ka-carte-arriere { transform: translate3d(-58px, -24px, -50px) rotateY(20deg) rotateX(6deg) rotateZ(-13deg); filter: none; }
+html.ka-sans-photo .ka-pile { display: none; }
+
+/* ---------- 5. École encore vide : les notes d'aide se retirent ----------
+   Seules les notes d'explication de la PAGE sont concernées : celles des
+   fenêtres de saisie restent (elles ne vivent pas dans .dash-body), et les
+   avertissements portent `note-garde`. Voir app-visuel.js, ecoleVide(). */
+html.ka-ecole-vide .dash-body .note-inline:not(.note-garde) { display: none; }
+
+/* ---------- 6. Pied de page de chaque écran ---------- */
+.ka-app .dash-body:not(.ia-page) { padding-bottom: 44px; }
+.ka-foot {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 22px 32px 30px;
+  border-top: 1px solid var(--line-soft);
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+  gap: 10px 26px;
+  font-size: 12.5px; color: var(--ink-faint);
+}
+.ka-foot p { margin: 0; }
+.ka-foot a { color: var(--ink-soft); font-weight: 600; text-decoration: none; }
+.ka-foot a:hover { color: var(--ink); text-decoration: underline; }
+.ka-foot a:focus-visible { box-shadow: var(--focus); border-radius: 4px; }
+.ka-foot-liens { display: flex; flex-wrap: wrap; gap: 6px 18px; }
+.ka-foot-sig { display: inline-flex; align-items: center; gap: 7px; }
+.ka-foot-sig img { width: 16px; height: 16px; border-radius: 4px; }
+
+/* ---------- 7. Petits écrans ---------- */
+@media (max-width: 860px) {
+  .ka-foot { padding: 20px 18px 28px; }
+  /* Pas la place pour deux moitiés : la photo passe derrière tout le
+     bandeau, sous un voile qui descend du haut vers le bas (0,78 au moins
+     sous le texte : l'AA tient sur la zone la plus claire d'une image). */
+  .ka-hero { min-height: 0; padding: 40px 22px 22px; }
+  .ka-hero-fond { inset: -10% -6%; }
+  .ka-hero::before {
+    background: linear-gradient(0deg, rgba(10, 22, 14, 0.92) 0%, rgba(10, 22, 14, 0.8) 60%, rgba(10, 22, 14, 0.55) 100%);
+  }
+  .ka-hero-texte, .ka-hero > .row { max-width: 100%; }
+}
+@media (max-width: 600px) {
+  .ka-hero { padding: 40px 18px 20px; border-radius: 20px; }
+  .ka-hero h1 { font-size: 25px; }
+  .ka-hero p { font-size: 13.5px; }
+  .ka-hero-mention { top: 10px; right: 10px; }
+  .ka-pile { width: 168px; height: 120px; }
+  .ka-foot { flex-direction: column; align-items: flex-start; }
+}
+
+/* ---------- 8. Impression : le bandeau redevient un titre ---------- */
+@media print {
+  .ka-hero { background: none !important; color: #000; min-height: 0; padding: 0; border-radius: 0; box-shadow: none; }
+  .ka-hero::before, .ka-hero-fond, .ka-hero-mention, .ka-hero-accroche, .ka-foot, .ka-pile { display: none !important; }
+  .ka-hero h1 { color: #000; text-shadow: none; font-family: var(--font-sans); }
+  .ka-hero p { color: #333; }
+}

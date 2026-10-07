@@ -188,6 +188,10 @@
       wireNotifications(ctx);
       wireSubscriptionBanner(ctx, current);
       cloturerAccueil(ctx);
+      // Couche visuelle (app-visuel.js) : photo d'accueil selon le rôle, nom de
+      // l'établissement dans le bandeau, notes d'aide d'une école encore vide.
+      // Du décor seulement — rien de ce qu'elle reçoit ne décide d'un accès.
+      if (window.KlassioDecor) window.KlassioDecor.contexte(ctx);
       if (isMobile()) document.getElementById("sidebarNav").addEventListener("click", function () { setCollapsed(true); });
       return ctx;
     });

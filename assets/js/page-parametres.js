@@ -95,7 +95,9 @@
       "<li>Les paiements et reçus — pièces comptables</li>" +
       "<li>Le journal d'audit</li></ul></div></div>" +
       (c.role === "directeur"
-        ? '<p class="note-inline" style="margin-bottom:14px">' + UI.icon("alert", 15) +
+        // `note-garde` : un avertissement, pas une explication — il reste
+        // affiché même dans une école encore vide (voir app-visuel.css).
+        ? '<p class="note-inline note-garde" style="margin-bottom:14px">' + UI.icon("alert", 15) +
           "<span>Vous êtes Direction. Si vous êtes la seule de votre établissement, nommez d'abord une autre Direction — sans elle, l'espace deviendrait inadministrable pour les familles et les enseignants.</span></p>"
         : "") +
       '<button type="button" class="btn btn-danger btn-sm" id="supprBtn">' + UI.icon("trash", 15) + "Supprimer mon compte</button>";
@@ -195,7 +197,7 @@
           UI.money(s.open_invoice.amount, s.open_invoice.currency) + ", à régler avant le " + UI.fmtDate(s.open_invoice.due_at) + "</dd>" : "") +
         "</dl>" +
 
-        (s.attention ? '<p class="note-inline mt-16">' + UI.icon("alert", 15) + "<span>" + UI.escapeHtml(s.attention) + "</span></p>" : "") +
+        (s.attention ? '<p class="note-inline note-garde mt-16">' + UI.icon("alert", 15) + "<span>" + UI.escapeHtml(s.attention) + "</span></p>" : "") +
 
         '<p class="note-inline mt-16">' + UI.icon("info", 15) +
         "<span><strong>À ne pas confondre avec les frais scolaires.</strong> L'abonnement Klassio est ce que votre établissement paie pour utiliser la plateforme. Les frais de scolarité réglés par les familles sont un circuit distinct, dans " +
