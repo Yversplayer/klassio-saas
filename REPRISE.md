@@ -80,6 +80,10 @@ Tests, **l'un après l'autre** :
   le code contient encore une route `POST /api/classes/<id>/grades`
   (`api_school.py`) et un onglet dans l'écran Classe : **à trancher** (cacher
   ou retirer) — pas fait, en attente de sa décision.
+- **Prix à l'année (07/10/2026)** : « 2 mois offerts » — Essentiel 999 $,
+  École 1 499 $, Complexe 2 499 $ par an ; Réseau sur devis. Facturés par le
+  serveur (période de 365 jours). Paiement : page `app/offre.html` (écran en
+  deux volets) ; tarifs de la landing refaits sur le modèle du propriétaire.
 - **Domaine (décidé le 07/10/2026)** : **`klassio.cd`** — « colle avec notre image ».
   Libre au 07/10 (registre .cd : « No Object Found »). Achat REPORTÉ ; budget
   prévu **57 à 60 $ par an** (Netim, 57 $ HT/an ; minimum 1 an ; activation jusqu'à

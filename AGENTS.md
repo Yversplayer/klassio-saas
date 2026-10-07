@@ -279,9 +279,12 @@ fichier créé uniquement dans le miroir sera perdu** — c'est déjà arrivé.
 - **Tarifs ARRÊTÉS le 01/10/2026 par le propriétaire** : Essentiel 99,90 $
   (≤ 300 élèves), École 149,90 $ (301–1 000), Complexe 249,90 $ (1 001–3 000),
   Réseau sur devis — par mois, toutes les fonctionnalités dans chaque offre.
-  Ils vivent à DEUX endroits qui doivent rester identiques : `PLANS_2026_10`
-  (backend/db.py, ce que le serveur facture) et la section `#tarifs` de la
-  landing. **Ne modifie aucun prix sans le propriétaire.**
+  **À l'année (07/10/2026, « 2 mois offerts »)** : 999 $, 1 499 $, 2 499 $ ;
+  Réseau sur devis. Ils vivent à DEUX endroits qui doivent rester identiques :
+  `PLANS_2026_10` et `PRIX_ANNUELS_2026_10` (backend/db.py, ce que le serveur
+  facture) et la section `#tarifs` de la landing (attributs data-mensuel /
+  data-annuel, vérifiés par test_abonnement). **Ne modifie aucun prix sans le
+  propriétaire.**
 - **Pas de mode gratuit.** Une école naît fermée (`awaiting_plan`) ; elle dépose
   ses fichiers Excel, choisit son offre (obligatoire), et ne s'ouvre qu'à la
   confirmation de son premier paiement par la plateforme — avec UNE ouverture
