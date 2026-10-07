@@ -71,9 +71,26 @@ async function servirFichier(requete, env, url) {
   return finale;
 }
 
+// HTTPS OBLIGATOIRE. Constaté le 06/10/2026 : http://klassio….workers.dev
+// répondait 200, page de connexion comprise — un mot de passe pouvait partir
+// en clair jusqu'à Cloudflare. Une page demandée en HTTP est renvoyée vers
+// HTTPS ; une écriture (POST, PUT…) n'est PAS redirigée mais refusée : la
+// rediriger apprendrait au navigateur à renvoyer ses données, et celles-ci
+// ont déjà voyagé en clair une fois.
+function exigerHttps(requete, url) {
+  if (url.protocol !== "http:") return null;
+  if (requete.method === "GET" || requete.method === "HEAD") {
+    url.protocol = "https:";
+    return Response.redirect(url.toString(), 301);
+  }
+  return Response.json({ error: "Klassio n'accepte que HTTPS." }, { status: 403 });
+}
+
 export default {
   async fetch(requete, env) {
     const url = new URL(requete.url);
+    const refus = exigerHttps(requete, url);
+    if (refus) return refus;
     if (url.pathname === "/api" || url.pathname.startsWith("/api/")) {
       return relayerApi(requete, env, url);
     }

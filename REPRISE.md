@@ -80,6 +80,12 @@ Tests, **l'un après l'autre** :
   le code contient encore une route `POST /api/classes/<id>/grades`
   (`api_school.py`) et un onglet dans l'écran Classe : **à trancher** (cacher
   ou retirer) — pas fait, en attente de sa décision.
+- **Domaine (décidé le 07/10/2026)** : **`klassio.cd`** — « colle avec notre image ».
+  Libre au 07/10 (registre .cd : « No Object Found »). Achat REPORTÉ ; budget
+  prévu **57 à 60 $ par an** (Netim, 57 $ HT/an ; minimum 1 an ; activation jusqu'à
+  15 jours ; WHOIS public, pas de masquage). `klassio.app`, cité dans le sitemap
+  et l'Open Graph, appartient à un tiers depuis le 28/11/2025 : à remplacer par
+  `klassio.cd` le jour de l'achat. En attendant : https://klassio.mudeyimusimwa.workers.dev
 - **Contact public** : WhatsApp **+243 971 839 237**, e-mail
   **mudeyimusimwa@gmail.com** (en attendant `contact@klassio.app`).
 - Landing : l'entrée dans le « O » est la signature, **conservée** ; pas
