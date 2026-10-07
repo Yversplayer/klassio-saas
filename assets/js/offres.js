@@ -174,5 +174,25 @@
     if (b && opts.onBypass) b.addEventListener("click", opts.onBypass);
   }
 
-  window.KlassioOffres = { render: render, whatsapp: wa };
+  // Les offres EN LECTURE SEULE, pour l'écran Abonnement d'une école déjà
+  // ouverte : le même dessin que le choix, sans bouton (changer d'offre en
+  // cours d'abonnement passe par Klassio — le serveur refuse /choose, 409).
+  // Chaque carte montre le prix au mois ET à l'année ; l'offre de l'école et
+  // son cycle sont signalés.
+  function cartesLecture(S) {
+    var actuel = S.plan ? S.plan.code : null;
+    var cycle = S.billing_cycle === "yearly" ? "yearly" : "monthly";
+    return '<div class="of-plans of-plans-4">' + S.plans.map(function (p) {
+      var devis = surDevis(p);
+      var c = p.code === actuel;
+      return '<article class="of-plan' + (c ? " is-choice" : "") + '">' + medaille(p.code) +
+        '<div class="of-plan-top"><h3>' + UI.escapeHtml(p.name) + "</h3>" + (c ? '<span class="of-reco">Votre offre' + (cycle === "yearly" ? " · à l'année" : " · au mois") + "</span>" : "") + "</div>" +
+        '<span class="of-range">' + UI.escapeHtml(tranche(p)) + "</span>" +
+        '<p class="of-price">' + (devis ? "<b>Sur devis</b>" : "<b>" + montant(p.base_price, p.currency) + "</b> <small>/ mois</small>") + "</p>" +
+        (annuelPossible(p) ? '<span class="of-eq">ou ' + montant(p.yearly_price, p.currency) + " par an — 2 mois offerts</span>" : '<span class="of-eq">Tarif adapté à votre réseau</span>') +
+        "</article>";
+    }).join("") + "</div>";
+  }
+
+  window.KlassioOffres = { render: render, whatsapp: wa, cartesLecture: cartesLecture, montant: montant };
 })();
