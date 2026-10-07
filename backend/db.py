@@ -247,15 +247,91 @@ class PgConnection:
         self.close()
 
 
-def get_connection():
+# ---------------------------------------------------------------------------
+# Row Level Security — la base elle-même cloisonne les établissements
+#
+# Depuis le 07/10/2026, chaque table qui porte `tenant_id` a une politique RLS
+# (voir _activer_rls). Le backend continue de filtrer chaque requête par
+# établissement ; RLS est le FILET dessous : une requête qui oublierait son
+# `WHERE tenant_id = ?` ne verrait quand même que l'école de la session, et
+# une écriture vers une autre école serait refusée par PostgreSQL.
+#
+# Comment. À chaque prise de connexion pendant une requête HTTP, la connexion
+# passe sous le rôle `klassio_app` (sans BYPASSRLS, sans propriété des tables)
+# et reçoit deux réglages de session :
+#   klassio.mode   = 'tenant' dans une requête d'école authentifiée (g.ctx),
+#                    'global' ailleurs (connexion, pages publiques, plateforme) ;
+#   klassio.tenant = l'établissement de la session.
+# Hors requête (migrations, outils d'exploitation, montage des tests), la
+# connexion reste celle du propriétaire, comme avant.
+#
+# FERMÉ PAR DÉFAUT : une connexion sous `klassio_app` dont le mode n'est pas
+# réglé ne voit AUCUNE ligne — un oubli se voit, il ne fuit pas.
+#
+# Les réglages sont appliqués en autocommit, donc durables pour la session : un
+# `conn.rollback()` au milieu d'une route ne peut pas les ramener à ceux de la
+# requête précédente (servie par la même connexion de la réserve, pour une
+# autre école). Ce piège-là aurait été une fuite entre établissements.
+# ---------------------------------------------------------------------------
+ROLE_APP = "klassio_app"
+_ROLE_APP_EXISTE = None
+
+
+def _role_app_disponible(conn):
+    global _ROLE_APP_EXISTE
+    if _ROLE_APP_EXISTE is None:
+        _ROLE_APP_EXISTE = bool(conn._conn.execute(
+            "SELECT 1 FROM pg_roles WHERE rolname = %s", (ROLE_APP,)).fetchone())
+    return _ROLE_APP_EXISTE
+
+
+def _contexte_rls(globale):
+    """None hors requête HTTP ; sinon (mode, établissement)."""
+    try:
+        from flask import g, has_request_context
+    except ImportError:  # pragma: no cover
+        return None
+    if not has_request_context():
+        return None
+    ctx = getattr(g, "ctx", None)
+    if not globale and ctx and ctx.get("tenant_id"):
+        return ("tenant", ctx["tenant_id"])
+    return ("global", "")
+
+
+def _appliquer_rls(conn, globale=False):
+    contexte = _contexte_rls(globale)
+    brute = conn._conn
+    brute.autocommit = True
+    try:
+        # Un seul aller-retour : rôle et réglages dans la même requête
+        # (set_config('role', …) équivaut à SET ROLE ; 'none' à RESET ROLE).
+        if contexte is None or not _role_app_disponible(conn):
+            role, mode, etablissement = "none", "global", ""
+        else:
+            role, (mode, etablissement) = ROLE_APP, contexte
+        brute.execute("SELECT set_config('role', %s, false), set_config('klassio.mode', %s, false), "
+                      "set_config('klassio.tenant', %s, false)", (role, mode, etablissement))
+    finally:
+        brute.autocommit = False
+
+
+def get_connection(globale=False):
+    """Une connexion. `globale=True` : dans une requête d'école, la connexion
+    voit TOUS les établissements — réservé aux actions qui portent sur
+    l'utilisateur lui-même et non sur une école (fermer toutes ses sessions
+    au changement de mot de passe, supprimer son compte partout). Chaque usage
+    est commenté à l'appel."""
     if is_postgres():
         if not config.SUPABASE_DB_URL:
             raise RuntimeError("KLASSIO_DB_BACKEND=postgres mais SUPABASE_DB_URL est absente.")
         conn = _pool_acquire()
         if conn is not None:
             conn._repos_depuis = None
-            return conn
-        return PgConnection(config.SUPABASE_DB_URL)
+        else:
+            conn = PgConnection(config.SUPABASE_DB_URL)
+        _appliquer_rls(conn, globale)
+        return conn
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
@@ -757,6 +833,72 @@ def _migrate(conn):
     # En dernier : la reprise d'unicité reconstruit potentiellement la table,
     # elle doit donc voir toutes les colonnes déjà ajoutées.
     _unicite_periodes(conn)
+    # Et tout à la fin, la sécurité au niveau des lignes, une fois toutes les
+    # tables et colonnes en place.
+    _activer_rls(conn)
+
+
+# Les deux conditions d'une ligne visible ou écrivable sous `klassio_app`.
+# current_setting(…, true) renvoie NULL quand le réglage manque : aucune ligne
+# ne passe alors — fermé par défaut.
+_RLS_USING = ("current_setting('klassio.mode', true) = 'global' "
+              "OR tenant_id = current_setting('klassio.tenant', true)")
+# audit_logs accepte des lignes sans établissement (événements de plateforme).
+_RLS_CHECK_AUDIT = "(" + _RLS_USING + ") OR tenant_id IS NULL"
+
+
+def _activer_rls(conn):
+    """Rôle `klassio_app`, droits, et une politique par table à `tenant_id`.
+
+    Rejouable : chaque déploiement la repasse (nouvelles tables comprises).
+    Découverte des tables par information_schema plutôt qu'une liste écrite à
+    la main : une table ajoutée demain avec `tenant_id` est couverte d'office,
+    et tests/test_rls.py échoue si l'une d'elles ne l'était pas."""
+    global _ROLE_APP_EXISTE
+    if not is_postgres():
+        return
+    conn.execute(f"""DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = '{ROLE_APP}') THEN
+            CREATE ROLE {ROLE_APP} NOLOGIN NOBYPASSRLS;
+        END IF;
+    END $$""")
+    version = int(conn.execute("SHOW server_version_num").fetchone()["server_version_num"])
+    # Depuis PostgreSQL 16, créer un rôle ne donne plus le droit d'en prendre
+    # l'identité : il faut l'option SET explicite.
+    conn.execute(f"GRANT {ROLE_APP} TO CURRENT_USER" + (" WITH SET TRUE" if version >= 160000 else ""))
+    schema = conn.execute("SELECT current_schema() AS s").fetchone()["s"]
+    conn.execute(f'GRANT USAGE ON SCHEMA "{schema}" TO {ROLE_APP}')
+    conn.execute(f'GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA "{schema}" TO {ROLE_APP}')
+    conn.execute(f'GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA "{schema}" TO {ROLE_APP}')
+    tables = [r["table_name"] for r in conn.execute(
+        """SELECT c.table_name FROM information_schema.columns c
+           JOIN information_schema.tables t ON t.table_schema = c.table_schema AND t.table_name = c.table_name
+           WHERE c.table_schema = %s AND c.column_name = 'tenant_id' AND t.table_type = 'BASE TABLE'
+           ORDER BY c.table_name""".replace("%s", "?"), (schema,))]
+    for table in tables:
+        check = _RLS_CHECK_AUDIT if table == "audit_logs" else _RLS_USING
+        conn.execute(f'ALTER TABLE "{table}" ENABLE ROW LEVEL SECURITY')
+        conn.execute(f'DROP POLICY IF EXISTS klassio_isolation ON "{table}"')
+        conn.execute(f'CREATE POLICY klassio_isolation ON "{table}" TO {ROLE_APP} '
+                     f"USING ({_RLS_USING}) WITH CHECK ({check})")
+    # Les tables SANS établissement (users, tenants, plans, sessions de la
+    # plateforme…) restent lisibles par `klassio_app`. Pourquoi une politique
+    # plutôt que rien : Supabase propose d'activer RLS d'office sur toute
+    # nouvelle table (« Enable automatic RLS », coché à la création du projet
+    # le 06/10/2026). Une table sous RLS SANS politique ne renvoie aucune ligne
+    # à un rôle qui n'en est pas propriétaire : sous `klassio_app`, plus de
+    # connexion possible. Trouvé avant le déploiement, en relisant la
+    # configuration du projet. La politique n'ouvre l'accès qu'à `klassio_app` ;
+    # les rôles publics de Supabase (anon, authenticated) restent fermés.
+    autres = [r["table_name"] for r in conn.execute(
+        """SELECT table_name FROM information_schema.tables
+           WHERE table_schema = ? AND table_type = 'BASE TABLE' ORDER BY 1""", (schema,))
+        if r["table_name"] not in tables]
+    for table in autres:
+        conn.execute(f'DROP POLICY IF EXISTS klassio_app_acces ON "{table}"')
+        conn.execute(f'CREATE POLICY klassio_app_acces ON "{table}" TO {ROLE_APP} USING (true) WITH CHECK (true)')
+    conn.commit()
+    _ROLE_APP_EXISTE = True
 
 
 def reset_db():

@@ -460,7 +460,11 @@ def change_password():
     current = data.get("current_password", "")
     new_password = valid_password(data.get("new_password", ""))
 
-    conn = db.get_connection()
+    # Connexion GLOBALE, volontairement (RLS, db.get_connection) : un
+    # mot de passe changé ferme les sessions de l'utilisateur dans TOUTES ses
+    # écoles. Sous la portée d'un seul établissement, celles des autres
+    # auraient survécu — exactement ce qu'on cherche à fermer en cas de fuite.
+    conn = db.get_connection(globale=True)
     user = conn.execute("SELECT * FROM users WHERE id=?", (g.ctx["user_id"],)).fetchone()
     if not user or not security.verify_password(current, user["password_hash"]):
         conn.close()
@@ -1000,7 +1004,11 @@ def delete_my_account():
     if not isinstance(mot_de_passe, str) or not mot_de_passe:
         raise ValidationError("Votre mot de passe est requis pour confirmer la suppression.")
 
-    conn = db.get_connection()
+    # Connexion GLOBALE, volontairement (RLS, db.get_connection) : supprimer
+    # son compte le retire de TOUTES ses écoles — memberships, sessions,
+    # conversations — et pas seulement de celle de la session courante.
+    # Chaque requête ci-dessous est bornée à `user_id`, ou à `tenant_id`.
+    conn = db.get_connection(globale=True)
     tenant_id, user_id = g.ctx["tenant_id"], g.ctx["user_id"]
     utilisateur = conn.execute("SELECT * FROM users WHERE id=?", (user_id,)).fetchone()
     if not utilisateur or not security.verify_password(mot_de_passe, utilisateur["password_hash"]):

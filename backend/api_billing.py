@@ -124,9 +124,21 @@ def ensure_subscription(conn, tenant_id):
 
 
 def _next_invoice_number(conn):
+    """Numéro de facture Klassio : une séquence UNIQUE pour toute la plateforme.
+
+    Trouvé par RLS (07/10/2026) : sous la portée d'une école, la lecture du
+    dernier numéro ne voyait que les factures de CETTE école — le numéro
+    recalculé était déjà pris par une autre, et l'insertion tombait sur la
+    contrainte d'unicité. La lecture passe donc par une connexion globale,
+    volontairement : elle ne renvoie qu'un numéro, aucune donnée d'école."""
     year = date.today().year
     prefix = f"INV-{year}-"
-    row = conn.execute("SELECT number FROM invoices WHERE number LIKE ? ORDER BY number DESC LIMIT 1", (prefix + "%",)).fetchone()
+    lecture = db.get_connection(globale=True)
+    try:
+        row = lecture.execute("SELECT number FROM invoices WHERE number LIKE ? ORDER BY number DESC LIMIT 1",
+                              (prefix + "%",)).fetchone()
+    finally:
+        lecture.close()
     seq = int(row["number"].rsplit("-", 1)[1]) + 1 if row else 1
     return f"{prefix}{seq:04d}"
 
@@ -391,6 +403,26 @@ def declare_payment():
 # inscrit dans l'ancienne table platform_admins — reçoit 403.
 
 
+def _etat_rls(conn):
+    """État de la sécurité au niveau des lignes, pour l'administration :
+    vérifier en production, sans accès à la base, que chaque table à
+    établissement est bien sous RLS et que les requêtes passent par le rôle
+    applicatif (db._activer_rls). None sous SQLite (pas de RLS)."""
+    if not db.is_postgres():
+        return None
+    tables = [r["table_name"] for r in conn.execute(
+        """SELECT c.table_name FROM information_schema.columns c
+           JOIN information_schema.tables t ON t.table_schema = c.table_schema AND t.table_name = c.table_name
+           WHERE c.table_schema = current_schema() AND c.column_name = 'tenant_id' AND t.table_type = 'BASE TABLE'""")]
+    proteges = {r["relname"] for r in conn.execute(
+        """SELECT k.relname FROM pg_class k JOIN pg_namespace n ON n.oid = k.relnamespace
+           JOIN pg_policies p ON p.schemaname = n.nspname AND p.tablename = k.relname
+           WHERE n.nspname = current_schema() AND k.relrowsecurity AND p.policyname = 'klassio_isolation'""")}
+    role = conn.execute("SELECT current_user AS r").fetchone()["r"]
+    return {"tenant_tables": len(tables), "protected": len([t for t in tables if t in proteges]),
+            "unprotected": sorted(t for t in tables if t not in proteges), "role": role}
+
+
 @bp.get("/api/platform/overview")
 @require_platform_admin
 def platform_overview():
@@ -407,8 +439,10 @@ def platform_overview():
                         "open_invoice": s["open_invoice"], "director": dict(director) if director else None})
     pending = [dict(r) for r in conn.execute("SELECT i.*, t.name AS tenant_name FROM invoices i JOIN tenants t ON t.id=i.tenant_id WHERE i.status='pending' ORDER BY i.created_at")]
     plans = [dict(r) for r in conn.execute("SELECT * FROM plans ORDER BY sort")]
+    securite = _etat_rls(conn)
     conn.close()
     return jsonify({"tenants": tenants, "mrr": round(mrr, 2), "pending_invoices": pending, "plans": plans,
+                    "security": securite,
                     "counts": {"total": len(tenants), "trial": sum(1 for x in tenants if x["status"] == "trial"), "active": sum(1 for x in tenants if x["status"] == "active"),
                                "past_due": sum(1 for x in tenants if x["status"] == "past_due"), "suspended": sum(1 for x in tenants if x["status"] == "suspended"),
                                "awaiting": sum(1 for x in tenants if x["status"] in AWAITING_STATUSES)}})
