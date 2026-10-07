@@ -180,7 +180,7 @@
       // fermé n'a rien d'autre à montrer. « locked » vient du serveur, qui
       // le lève lui-même en mode testeur.
       if (ctx.subscription && ctx.subscription.locked && current !== "abonnement") {
-        if (ctx.role === "directeur") { window.location.replace("abonnement.html"); return new Promise(function () {}); }
+        if (ctx.role === "directeur") { window.location.replace("offre.html"); return new Promise(function () {}); }
         var corps = document.querySelector(".dash-body");
         if (corps) corps.innerHTML = UI.emptyState("L'espace n'est pas encore ouvert", "Votre établissement finalise son abonnement Klassio. Vous pourrez y accéder dès son ouverture.", "", "lock");
         return new Promise(function () {});
@@ -311,8 +311,11 @@
         (ctx.role === "directeur"
           ? '<a href="abonnement.html" class="s-acc-item" role="menuitem">' + UI.icon("receipt", 15) + "Abonnement</a>"
           : "") +
+        '<a href="mailto:mudeyimusimwa@gmail.com" class="s-acc-item" role="menuitem">' + UI.icon("mail", 15) + "Écrire à Klassio</a>" +
         '<button type="button" class="s-acc-item" id="logoutBtn" role="menuitem">' + UI.icon("logout", 15) + "Se déconnecter</button>" +
-      "</div>";
+      "</div>" +
+      // L'adresse de Klassio, visible sur chaque écran de l'application (07/10/2026).
+      '<a class="s-contact" href="mailto:mudeyimusimwa@gmail.com">mudeyimusimwa@gmail.com</a>';
 
     var btn = document.getElementById("accountBtn");
     var menu = document.getElementById("accountMenu");

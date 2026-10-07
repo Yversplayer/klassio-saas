@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex, nofollow" />
+<title>Votre offre — Klassio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;1,500;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/style.css?v=1791800004" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' http://localhost:5001; base-uri 'self'; form-action 'self'">
+<script src="../assets/js/theme.js?v=1790200001"></script>
+<link rel="icon" href="../favicon.ico" sizes="any">
+</head>
+<body data-page="offre">
+<!--
+  Page de paiement (07/10/2026). Ici seulement : choisir l'offre, recevoir la
+  facture, déclarer son paiement. La logique est celle d'assets/js/offres.js
+  (même composant que l'écran Abonnement) ; le serveur décide de tout.
+  La colonne de gauche montre des fonctions RÉELLES du logiciel, avec des
+  données fictives annoncées comme telles (AGENTS.md §10).
+-->
+<main class="kp-page">
+  <section class="kp-gauche" aria-label="Klassio">
+    <a class="kp-marque" href="../index.html"><img src="../assets/logo.png?v=1789000492" alt="" width="44" height="44">Klassio</a>
+    <p class="kp-accroche">Toute votre école, <em>enfin sous la main</em>.</p>
+    <div class="kp-ecran" aria-hidden="true">
+      <div class="kp-ecran-tete"><b>Aujourd'hui, à la Direction</b><span>lundi, 7 h 42</span></div>
+      <ul class="kp-fil">
+        <li><span class="kp-coche">✓</span><span><b>Appel du matin</b> · 6e A, 32 présents sur 34</span></li>
+        <li><span class="kp-coche">✓</span><span><b>Retard signalé</b> aux parents de Kevin</span></li>
+        <li><span class="kp-coche">✓</span><span><b>Reçu n° 0142</b> émis pour la famille Mbuyi</span></li>
+        <li><span class="kp-coche">✓</span><span><b>Bulletins proclamés</b> · 5e B, 1er trimestre</span></li>
+        <li><span class="kp-coche">✓</span><span><b>Message aux familles</b> de la 4e : réunion vendredi</span></li>
+      </ul>
+      <p class="kp-fictif">Données fictives — un aperçu de ce que fait Klassio.</p>
+    </div>
+    <p class="kp-contact">Une question ? <a href="mailto:mudeyimusimwa@gmail.com">mudeyimusimwa@gmail.com</a> · <a href="https://wa.me/243971839237" target="_blank" rel="noopener">WhatsApp</a></p>
+  </section>
+
+  <section class="kp-droite" aria-labelledby="kpTitre">
+    <h1 id="kpTitre">Choisissez votre offre</h1>
+    <p class="kp-sous" id="kpSous">Toutes les fonctionnalités dans chaque offre. Seul votre effectif change le prix.</p>
+    <div class="kp-hote" id="offreHost" aria-live="polite"></div>
+  </section>
+</main>
+<script src="../assets/js/ui.js?v=1791400003"></script>
+<script src="../assets/js/app.js?v=1791800001"></script>
+<script src="../assets/js/offres.js?v=1791800002"></script>
+<script src="../assets/js/page-offre.js?v=1791800002"></script>
+</body>
+</html>

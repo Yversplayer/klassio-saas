@@ -77,7 +77,7 @@
   // le vide vaut moins que pas de lien du tout : il fait douter du reste.
   function footer() {
     var cols = [
-      ["Klassio", [["index.html#a-propos", "À propos"], ["index.html#produit", "Le logiciel"], ["index.html#tarifs", "Tarifs"], ["demo.html", "Démonstration"], ["index.html#contact", "Contact"], ["https://wa.me/243971839237", "WhatsApp : +243 971 839 237"]]],
+      ["Klassio", [["index.html#a-propos", "À propos"], ["index.html#produit", "Le logiciel"], ["index.html#tarifs", "Tarifs"], ["demo.html", "Démonstration"], ["index.html#contact", "Contact"], ["https://wa.me/243971839237", "WhatsApp : +243 971 839 237"], ["mailto:mudeyimusimwa@gmail.com", "mudeyimusimwa@gmail.com"]]],
       ["Pour qui", [["index.html#roles", "Direction"], ["index.html#roles", "Professeurs"], ["index.html#roles", "Parents"], ["index.html#roles", "Directeur des disciplines"]]],
       ["Ressources", [["aide.html", "Centre d'aide"], ["index.html#faq", "FAQ"], ["securite.html", "Sécurité"], ["app/inscription.html", "Créer un espace"]]],
       ["Légal", [["confidentialite.html", "Confidentialité"], ["cgu.html", "Conditions générales"], ["mentions.html", "Mentions légales"], ["confidentialite.html#suppression", "Suppression du compte"]]],

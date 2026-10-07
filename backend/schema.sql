@@ -878,7 +878,8 @@ CREATE TABLE IF NOT EXISTS plans (
   currency TEXT NOT NULL DEFAULT 'USD',
   description TEXT,
   sort INTEGER NOT NULL DEFAULT 0,
-  active INTEGER NOT NULL DEFAULT 1
+  active INTEGER NOT NULL DEFAULT 1,
+  yearly_price REAL                -- prix à l'année (07/10/2026) ; NULL = pas d'offre annuelle (sur devis)
 );
 
 CREATE TABLE IF NOT EXISTS subscriptions (
@@ -891,7 +892,8 @@ CREATE TABLE IF NOT EXISTS subscriptions (
   grace_days INTEGER NOT NULL DEFAULT 15,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL,
-  provisional_until TEXT          -- ouverture provisoire pendant la vérification du 1er paiement (NULL = jamais accordée)
+  provisional_until TEXT,         -- ouverture provisoire pendant la vérification du 1er paiement (NULL = jamais accordée)
+  billing_cycle TEXT NOT NULL DEFAULT 'monthly' -- monthly | yearly (07/10/2026)
 );
 
 CREATE TABLE IF NOT EXISTS invoices (
@@ -909,7 +911,8 @@ CREATE TABLE IF NOT EXISTS invoices (
   paid_at TEXT,
   method TEXT,
   reference TEXT,
-  created_at TEXT NOT NULL
+  created_at TEXT NOT NULL,
+  billing_cycle TEXT NOT NULL DEFAULT 'monthly' -- la période qu'elle couvre : 30 ou 365 jours
 );
 
 -- Administrateurs de la plateforme Klassio (rôle global, hors tenant).

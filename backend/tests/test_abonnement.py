@@ -231,6 +231,63 @@ class AbonnementTests(unittest.TestCase):
         self.assertIsNone(plans["reseau"]["max_students"])
         self.assertTrue(all(p["per_student"] == 0 for p in plans.values()))
 
+    # ------------------------------------------------------- à l'année
+    def test_prix_annuels_deux_mois_offerts(self):
+        """Arrêtés par le propriétaire le 07/10/2026 : 10 mois payés pour 12."""
+        plans = {p["code"]: p for p in self.c.get("/api/plans").get_json()}
+        self.assertEqual(plans["essentiel"]["yearly_price"], 999.0)
+        self.assertEqual(plans["ecole"]["yearly_price"], 1499.0)
+        self.assertEqual(plans["complexe"]["yearly_price"], 2499.0)
+        self.assertIsNone(plans["reseau"]["yearly_price"])
+        for code, mensuel in (("essentiel", 99.9), ("ecole", 149.9), ("complexe", 249.9)):
+            self.assertLess(plans[code]["yearly_price"], mensuel * 12, f"{code} : l'annuel coûte plus que 12 mois")
+
+    def test_la_landing_affiche_les_prix_que_le_serveur_facture(self):
+        """Deux endroits à garder identiques (AGENTS.md §9) : PLANS_2026_10 et
+        PRIX_ANNUELS_2026_10 côté serveur, la section #tarifs de la landing."""
+        racine = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+        with open(os.path.join(racine, "index.html"), encoding="utf-8") as f:
+            page = f.read()
+        tarifs = page[page.index('id="tarifs"'):page.index('id="faq"')]
+        for code, mensuel in (("essentiel", 99.9), ("ecole", 149.9), ("complexe", 249.9)):
+            self.assertTrue(f'data-mensuel="{mensuel:.2f}"' in tarifs, f"{code} : prix mensuel absent de la landing")
+            self.assertTrue(f'data-annuel="{db.PRIX_ANNUELS_2026_10[code]:.2f}"' in tarifs, f"{code} : prix annuel absent de la landing")
+
+    def test_choisir_a_l_annee_facture_un_an_et_ouvre_un_an(self):
+        tid, h = self._ecole()
+        r = self.c.post("/api/subscription/choose", json={"plan_code": "essentiel", "billing_cycle": "yearly"}, headers=h)
+        self.assertEqual(r.status_code, 200, r.get_data(as_text=True))
+        inv = r.get_json()["invoice"]
+        self.assertEqual(inv["amount"], 999.0)
+        self.assertEqual(inv["billing_cycle"], "yearly")
+        from datetime import date
+        duree = (date.fromisoformat(inv["period_end"]) - date.fromisoformat(inv["period_start"])).days
+        self.assertEqual(duree, 365)
+        self.assertEqual(self.c.post("/api/subscription/pay", json={"invoice_id": inv["id"], "method": "bank",
+                                                                    "reference": "VIR-AN"}, headers=h).status_code, 200)
+        admin, csrf = self._admin()
+        self.assertEqual(admin.post(f"/api/platform/invoices/{inv['id']}/confirm", headers=csrf).status_code, 200)
+        s = self.c.get("/api/subscription", headers=h).get_json()
+        self.assertEqual((s["status"], s["billing_cycle"]), ("active", "yearly"))
+        jours = (float(s["current_period_end"]) - time.time()) / 86400
+        self.assertGreater(jours, 360, "la confirmation n'a ouvert qu'un mois pour une facture annuelle")
+        # La plateforme compte cette école pour son équivalent mensuel.
+        ov = admin.get("/api/platform/overview").get_json()
+        ligne = next(t for t in ov["tenants"] if t["id"] == tid)
+        self.assertEqual((ligne["amount"], ligne["billing_cycle"]), (83.25, "yearly"))
+
+    def test_au_mois_rien_ne_change(self):
+        tid, h = self._ecole()
+        inv = self.c.post("/api/subscription/choose", json={"plan_code": "essentiel"}, headers=h).get_json()["invoice"]
+        self.assertEqual((inv["amount"], inv["billing_cycle"]), (99.9, "monthly"))
+
+    def test_sur_devis_ou_cycle_inconnu_refuses_a_l_annee(self):
+        tid, h = self._ecole()
+        self.assertEqual(self.c.post("/api/subscription/choose", json={"plan_code": "reseau", "billing_cycle": "yearly"},
+                                     headers=h).status_code, 400)
+        self.assertEqual(self.c.post("/api/subscription/choose", json={"plan_code": "essentiel", "billing_cycle": "decennal"},
+                                     headers=h).status_code, 400)
+
 
 if __name__ == "__main__":
     unittest.main()

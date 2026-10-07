@@ -5,7 +5,7 @@
       "name": "klassio",
       "runtimeExecutable": "./demarrer.sh",
       "runtimeArgs": [],
-      "port": 4173
+      "port": 5001
     }
   ]
 }

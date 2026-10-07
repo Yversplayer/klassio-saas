@@ -33,6 +33,15 @@ bp = Blueprint("billing", __name__)
 
 TRIAL_DAYS = 30
 PERIOD_DAYS = 30
+# Facturation à l'année (07/10/2026) : « 2 mois offerts ». Une facture porte
+# son cycle, et c'est lui qui fixe la période qu'elle ouvre — à la création
+# comme à la confirmation.
+CYCLES = ("monthly", "yearly")
+YEAR_DAYS = 365
+
+
+def jours_du_cycle(cycle):
+    return YEAR_DAYS if cycle == "yearly" else PERIOD_DAYS
 INVOICE_DUE_DAYS = 7
 WRITE_ALLOWLIST_PREFIXES = ("/api/subscription", "/api/auth/", "/api/me", "/api/notifications", "/api/platform", "/api/ai/")
 # Espace pas encore activé : il ne répond qu'à ce qui permet de l'ouvrir — la
@@ -102,10 +111,24 @@ def plan_for(conn, students):
     return dict(rows[-1]) if rows else None
 
 
-def amount_for(plan, students):
+def amount_for(plan, students, cycle="monthly"):
     if plan is None:
         return 0.0
+    if cycle == "yearly" and plan.get("yearly_price") is not None:
+        return round(float(plan["yearly_price"]), 2)
     return round(float(plan["base_price"]) + float(plan["per_student"]) * students, 2)
+
+
+def equivalent_mensuel(plan, students, cycle="monthly"):
+    """Ce que l'école rapporte par mois : une école à l'année compte pour son
+    prix annuel divisé par 12 dans le revenu mensuel de la plateforme."""
+    montant = amount_for(plan, students, cycle)
+    return round(montant / 12, 2) if cycle == "yearly" and plan and plan.get("yearly_price") is not None else montant
+
+
+def _cycle_de(sub):
+    cycle = sub["billing_cycle"] if "billing_cycle" in sub.keys() else None
+    return cycle if cycle in CYCLES else "monthly"
 
 
 def ensure_subscription(conn, tenant_id):
@@ -143,28 +166,35 @@ def _next_invoice_number(conn):
     return f"{prefix}{seq:04d}"
 
 
-def issue_invoice(conn, tenant_id, period_start, plan=None):
+def issue_invoice(conn, tenant_id, period_start, plan=None, cycle=None):
     """plan=None : le palier qu'impose la taille de l'école (renouvellement).
     Le palier CHOISI n'est retenu que s'il couvre l'effectif : une école qui a
-    grandi passe d'elle-même au palier au-dessus, jamais l'inverse."""
+    grandi passe d'elle-même au palier au-dessus, jamais l'inverse.
+    cycle=None : celui de l'abonnement (au mois par défaut). Un palier sans
+    prix annuel (sur devis) est toujours facturé au mois."""
     students = active_students(conn, tenant_id)
     requis = plan_for(conn, students)
     if plan is None or (plan["max_students"] is not None and students > plan["max_students"]):
         plan = requis
-    period_end = period_start + timedelta(days=PERIOD_DAYS)
-    amount = amount_for(plan, students)
+    if cycle not in CYCLES:
+        sub = conn.execute("SELECT * FROM subscriptions WHERE tenant_id=?", (tenant_id,)).fetchone()
+        cycle = _cycle_de(sub) if sub else "monthly"
+    if cycle == "yearly" and (plan is None or plan.get("yearly_price") is None):
+        cycle = "monthly"
+    period_end = period_start + timedelta(days=jours_du_cycle(cycle))
+    amount = amount_for(plan, students, cycle)
     iid = new_id()
     conn.execute(
-        """INSERT INTO invoices (id, tenant_id, number, plan_code, period_start, period_end, students, amount, currency, status, due_at, created_at)
-           VALUES (?,?,?,?,?,?,?,?,?,'open',?,?)""",
+        """INSERT INTO invoices (id, tenant_id, number, plan_code, period_start, period_end, students, amount, currency, status, due_at, created_at, billing_cycle)
+           VALUES (?,?,?,?,?,?,?,?,?,'open',?,?,?)""",
         (iid, tenant_id, _next_invoice_number(conn), plan["code"] if plan else "essentiel", period_start.date().isoformat(), period_end.date().isoformat(),
-         students, amount, plan["currency"] if plan else "USD", _ts(period_start + timedelta(days=INVOICE_DUE_DAYS)), str(time.time())))
+         students, amount, plan["currency"] if plan else "USD", _ts(period_start + timedelta(days=INVOICE_DUE_DAYS)), str(time.time()), cycle))
     conn.execute("UPDATE subscriptions SET plan_code=?, current_period_start=?, current_period_end=?, updated_at=? WHERE tenant_id=?",
                  (plan["code"] if plan else "essentiel", _ts(period_start), _ts(period_end), str(time.time()), tenant_id))
     conn.commit()
     inv = dict(conn.execute("SELECT * FROM invoices WHERE id=?", (iid,)).fetchone())
     notif_module.on_subscription_notice(conn, tenant_id, f"Facture {inv['number']} — abonnement Klassio",
-                                        f"{amount:.2f} {inv['currency']} pour {students} élèves actifs (palier {plan['name'] if plan else '—'}), à régler avant le {_dt(inv['due_at']).date().isoformat()}.")
+                                        f"{amount:.2f} {inv['currency']} {'pour un an' if cycle == 'yearly' else 'pour un mois'}, {students} élèves actifs (palier {plan['name'] if plan else '—'}), à régler avant le {_dt(inv['due_at']).date().isoformat()}.")
     return inv
 
 
@@ -241,7 +271,10 @@ def summary(conn, tenant_id):
         attention = (f"Facture {open_inv['number']} de {open_inv['amount']:.2f} {open_inv['currency']} "
                      f"à régler avant le {_dt(open_inv['due_at']).date().isoformat()}.")
     return {
-        "status": sub["status"], "plan": plan, "students": students, "estimated_amount": amount_for(plan, students),
+        "status": sub["status"], "plan": plan, "students": students,
+        "billing_cycle": _cycle_de(sub),
+        "estimated_amount": amount_for(plan, students, _cycle_de(sub)),
+        "monthly_equivalent": equivalent_mensuel(plan, students, _cycle_de(sub)),
         "trial_ends_at": sub["trial_ends_at"], "days_left": days_left, "current_period_end": sub["current_period_end"], "grace_days": sub["grace_days"],
         "attention": attention, "read_only": sub["status"] == "suspended",
         "open_invoice": dict(open_inv) if open_inv else None,
@@ -325,6 +358,9 @@ def choose_plan():
         return jsonify({"error": "Réservé à la Direction."}), 403
     data = json_object(request.get_json(force=True))
     code = str(data.get("plan_code") or "")
+    cycle = data.get("billing_cycle") or "monthly"
+    if cycle not in CYCLES:
+        raise ValidationError("Facturation au mois ou à l'année uniquement.")
     conn = db.get_connection()
     tenant_id = g.ctx["tenant_id"]
     sub = ensure_subscription(conn, tenant_id)
@@ -336,6 +372,9 @@ def choose_plan():
         conn.close()
         raise ValidationError("Offre inconnue.")
     plan = dict(plan)
+    if cycle == "yearly" and plan.get("yearly_price") is None:
+        conn.close()
+        raise ValidationError(f"L'offre {plan['name']} ne se règle pas à l'année.")
     if plan["max_students"] is None and float(plan["base_price"]) == 0:
         conn.close()
         return jsonify({"error": "Cette offre est sur devis : écrivez-nous, nous vous répondons avec un tarif adapté.", "quote": True}), 409
@@ -349,13 +388,14 @@ def choose_plan():
         return jsonify({"error": "Un paiement est déjà déclaré pour cette facture : attendez sa confirmation."}), 409
     # Changer d'avis avant d'avoir payé : la facture précédente est annulée.
     conn.execute("UPDATE invoices SET status='void' WHERE tenant_id=? AND status='open'", (tenant_id,))
-    conn.execute("UPDATE subscriptions SET plan_code=?, status='awaiting_payment', updated_at=? WHERE tenant_id=?",
-                 (plan["code"], str(time.time()), tenant_id))
+    conn.execute("UPDATE subscriptions SET plan_code=?, status='awaiting_payment', billing_cycle=?, updated_at=? WHERE tenant_id=?",
+                 (plan["code"], cycle, str(time.time()), tenant_id))
     conn.commit()
-    inv = issue_invoice(conn, tenant_id, datetime.now(), plan)
+    inv = issue_invoice(conn, tenant_id, datetime.now(), plan, cycle)
     conn.close()
-    audit(tenant_id, g.ctx["user_id"], "billing.plan_chosen", "plan", plan["code"], "success", after={"invoice": inv["number"], "amount": inv["amount"]})
-    return jsonify({"ok": True, "status": "awaiting_payment", "invoice": inv})
+    audit(tenant_id, g.ctx["user_id"], "billing.plan_chosen", "plan", plan["code"], "success",
+          after={"invoice": inv["number"], "amount": inv["amount"], "billing_cycle": cycle})
+    return jsonify({"ok": True, "status": "awaiting_payment", "invoice": inv, "billing_cycle": cycle})
 
 
 @bp.post("/api/subscription/pay")
@@ -433,9 +473,10 @@ def platform_overview():
         s = summary(conn, t["id"])
         director = conn.execute("SELECT u.name, u.email, u.phone FROM memberships m JOIN users u ON u.id=m.user_id WHERE m.tenant_id=? AND m.role='directeur' ORDER BY m.created_at LIMIT 1", (t["id"],)).fetchone()
         if s["status"] in ("active", "past_due"):
-            mrr += s["estimated_amount"]
+            mrr += s["monthly_equivalent"]
         tenants.append({"id": t["id"], "name": t["name"], "slug": t["slug"], "created_at": t["created_at"], "status": s["status"], "students": s["students"],
-                        "plan": s["plan"]["name"] if s["plan"] else None, "amount": s["estimated_amount"], "days_left": s["days_left"],
+                        "plan": s["plan"]["name"] if s["plan"] else None, "amount": s["monthly_equivalent"],
+                        "billing_cycle": s["billing_cycle"], "days_left": s["days_left"],
                         "open_invoice": s["open_invoice"], "director": dict(director) if director else None})
     pending = [dict(r) for r in conn.execute("SELECT i.*, t.name AS tenant_name FROM invoices i JOIN tenants t ON t.id=i.tenant_id WHERE i.status='pending' ORDER BY i.created_at")]
     plans = [dict(r) for r in conn.execute("SELECT * FROM plans ORDER BY sort")]
@@ -464,7 +505,7 @@ def confirm_invoice(invoice_id):
         # commence le jour de l'ouverture — pas le jour du choix de l'offre,
         # pendant lequel l'école n'avait pas accès.
         debut = datetime.now()
-        fin = debut + timedelta(days=PERIOD_DAYS)
+        fin = debut + timedelta(days=jours_du_cycle(inv["billing_cycle"] if "billing_cycle" in inv.keys() else "monthly"))
         conn.execute("UPDATE invoices SET period_start=?, period_end=? WHERE id=?", (debut.date().isoformat(), fin.date().isoformat(), invoice_id))
         conn.execute("UPDATE subscriptions SET status='active', current_period_start=?, current_period_end=?, updated_at=? WHERE tenant_id=?",
                      (_ts(debut), _ts(fin), now, inv["tenant_id"]))

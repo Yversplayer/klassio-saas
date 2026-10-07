@@ -533,6 +533,11 @@ PLANS_2026_10 = [
     ("complexe", "Complexe", 1001, 3000, 249.9, 0.0, "USD", "De 1 001 à 3 000 élèves — toutes les fonctionnalités.", 3),
     ("reseau", "Réseau", 3001, None, 0.0, 0.0, "USD", "Plusieurs établissements ou plus de 3 000 élèves — sur devis.", 4),
 ]
+# Prix à l'année, arrêtés par le propriétaire le 07/10/2026 : « 2 mois
+# offerts » (10 mois payés pour 12). Le Réseau reste sur devis. Ils vivent à
+# deux endroits qui doivent rester identiques : ici et la section #tarifs de
+# la landing (tests/test_abonnement.py vérifie la landing contre ces valeurs).
+PRIX_ANNUELS_2026_10 = {"essentiel": 999.0, "ecole": 1499.0, "complexe": 2499.0}
 
 
 def _migrate(conn):
@@ -719,6 +724,10 @@ def _migrate(conn):
     # seule fois par école). NULL = jamais accordée ; une date passée = déjà
     # consommée — c'est ce qui empêche une fausse référence de rouvrir l'espace.
     _add_column_if_missing(conn, "subscriptions", "provisional_until", "TEXT")
+    # Facturation à l'année (07/10/2026). Une école existante reste au mois.
+    _add_column_if_missing(conn, "plans", "yearly_price", "REAL")
+    _add_column_if_missing(conn, "subscriptions", "billing_cycle", "TEXT NOT NULL DEFAULT 'monthly'")
+    _add_column_if_missing(conn, "invoices", "billing_cycle", "TEXT NOT NULL DEFAULT 'monthly'")
 
     # Plans d'abonnement par défaut (modifiables par l'administration de la plateforme).
     if not conn.execute("SELECT 1 FROM plans LIMIT 1").fetchone():
@@ -738,6 +747,10 @@ def _migrate(conn):
         for code, name, mini, maxi, base, per, cur, desc, sort in PLANS_2026_10:
             conn.execute("UPDATE plans SET name=?, min_students=?, max_students=?, base_price=?, per_student=?, currency=?, description=?, sort=? WHERE code=?",
                          (name, mini, maxi, base, per, cur, desc, sort, code))
+    # Prix annuels posés UNE fois : un prix annuel déjà réglé (par
+    # l'administration de la plateforme) n'est jamais écrasé.
+    for code, prix_annuel in PRIX_ANNUELS_2026_10.items():
+        conn.execute("UPDATE plans SET yearly_price=? WHERE code=? AND yearly_price IS NULL", (prix_annuel, code))
     conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_phone ON users(phone)")
     conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_tenants_slug ON tenants(slug)")
 

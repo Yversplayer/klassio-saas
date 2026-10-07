@@ -190,13 +190,16 @@
     function goStep(n) {
       ["step-account", "step-import", "step-offre", "step-reveal"].forEach(function (id, i) { document.getElementById(id).hidden = i !== n - 1; });
       dots.forEach(function (d) { d.classList.toggle("active", parseInt(d.dataset.step, 10) === n); });
-      if (n === 3) chargerOffre();
+      // L'offre se choisit sur la page de paiement en deux volets (07/10/2026),
+      // avec l'offre et la période éventuellement choisies sur les tarifs.
+      if (n === 3) { window.location.href = "offre.html" + (offreDemandee ? "?offre=" + offreDemandee + (cycleDemande === "yearly" ? "&cycle=yearly" : "") : (cycleDemande === "yearly" ? "?cycle=yearly" : "")); }
     }
 
     // ÉTAPE 3 — l'offre, obligatoire : il n'existe pas de mode gratuit. Une
     // offre choisie depuis la page Tarifs du site (?offre=ecole) est
     // présélectionnée ; le serveur la refuse si elle ne couvre pas l'effectif.
     var offreDemandee = (location.search.match(/[?&]offre=([a-z]+)/) || [])[1] || null;
+    var cycleDemande = /[?&]cycle=yearly(&|$)/.test(location.search) ? "yearly" : "monthly";
     function chargerOffre() {
       var host = document.getElementById("offreHost");
       host.innerHTML = UI.skeleton ? UI.skeleton("card", 2) : "";
@@ -378,6 +381,14 @@
         if (!res.ok) { UI.btnState(btn, "idle"); errorEl.textContent = res.body.error || "Connexion impossible."; errorEl.hidden = false; return; }
         storeSession(res.body);
         UI.btnState(btn, "success", "Connecté");
+        // « J'ai déjà un compte » depuis les tarifs : la Direction reprend son
+        // choix sur la page de paiement. Seule valeur acceptée : « offre »
+        // (jamais une adresse fournie par le lien — pas de redirection ouverte).
+        if (UI.qs("suite") === "offre" && res.body.role === "directeur") {
+          var o = (UI.qs("offre") || "").replace(/[^a-z]/g, "");
+          window.location.href = "offre.html?" + (o ? "offre=" + o + "&" : "") + (UI.qs("cycle") === "yearly" ? "cycle=yearly" : "cycle=monthly");
+          return;
+        }
         window.location.href = UI.homeFor(res.body.role);
       }).catch(function () { UI.btnState(btn, "idle"); errorEl.textContent = "Le serveur Klassio est momentanément injoignable. Réessayez dans un instant."; errorEl.hidden = false; });
     }

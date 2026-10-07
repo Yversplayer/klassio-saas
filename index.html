@@ -10,9 +10,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;1,500;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Archivo:wdth,wght@62..125,400..800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/style.css?v=1791500001" />
+<link rel="stylesheet" href="assets/css/style.css?v=1791800004" />
 <link rel="stylesheet" href="assets/css/cine.css?v=1791400003" />
-<link rel="stylesheet" href="assets/css/vitrine.css?v=1791400003" />
+<link rel="stylesheet" href="assets/css/vitrine.css?v=1791800001" />
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' http://localhost:5001; base-uri 'self'; form-action 'self'">
 <script src="assets/js/theme.js?v=1790200001"></script>
 <style>
@@ -531,48 +531,101 @@
   </section>
 
   <!-- TARIFS (tarifs.py) — montants identiques à la table plans du serveur -->
-  <section class="kx-sec kx-tarifs" id="tarifs" aria-labelledby="tarifsTitle">
+  <!-- TARIFS — refonte du 07/10/2026 sur le modèle « cartes lumineuses » fourni
+       par le propriétaire, aux couleurs Klassio. Les prix sont ceux que le
+       serveur facture : PLANS_2026_10 et PRIX_ANNUELS_2026_10 (backend/db.py),
+       vérifiés par tests/test_abonnement.py. Sans JavaScript : prix mensuels,
+       liens directs vers l'inscription. Avec : bascule Mensuel / Annuel et
+       fenêtre de choix (assets/js/tarifs.js). -->
+  <section class="kx-sec kx-tarifs kx-tp" id="tarifs" aria-labelledby="tarifsTitle">
+    <div class="kx-tp-sky" aria-hidden="true"></div>
     <div class="kx-wrap">
-      <div class="kx-tarifs-head">
-        <span class="kx-eyebrow">Tarifs</span>
-        <h2 class="kx-title" id="tarifsTitle">Un prix clair, <em>à la taille de votre école</em>.</h2>
-        <p class="kx-lead">Chaque offre contient tout Klassio. Pas de frais cachés, pas de module à débloquer : seul votre effectif change le prix.</p>
-      </div>
-      <div class="kx-prices" data-kx-arrive>
-        <article class="kx-price">
-          <h3>Essentiel</h3>
-          <p class="kx-price-range">Jusqu'à 300 élèves</p>
-          <p class="kx-price-amount"><b>99,90 $</b> <small>/ mois</small></p>
-          <a class="btn btn-ghost kx-price-cta" href="app/inscription.html?offre=essentiel">Choisir Essentiel</a>
-        </article>
-        <article class="kx-price forest">
-          <h3>École</h3>
-          <p class="kx-price-range">De 301 à 1 000 élèves</p>
-          <p class="kx-price-amount"><b>149,90 $</b> <small>/ mois</small></p>
-          <a class="btn btn-lime kx-price-cta" href="app/inscription.html?offre=ecole">Choisir École</a>
-        </article>
-        <article class="kx-price">
-          <h3>Complexe</h3>
-          <p class="kx-price-range">De 1 001 à 3 000 élèves</p>
-          <p class="kx-price-amount"><b>249,90 $</b> <small>/ mois</small></p>
-          <a class="btn btn-ghost kx-price-cta" href="app/inscription.html?offre=complexe">Choisir Complexe</a>
-        </article>
-        <article class="kx-price">
-          <h3>Réseau</h3>
-          <p class="kx-price-range">Plus de 3 000 élèves, ou plusieurs établissements</p>
-          <p class="kx-price-amount"><b>Sur devis</b></p>
-          <a class="btn btn-ghost kx-price-cta" href="https://wa.me/243971839237?text=Bonjour%2C%20je%20souhaite%20un%20devis%20Klassio%20pour%20notre%20r%C3%A9seau%20d%27%C3%A9tablissements." target="_blank" rel="noopener">Demander un devis</a>
-        </article>
-      </div>
-      <div class="kx-tarifs-foot">
-        <ul class="kx-inclus"><li>Les 32 fonctions du logiciel, sans option à débloquer</li><li>Utilisateurs illimités : Direction, professeurs, discipline, parents</li><li>Import de vos fichiers Excel existants</li><li>Vos données exportables à tout moment</li><li>Jamais de suppression de données pour un retard de paiement</li></ul>
-        <div class="kx-tarifs-aside">
-          <p><b>Envie de voir avant de choisir ?</b> La démonstration ouvre l'espace complet d'une école fictive, sans inscription.</p>
-          <a class="kx-arrow-link" href="demo.html">Visiter la démo <svg class="kx-ic" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
-          <p class="kx-tarifs-note">Règlement mensuel par Mobile Money ou virement. Une question ? <a href="https://wa.me/243971839237" target="_blank" rel="noopener">Écrivez-nous sur WhatsApp</a>.</p>
+      <div class="kx-tp-head">
+        <span class="kx-tp-eyebrow">Tarifs</span>
+        <h2 class="kx-tp-title" id="tarifsTitle">Un prix clair, <em>à la taille de votre école</em>.</h2>
+        <p class="kx-tp-lead">Chaque offre contient tout Klassio. Pas de frais cachés, pas de module à débloquer : seul votre effectif change le prix.</p>
+        <div class="kx-tp-switch" role="group" aria-label="Période de facturation" hidden>
+          <button type="button" class="kx-tp-opt" data-cycle="monthly" aria-pressed="true">Mensuel</button>
+          <button type="button" class="kx-tp-opt" data-cycle="yearly" aria-pressed="false">Annuel <span class="kx-tp-gift">2 mois offerts</span></button>
         </div>
       </div>
+      <div class="kx-tp-cards" data-kx-arrive>
+        <article class="kx-tp-card" data-code="essentiel" data-nom="Essentiel" data-mensuel="99.90" data-annuel="999.00">
+          <span class="kx-tp-medal" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21V11"/><path d="M12 11c0-4 3-6 7-6 0 4-3 6-7 6Z"/><path d="M12 14c0-3-2.5-5-6-5 0 3 2.5 5 6 5Z"/></svg></span>
+          <h3>Essentiel</h3>
+          <p class="kx-tp-desc">Jusqu'à 300 élèves.</p>
+          <ul class="kx-tp-feat">
+            <li>Les 32 fonctions du logiciel</li>
+            <li>Utilisateurs illimités</li>
+            <li>Import de vos fichiers Excel</li>
+            <li>Données exportables à tout moment</li>
+          </ul>
+          <p class="kx-tp-price"><b class="kx-tp-num">99,90 $</b> <small class="kx-tp-per">/ mois</small></p>
+          <p class="kx-tp-eq" hidden>soit 83,25 $ par mois — 2 mois offerts</p>
+          <a class="kx-tp-cta" href="app/inscription.html?offre=essentiel">Choisir Essentiel</a>
+        </article>
+        <article class="kx-tp-card is-feature" data-code="ecole" data-nom="École" data-mensuel="149.90" data-annuel="1499.00">
+          <span class="kx-tp-medal" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10 12 5l9 5"/><path d="M5 10v9h14v-9"/><path d="M10 19v-5h4v5"/></svg></span>
+          <h3>École</h3>
+          <p class="kx-tp-desc">De 301 à 1 000 élèves.</p>
+          <ul class="kx-tp-feat">
+            <li>Les 32 fonctions du logiciel</li>
+            <li>Utilisateurs illimités</li>
+            <li>Import de vos fichiers Excel</li>
+            <li>Données exportables à tout moment</li>
+          </ul>
+          <p class="kx-tp-price"><b class="kx-tp-num">149,90 $</b> <small class="kx-tp-per">/ mois</small></p>
+          <p class="kx-tp-eq" hidden>soit 124,92 $ par mois — 2 mois offerts</p>
+          <a class="kx-tp-cta" href="app/inscription.html?offre=ecole">Choisir École</a>
+        </article>
+        <article class="kx-tp-card" data-code="complexe" data-nom="Complexe" data-mensuel="249.90" data-annuel="2499.00">
+          <span class="kx-tp-medal" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20V9l5-3 5 3v11"/><path d="M13 20v-8l4-2 4 2v8"/><path d="M2 20h20"/><path d="M6.5 13h3M6.5 16h3M16 15h2"/></svg></span>
+          <h3>Complexe</h3>
+          <p class="kx-tp-desc">De 1 001 à 3 000 élèves.</p>
+          <ul class="kx-tp-feat">
+            <li>Les 32 fonctions du logiciel</li>
+            <li>Utilisateurs illimités</li>
+            <li>Import de vos fichiers Excel</li>
+            <li>Données exportables à tout moment</li>
+          </ul>
+          <p class="kx-tp-price"><b class="kx-tp-num">249,90 $</b> <small class="kx-tp-per">/ mois</small></p>
+          <p class="kx-tp-eq" hidden>soit 208,25 $ par mois — 2 mois offerts</p>
+          <a class="kx-tp-cta" href="app/inscription.html?offre=complexe">Choisir Complexe</a>
+        </article>
+        <article class="kx-tp-card is-devis">
+          <span class="kx-tp-medal" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2.2"/><circle cx="5" cy="18" r="2.2"/><circle cx="19" cy="18" r="2.2"/><path d="M11 7 6 16M13 7l5 9M7.2 18h9.6"/></svg></span>
+          <h3>Réseau</h3>
+          <p class="kx-tp-desc">Plus de 3 000 élèves, ou plusieurs établissements.</p>
+          <ul class="kx-tp-feat">
+            <li>Tout Klassio, pour chaque établissement</li>
+            <li>Utilisateurs illimités</li>
+            <li>Un tarif adapté à votre réseau</li>
+          </ul>
+          <p class="kx-tp-price"><b>Sur devis</b></p>
+          <a class="kx-tp-cta" href="https://wa.me/243971839237?text=Bonjour%2C%20je%20souhaite%20un%20devis%20Klassio%20pour%20notre%20r%C3%A9seau%20d%27%C3%A9tablissements." target="_blank" rel="noopener">Demander un devis</a>
+        </article>
+      </div>
+      <div class="kx-tp-foot">
+        <p>Règlement par Mobile Money ou virement, au mois ou à l'année. Aucune donnée supprimée pour un retard de paiement.
+          <a href="demo.html">Visiter la démo</a> · <a href="https://wa.me/243971839237" target="_blank" rel="noopener">WhatsApp</a> · <a href="mailto:mudeyimusimwa@gmail.com">mudeyimusimwa@gmail.com</a></p>
+      </div>
     </div>
+
+    <dialog class="kx-tp-modal" id="tpModal" aria-labelledby="tpModalTitle">
+      <button type="button" class="kx-tp-close" data-tp-close aria-label="Fermer">×</button>
+      <div class="kx-tp-modal-art" style="background-image:url('data:image/webp;base64,UklGRrgAAABXRUJQVlA4IKwAAAAwBQCdASoYABgAPu1oqlAppaOiqA1RMB2JaACw7BDRvCMdHD1ESK3x9y5XjQexW50AAAD+4xDvqTFanh+PtkoKrB4SS8o6OrGpvTH+J+EwgXvgwHONYWVDSyWqVlyPbCjacz9EJpo+IdLMDol10scnYs5rIQ46c0JYsuivAiKmXHPE1KLHmAQ+PtVTT0jXzlDTwfQP8YoCw9CdPva+eGrf63w6j3UJJFJhwAAA')">
+        <img src="assets/cine/directeur-solution-640.webp" srcset="assets/cine/directeur-solution-640.webp 640w, assets/cine/directeur-solution-1200.webp 1200w" sizes="(max-width: 720px) 90vw, 420px" width="640" height="640" loading="lazy" decoding="async" alt="Un directeur d'école devant son ordinateur, une étoile lumineuse au-dessus de la tête : il a trouvé sa solution.">
+        <span class="kx-tp-spark" aria-hidden="true"></span>
+      </div>
+      <div class="kx-tp-modal-body">
+        <span class="kx-tp-eyebrow">Votre offre</span>
+        <h3 id="tpModalTitle">Votre école a trouvé sa solution.</h3>
+        <p class="kx-tp-recap" id="tpRecap"></p>
+        <a class="kx-tp-cta is-primary" id="tpCreer" href="app/inscription.html">Créer l'espace de mon école</a>
+        <a class="kx-tp-cta" id="tpConnexion" href="app/connexion.html">J'ai déjà un compte · me connecter</a>
+        <p class="kx-tp-small">Le paiement se fait après la création de votre espace, par Mobile Money ou virement. Une question ? <a href="mailto:mudeyimusimwa@gmail.com">mudeyimusimwa@gmail.com</a></p>
+      </div>
+    </dialog>
   </section>
 
   <!-- FAQ — les quatorze questions de l'ancienne page, fusionnées ici, mot
@@ -705,6 +758,7 @@
   <script src="assets/js/motion.js?v=1791400003"></script>
   <script src="assets/js/main.js?v=1791400003"></script>
   <script src="assets/js/contact.js?v=1791400003"></script>
+  <script src="assets/js/tarifs.js?v=1791800002"></script>
   <script src="assets/js/cookie-consent.js?v=1790800001"></script>
 </body>
 </html>

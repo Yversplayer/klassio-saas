@@ -4247,3 +4247,130 @@ body[data-page="demo"] .demo-shell { grid-template-columns: 1fr !important; }
   .orb-scene { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; aspect-ratio: auto; }
   .orb-anneau { display: none; }
 }
+
+/* ===========================================================================
+   OFFRES — refonte du 07/10/2026 (assets/js/offres.js). Cartes au modèle de la
+   landing : médaillon, prix, un bouton par offre, bascule Mensuel / Annuel.
+   Classes of-* : utilisées seulement par offres.js.
+   =========================================================================== */
+.of-switch { display: inline-flex; gap: 4px; padding: 4px; margin-bottom: 18px; border-radius: 999px; background: var(--surface-soft); border: 1px solid var(--line); }
+.of-opt { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 16px; border: 0; border-radius: 999px; background: transparent; color: var(--ink-soft); font: inherit; font-size: 13.5px; font-weight: 700; cursor: pointer; }
+.of-opt[aria-pressed="true"] { background: #14301F; color: #F7F7F2; }
+.of-opt:focus-visible { outline: 2px solid var(--lime-deep); outline-offset: 2px; }
+.of-gift { padding: 2px 8px; border-radius: 999px; font-size: 11px; background: color-mix(in srgb, var(--lime) 35%, transparent); color: #1E3A0A; }
+.of-opt[aria-pressed="true"] .of-gift { background: #B8FF00; color: #10220F; }
+.of-plans { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 14px; }
+.of-plan { position: relative; display: flex; flex-direction: column; padding: 30px 18px 16px; border-radius: 18px; background: var(--surface); border: 1px solid var(--line); transition: border-color 0.2s ease, box-shadow 0.2s ease; }
+.of-plan.is-choice { border-color: #3E6B12; box-shadow: 0 0 0 1px #3E6B12, 0 18px 40px -24px rgba(62, 107, 18, 0.55); }
+.of-plan.is-off { opacity: 0.6; }
+.of-medal { position: absolute; top: 0; left: 18px; transform: translateY(-50%); display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: #14301F; color: #B8FF00; box-shadow: 0 0 0 4px var(--surface), 0 6px 18px rgba(20, 48, 31, 0.25); }
+.of-plan-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.of-plan h3 { margin: 0; font-size: 17px; font-weight: 800; color: var(--ink); }
+.of-reco { padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; background: color-mix(in srgb, var(--lime) 30%, transparent); color: #1E3A0A; }
+.of-range { margin-top: 2px; font-size: 12.5px; color: var(--ink-soft); }
+.of-price { margin: 10px 0 0; color: var(--ink); }
+.of-price b { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.of-price small { font-size: 12.5px; color: var(--ink-soft); }
+.of-eq { font-size: 12px; color: var(--ink-soft); }
+.of-cta { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 40px; margin-top: 12px; padding: 0 14px; border-radius: 999px; border: 1px solid #14301F; background: transparent; color: #14301F; font: inherit; font-size: 13.5px; font-weight: 700; text-decoration: none; cursor: pointer; }
+.of-cta::after { content: "→"; }
+.of-cta:hover { background: rgba(20, 48, 31, 0.06); }
+.of-cta.is-primary { background: #14301F; color: #F7F7F2; }
+.of-cta.is-primary:hover { background: #1D4A30; }
+.of-cta:focus-visible { outline: 2px solid var(--lime-deep); outline-offset: 2px; }
+:root[data-theme="dark"] .of-opt[aria-pressed="true"], :root[data-theme="dark"] .of-medal { background: #B8FF00; color: #10220F; }
+:root[data-theme="dark"] .of-cta { border-color: #B8FF00; color: #E8F5C8; }
+:root[data-theme="dark"] .of-cta.is-primary { background: #B8FF00; color: #10220F; }
+:root[data-theme="dark"] .of-plan.is-choice { border-color: #B8FF00; box-shadow: 0 0 0 1px #B8FF00; }
+:root[data-theme="dark"] .of-reco, :root[data-theme="dark"] .of-gift { color: #E8F5C8; }
+.of-pay-head { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 14px; }
+.of-pay-head .of-medal { position: static; transform: none; box-shadow: none; }
+.of-pay-head > div { flex: 1; min-width: 180px; }
+.of-link { border: 0; background: none; padding: 4px 0; color: var(--ink); font: inherit; font-size: 13px; font-weight: 700; text-decoration: underline; cursor: pointer; }
+.of-methods { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 0 0 12px; padding: 0; border: 0; }
+.of-methods legend { margin-bottom: 8px; font-size: 13px; font-weight: 700; color: var(--ink); }
+.of-method { display: flex; gap: 10px; align-items: flex-start; padding: 12px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); cursor: pointer; }
+.of-method:has(input:checked) { border-color: #3E6B12; box-shadow: 0 0 0 1px #3E6B12; }
+.of-method input { margin-top: 3px; accent-color: #3E6B12; }
+.of-method b { display: block; font-size: 14px; color: var(--ink); }
+.of-method small { font-size: 12px; color: var(--ink-soft); }
+.of-pay .of-form { display: block; }
+.of-pay .of-form .field { margin: 0 0 12px; }
+@media (max-width: 640px) {
+  .of-plans, .of-methods { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ===========================================================================
+   PAGE DE PAIEMENT — app/offre.html (07/10/2026). Écran partagé : à gauche
+   le vert Klassio, le logo et la journée d'un directeur qui s'anime ; à
+   droite le blanc, les offres et rien d'autre. Sur un écran assez grand, la
+   page tient sans défiler ; en dessous, elle se replie en une colonne.
+   Classes kp-* : cette page seulement.
+   =========================================================================== */
+.kp-page { min-height: 100vh; display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); background: #F7F7F2; }
+.kp-gauche { position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 22px; padding: clamp(24px, 3vw, 40px); background: radial-gradient(120% 80% at 20% 0%, #1D4A30 0%, #14301F 55%, #0D2216 100%); color: #F3F0E4; }
+.kp-gauche::before { content: ""; position: absolute; inset: 0; pointer-events: none; background-image: linear-gradient(to right, rgba(184, 255, 0, 0.06) 1px, transparent 1px), linear-gradient(to bottom, rgba(184, 255, 0, 0.06) 1px, transparent 1px); background-size: 48px 48px; -webkit-mask-image: radial-gradient(80% 60% at 30% 20%, #000, transparent 75%); mask-image: radial-gradient(80% 60% at 30% 20%, #000, transparent 75%); }
+.kp-marque { position: relative; display: flex; align-items: center; gap: 12px; color: #F7F7F2; text-decoration: none; font-weight: 800; font-size: 20px; letter-spacing: 0.02em; }
+.kp-marque img { width: 44px; height: 44px; border-radius: 12px; }
+.kp-accroche { position: relative; margin: 0; font-family: "Fraunces", Georgia, serif; font-weight: 600; font-size: clamp(26px, 2.6vw, 38px); line-height: 1.12; color: #F7F7F2; }
+.kp-accroche em { font-style: italic; font-weight: 500; color: #B8FF00; }
+.kp-ecran { position: relative; margin-top: auto; padding: 16px; border-radius: 20px; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(184, 255, 0, 0.2); box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.6); }
+.kp-ecran-tete { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; font-size: 12px; color: #C9D3C4; }
+.kp-ecran-tete b { color: #F7F7F2; font-size: 13.5px; }
+.kp-fil { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.kp-fil li { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; background: rgba(13, 34, 22, 0.75); font-size: 13px; color: #DDE5D6; }
+.kp-fil li b { color: #F7F7F2; font-weight: 700; }
+.kp-coche { flex: none; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: #B8FF00; color: #10220F; font-size: 13px; font-weight: 800; }
+.kp-fictif { margin: 8px 0 0; font-size: 11.5px; color: #A9B8A2; }
+.kp-contact { position: relative; margin: 0; font-size: 13px; color: #C9D3C4; }
+.kp-contact a { color: #F7F7F2; font-weight: 700; }
+.kp-droite { display: flex; flex-direction: column; justify-content: center; padding: clamp(24px, 3vw, 44px); background: #FFFFFF; color: #14301F; }
+.kp-droite h1 { margin: 0 0 4px; font-size: clamp(22px, 2.2vw, 30px); font-weight: 800; letter-spacing: -0.02em; color: #14301F; }
+.kp-droite .kp-sous { margin: 0 0 18px; font-size: 14px; color: #4A5A4F; }
+.kp-droite .form-error { margin-top: 12px; }
+.kp-hote { min-height: 120px; }
+/* La page est claire par construction : elle garde ses couleurs en thème sombre. */
+:root[data-theme="dark"] .kp-droite { --surface: #FFFFFF; --surface-soft: #F2F4EE; --line: #DDE3D8; --ink: #14301F; --ink-soft: #4A5A4F; }
+:root[data-theme="dark"] .kp-droite .of-opt[aria-pressed="true"], :root[data-theme="dark"] .kp-droite .of-medal { background: #14301F; color: #B8FF00; }
+:root[data-theme="dark"] .kp-droite .of-cta { border-color: #14301F; color: #14301F; }
+:root[data-theme="dark"] .kp-droite .of-cta.is-primary { background: #14301F; color: #F7F7F2; }
+:root[data-theme="dark"] .kp-droite .of-plan.is-choice { border-color: #3E6B12; box-shadow: 0 0 0 1px #3E6B12; }
+:root[data-theme="dark"] .kp-droite .of-reco, :root[data-theme="dark"] .kp-droite .of-gift { color: #1E3A0A; }
+/* Sans défilement sur un écran assez grand : tout tient dans la hauteur. */
+@media (min-width: 900px) and (min-height: 640px) {
+  .kp-page { height: 100vh; overflow: hidden; }
+  .kp-droite { overflow: auto; }
+}
+@media (max-width: 899px) {
+  .kp-page { grid-template-columns: minmax(0, 1fr); }
+  /* Sur téléphone, les prix d'abord : le volet vert se réduit à la marque,
+     l'accroche et le contact ; la journée animée reste aux grands écrans. */
+  .kp-gauche { gap: 12px; }
+  .kp-ecran { display: none; }
+  .kp-accroche { font-size: 24px; }
+}
+/* La journée du directeur : chaque ligne s'allume à son tour, comme l'appel
+   de la démo. Sans mouvement (préférence ou sans script), tout est là d'emblée. */
+@media (prefers-reduced-motion: no-preference) {
+  .kp-anime .kp-fil li { animation: kpLigne 12s var(--v-ease, ease) infinite both; }
+  .kp-anime .kp-fil li:nth-child(2) { animation-delay: 1.4s; }
+  .kp-anime .kp-fil li:nth-child(3) { animation-delay: 2.8s; }
+  .kp-anime .kp-fil li:nth-child(4) { animation-delay: 4.2s; }
+  .kp-anime .kp-fil li:nth-child(5) { animation-delay: 5.6s; }
+}
+@keyframes kpLigne {
+  0% { opacity: 0; transform: translateY(10px); }
+  5%, 80% { opacity: 1; transform: none; }
+  92%, 100% { opacity: 0; transform: translateY(-6px); }
+}
+
+/* L'adresse de Klassio, sur chaque écran (07/10/2026) : pages d'accès
+   (k-contact-line) et barre latérale de l'application (s-contact). */
+.k-contact-line { margin: 18px auto 0; max-width: 440px; text-align: center; font-size: 13px; line-height: 1.6; color: var(--ink-soft); }
+.k-contact-line a { color: var(--ink); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+.s-contact { display: block; margin: 6px 12px 2px; font-size: 11.5px; color: var(--ink-faint); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.s-contact:hover { color: var(--ink); text-decoration: underline; }
+.sidebar.collapsed .s-contact { display: none; }
+/* Pages d'accès : la ligne de contact reste visible sans défiler. */
+body:has(> .k-contact-line) .auth-page { min-height: calc(100vh - 64px); }
+body > .k-contact-line { padding: 0 16px 20px; margin-top: 0; }
