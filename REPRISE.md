@@ -8,11 +8,50 @@ Ce fichier existe pour qu'une nouvelle conversation reprenne sans rien
 redécouvrir. Lisez-le en entier : il contient tout ce qui n'est pas déductible
 du code.
 
-Dernière mise à jour : **2026-10-02**. **Commencez par §00 ci-dessous** : il donne l'état courant. Le §0 et la suite sont l'historique (17/09 et avant), toujours vrai sauf là où §00 le corrige.
+Dernière mise à jour : **2026-10-07**. **Commencez par §00 ci-dessous** (le bloc « état au 07/10 » d'abord) : il donne l'état courant. Le §0 et la suite sont l'historique (17/09 et avant), toujours vrai sauf là où §00 le corrige.
 
 ---
 
-## 00. REPRISE IMMÉDIATE — état au 02/10/2026
+## 00. REPRISE IMMÉDIATE — état au 07/10/2026 (ce bloc fait foi ; la suite date du 02/10)
+
+> **Nouvelle discussion ?** Lisez `AGENTS.md`, puis ce bloc, puis le reste du §00.
+
+**Klassio est EN LIGNE** : https://klassio.mudeyimusimwa.workers.dev
+(**579** tests SQLite, **34/34** modules PostgreSQL).
+
+| Couche | Où | À savoir |
+|---|---|---|
+| Pages | Worker Cloudflare `klassio` (`wrangler.jsonc`, `cloudflare/`) | Redéployé **automatiquement** à chaque push. Force HTTPS, relaie `/api/*` vers Render avec le secret `KLASSIO_RELAIS_SECRET` (IP réelle pour la limitation de débit). |
+| API | Render `klassio-api`, Francfort, offre gratuite | **Manual Deploy après chaque push qui touche `backend/`.** Passage en Starter : attend la carte du propriétaire. |
+| Base | Supabase `klassio`, Francfort | **RLS active** (rôle `klassio_app`, `db.get_connection(globale=True)` pour l'inter-écoles). Pas de sauvegarde sur l'offre gratuite. Réseau du propriétaire : port 5432 bloqué, utiliser 6543. |
+
+Fait du 03 au 07/10 : session en **cookie HttpOnly + CSRF** (plus de jeton dans
+le navigateur) ; **administration de la plateforme à part** (`/app/admin.html`,
+`/api/admin/*`, comptes `platform_accounts` + TOTP, créés seulement par
+`backend/tools/platform_admin.py`) ; RLS ; HTTPS imposé ; **prix à l'année**
+(999 / 1 499 / 2 499 $, « 2 mois offerts », `billing_cycle`) ; tarifs de la
+landing refaits (bascule Mensuel/Annuel, fenêtre avec l'image du directeur) ;
+**page de paiement en deux volets** (`app/offre.html`) ; page Abonnement au
+même dessin (`cartesLecture` d'`offres.js`) ; e-mail de contact sur toutes les
+pages ; bouton « Ouvrir un essai (15 j) » dans la Plateforme pour les testeurs.
+
+**Secrets : le propriétaire les saisit LUI-MÊME** (Render, Cloudflare, Supabase,
+terminal). Ne jamais en afficher, en générer à l'écran ni en demander dans la
+discussion.
+
+Reste, dans l'ordre :
+1. **Rendez-vous pilote jeudi 08/10/2026 à Lestonnac Mobokoli** — documents
+   proposés (fiche, convention d'essai, script de démo, objections), pas encore
+   commandés.
+2. **Domaine `klassio.cd`** (~57–60 $/an, pas encore acheté) → domaine du Worker,
+   puis remplacer `klassio.app` (sitemap, Open Graph) et l'e-mail gmail (13 fichiers).
+3. **E-mail** (Brevo + SPF/DKIM/DMARC) — dépend du domaine.
+4. Render Starter ; sauvegardes Supabase ; vérifier le champ `security` (RLS)
+   de la vue d'ensemble Plateforme après une connexion admin.
+5. Thème plus clair (demandé par un testeur) — pas fait.
+6. Trancher la route de saisie des notes (voir plus bas).
+
+## 00-bis. État au 02/10/2026 (historique récent)
 
 > **Nouvelle discussion ?** Lisez `AGENTS.md` (les règles), puis cette section
 > (l'état). Elle suffit pour reprendre ; le reste du fichier est l'historique.
