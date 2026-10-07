@@ -436,6 +436,32 @@ et ne monte qu'avec la plongée (`--portal-p`, exposé par `main.js`). Au
 repos, `.portal-reveal` EST le trou de la lettre — une photo visible dès la
 première image ferait lire « KLASSI » suivi d'un disque sombre.
 
+### La couche visuelle de l'application (07/10) — où elle vit, et ses trois règles
+
+Le propriétaire trouvait les écrans connectés « tout noirs » : tout avait été
+mis sur la landing et la démo. Les 25 écrans munis de la coquille portent
+désormais un bandeau photo, des piles de photos en 3D dans les états vides et
+un pied de page. **Elle ne vit pas dans `style.css`** :
+
+| Fichier | Rôle |
+|---|---|
+| `assets/css/app-visuel.css` | tout le visuel, classes préfixées `ka-`. Chargée par les écrans connectés seulement : la landing et la démo ne la voient pas. Thème sombre vert nuit ; `--ink-faint` relevé pour l'AA dans les deux thèmes. |
+| `assets/js/app-visuel.js` | bandeau photo (table `ECRAN`, `ACCUEIL` selon le rôle), piles des états vides (table `PILES`, par icône de `UI.emptyState`), pied de page, école vide. `admin.js` l'appelle une fois `/me` reçu (`KlassioDecor.contexte`). |
+| `assets/cine/*-480.webp` | variantes légères des photos de la landing, pour les piles. Les bandeaux prennent les 960/1600. |
+
+1. **Élèves & classes, Mes classes et l'écran d'une classe ne reçoivent
+   AUCUNE animation** (demande du propriétaire) : photos fixes seulement
+   (table `CALMES`). Les dossiers et les cartes de classe gardent les leurs.
+2. **Une note jaune d'explication (`.note-inline`) se retire chez une
+   Direction dont l'école n'a ni élève ni classe.** Un avertissement qui doit
+   rester affiché porte `note-garde` (abonnement, suppression du seul compte
+   Direction). Les notes des fenêtres de saisie ne sont pas concernées.
+3. **Une photo est une illustration, annoncée comme telle** (« Photo
+   d'illustration ») : jamais une donnée, jamais une fonction absente. Bandeaux
+   en paysage seulement — un portrait n'y montrait qu'un morceau de visage.
+   Aucune photo en économie de données ou en 2G ; rien ne bouge en mouvement
+   réduit.
+
 ### Analytics et cookies — ne décide pas seul
 
 Klassio manipule des dossiers d'enfants scolarisés. Brancher un outil

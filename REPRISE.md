@@ -33,7 +33,12 @@ le navigateur) ; **administration de la plateforme à part** (`/app/admin.html`,
 landing refaits (bascule Mensuel/Annuel, fenêtre avec l'image du directeur) ;
 **page de paiement en deux volets** (`app/offre.html`) ; page Abonnement au
 même dessin (`cartesLecture` d'`offres.js`) ; e-mail de contact sur toutes les
-pages ; bouton « Ouvrir un essai (15 j) » dans la Plateforme pour les testeurs.
+pages ; bouton « Ouvrir un essai (15 j) » dans la Plateforme pour les testeurs ;
+**couche visuelle de l'application** (07/10, AGENTS §10) : bandeau photo par
+écran, piles de photos 3D dans les états vides, pied de page partout (contact +
+pages légales — lecture de « les écrits footer » à faire confirmer par le
+propriétaire), notes jaunes d'explication retirées chez une Direction sans
+élève ni classe, thème sombre vert nuit.
 
 **Secrets : le propriétaire les saisit LUI-MÊME** (Render, Cloudflare, Supabase,
 terminal). Ne jamais en afficher, en générer à l'écran ni en demander dans la
@@ -48,7 +53,9 @@ Reste, dans l'ordre :
 3. **E-mail** (Brevo + SPF/DKIM/DMARC) — dépend du domaine.
 4. Render Starter ; sauvegardes Supabase ; vérifier le champ `security` (RLS)
    de la vue d'ensemble Plateforme après une connexion admin.
-5. Thème plus clair (demandé par un testeur) — pas fait.
+5. Thème plus clair (demandé par un testeur) : le sombre est passé au vert
+   nuit, avec photos, le 07/10 — à revoir avec lui s'il le trouve encore trop
+   sombre.
 6. Trancher la route de saisie des notes (voir plus bas).
 
 ## 00-bis. État au 02/10/2026 (historique récent)
