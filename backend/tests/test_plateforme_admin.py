@@ -257,6 +257,44 @@ class LaVieDeLaSession(Base):
         self.assertEqual(c.get("/api/platform/overview").status_code, 403)
 
 
+class LEssaiAccordeParLAdministration(Base):
+    """Testeurs et école pilote : l'administration ouvre un essai à UNE école,
+    pour un temps limité — jamais un mode gratuit. Sans contournement global
+    (KLASSIO_CONTOURNER_ABONNEMENT reste refusé sur une base distante)."""
+
+    def setUp(self):
+        super().setUp()
+        import config
+        self._config, self._ancien = config, config.CONTOURNER_ABONNEMENT
+        config.CONTOURNER_ABONNEMENT = False
+
+    def tearDown(self):
+        self._config.CONTOURNER_ABONNEMENT = self._ancien
+
+    def test_50_une_ecole_fermee_ouvre_pendant_son_essai_puis_rentre_dans_le_rang(self):
+        jeton = self.ecole()
+        h = {"Authorization": "Bearer " + jeton}
+        c = APP.test_client()
+        self.assertEqual(c.get("/api/students", headers=h).status_code, 402, "école neuve ouverte sans paiement")
+        tenant = c.get("/api/me", headers=h).get_json()["tenant_id"]
+        # Un directeur ne peut pas s'ouvrir lui-même un essai.
+        self.assertEqual(c.put(f"/api/platform/tenants/{tenant}", json={"extend_trial_days": 15}, headers=h).status_code, 403)
+        admin, csrf, _ = session_admin(APP)
+        self.assertEqual(admin.put(f"/api/platform/tenants/{tenant}", json={"extend_trial_days": 15},
+                                   headers=csrf).status_code, 200)
+        self.assertEqual(c.get("/api/students", headers=h).status_code, 200, "l'essai n'ouvre pas l'espace")
+        self.assertEqual(c.post("/api/classes", json={"name": "6e Essai", "academic_year_id":
+                                c.get("/api/academic-years", headers=h).get_json()[0]["id"], "cycle": "secondaire"},
+                                headers=h).status_code, 201)
+        # Fin d'essai : une facture est émise, l'école rentre dans le circuit payant.
+        conn = db.get_connection()
+        conn.execute("UPDATE subscriptions SET trial_ends_at=? WHERE tenant_id=?", (str(time.time() - 60), tenant))
+        conn.commit(); conn.close()
+        abonnement = c.get("/api/subscription", headers=h).get_json()
+        self.assertNotEqual(abonnement["status"], "trial")
+        self.assertIsNotNone(abonnement["open_invoice"], "fin d'essai sans facture : la gratuité deviendrait permanente")
+
+
 class PersonneNeDevientAdministrateurParLeWeb(Base):
     def test_40_aucun_code_du_serveur_web_ne_cree_ni_ne_modifie_un_compte(self):
         fautifs = []
