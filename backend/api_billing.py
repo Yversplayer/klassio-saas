@@ -91,6 +91,10 @@ def bypass_active():
     return bool(getattr(config, "CONTOURNER_ABONNEMENT", False))
 
 
+# Durées d'essai qu'une administration de la plateforme peut accorder.
+DUREES_ESSAI_JOURS = (15, 30, 90)
+
+
 def _ts(dt):
     return str(dt.timestamp())
 
@@ -555,6 +559,13 @@ def update_tenant_subscription(tenant_id):
             days = int(data["extend_trial_days"])
         except (TypeError, ValueError):
             raise ValidationError("extend_trial_days doit être un entier.")
+        # Trois durées seulement, choisies par le propriétaire (07/10/2026) :
+        # 15 jours, 1 mois, 3 mois. La route acceptait N'IMPORTE QUEL entier —
+        # 3 650 jours ouvraient dix ans de gratuité, un nombre négatif
+        # raccourcissait un essai en cours. C'est le serveur qui borne, pas
+        # le menu de l'écran Plateforme.
+        if days not in DUREES_ESSAI_JOURS:
+            raise ValidationError("Durée d'essai : 15, 30 ou 90 jours.")
         base = max(datetime.now(), _dt(sub["trial_ends_at"])) if sub["trial_ends_at"] else datetime.now()
         fields.append("trial_ends_at=?"); params.append(_ts(base + timedelta(days=days)))
         fields.append("status='trial'")

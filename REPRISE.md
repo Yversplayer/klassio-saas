@@ -33,7 +33,7 @@ le navigateur) ; **administration de la plateforme à part** (`/app/admin.html`,
 landing refaits (bascule Mensuel/Annuel, fenêtre avec l'image du directeur) ;
 **page de paiement en deux volets** (`app/offre.html`) ; page Abonnement au
 même dessin (`cartesLecture` d'`offres.js`) ; e-mail de contact sur toutes les
-pages ; bouton « Ouvrir un essai (15 j) » dans la Plateforme pour les testeurs ;
+pages ; bouton « Ouvrir un essai » dans la Plateforme (15 jours, 1 mois ou 3 mois, au choix du propriétaire ; le serveur refuse toute autre durée) ;
 **couche visuelle de l'application** (07/10, AGENTS §10) : bandeau photo par
 écran, piles de photos 3D dans les états vides, pied de page partout (contact +
 pages légales — lecture de « les écrits footer » à faire confirmer par le

@@ -77,15 +77,42 @@
           // Essai accordé par l'administration (testeurs, école pilote) : une
           // exception école par école, limitée dans le temps — jamais un mode
           // gratuit. À son terme, facture puis lecture seule (api_billing).
-          (t.status === "awaiting_plan" || t.status === "awaiting_payment" ? '<button type="button" class="btn btn-lime btn-xs ext" data-id="' + t.id + '" data-name="' + UI.escapeHtml(t.name) + '">Ouvrir un essai (15 j)</button> ' : "") + (t.status === "suspended" ? '<button type="button" class="btn btn-ghost btn-xs react" data-id="' + t.id + '">Réactiver</button>' : "") + "</td></tr>";
+          (t.status === "awaiting_plan" || t.status === "awaiting_payment" ? '<button type="button" class="btn btn-lime btn-xs ext" data-id="' + t.id + '" data-name="' + UI.escapeHtml(t.name) + '">Ouvrir un essai</button> ' : "") + (t.status === "suspended" ? '<button type="button" class="btn btn-ghost btn-xs react" data-id="' + t.id + '">Réactiver</button>' : "") + "</td></tr>";
       }).join("") + "</tbody></table></div></div>" +
       '<div class="panel"><div class="panel-head"><h2>Paliers</h2><span class="sub">Modifiables — appliqués aux prochaines factures</span></div><div class="table-wrap"><table class="data-table responsive"><thead><tr><th>Palier</th><th>Élèves</th><th class="num">Forfait</th><th class="num">Par élève</th><th class="actions"></th></tr></thead><tbody>' + O.plans.map(function (p) {
         return '<tr data-code="' + p.code + '"><td data-label="Palier"><span class="cell-main">' + UI.escapeHtml(p.name) + '</span><span class="cell-sub">' + UI.escapeHtml(p.description || "") + '</span></td><td data-label="Élèves">' + p.min_students + (p.max_students ? " – " + p.max_students : " +") + '</td><td data-label="Forfait" class="num"><input type="number" step="0.01" min="0" class="grade-input p-base" value="' + p.base_price + '" style="width:90px" /></td><td data-label="Par élève" class="num"><input type="number" step="0.01" min="0" class="grade-input p-per" value="' + p.per_student + '" style="width:90px" /></td><td class="actions"><button type="button" class="btn btn-ghost btn-xs save-plan">Enregistrer</button></td></tr>';
       }).join("") + "</tbody></table></div></div>";
     host.querySelectorAll(".conf").forEach(function (b) { b.addEventListener("click", function () { UI.confirm("Confirmer ce paiement ?", "L'établissement repasse « actif » et est notifié.", "Confirmer").then(function (ok) { if (ok) adminFetch("/platform/invoices/" + b.dataset.id + "/confirm", { method: "POST" }).then(function (r) { if (!r.ok) return UI.toast(r.body.error || "Impossible.", "error"); UI.toast("Paiement confirmé.", "success"); load(); }); }); }); });
     host.querySelectorAll(".void").forEach(function (b) { b.addEventListener("click", function () { UI.confirm("Annuler cette facture ?", "", "Annuler la facture").then(function (ok) { if (ok) adminFetch("/platform/invoices/" + b.dataset.id + "/void", { method: "POST" }).then(function () { UI.toast("Facture annulée.", "success"); load(); }); }); }); });
-    host.querySelectorAll(".ext").forEach(function (b) { b.addEventListener("click", function () { UI.confirm("Essai de 15 jours pour cette école ?", b.dataset.name + " — accès complet sans paiement pendant 15 jours ; ensuite facture, puis lecture seule si elle n'est pas réglée.", "Ouvrir l'essai").then(function (ok) { if (ok) adminFetch("/platform/tenants/" + b.dataset.id, { method: "PUT", body: JSON.stringify({ extend_trial_days: 15 }) }).then(function () { UI.toast("Essai ouvert pour 15 jours.", "success"); load(); }); }); }); });
+    // La durée est choisie ici parmi trois — 15 jours, 1 mois, 3 mois — mais
+    // c'est le serveur qui la borne (api_billing.DUREES_ESSAI_JOURS) : une
+    // autre valeur envoyée à la main est refusée.
+    host.querySelectorAll(".ext").forEach(function (b) { b.addEventListener("click", function () { ouvrirEssai(b.dataset.id, b.dataset.name); }); });
     host.querySelectorAll(".react").forEach(function (b) { b.addEventListener("click", function () { adminFetch("/platform/tenants/" + b.dataset.id, { method: "PUT", body: JSON.stringify({ status: "active" }) }).then(function () { UI.toast("Établissement réactivé.", "success"); load(); }); }); });
     host.querySelectorAll(".save-plan").forEach(function (b) { b.addEventListener("click", function () { var tr = b.closest("tr"); UI.btnState(b, "loading"); adminFetch("/platform/plans/" + tr.dataset.code, { method: "PUT", body: JSON.stringify({ base_price: parseFloat(tr.querySelector(".p-base").value), per_student: parseFloat(tr.querySelector(".p-per").value) }) }).then(function (r) { if (!r.ok) { UI.btnState(b, "error"); return UI.toast(r.body.error || "Impossible.", "error"); } UI.btnState(b, "success"); }); }); });
+  }
+
+  function ouvrirEssai(id, nom) {
+    var choix = [[15, "15 jours"], [30, "1 mois", "30 jours"], [90, "3 mois", "90 jours"]];
+    var m = UI.modal({
+      title: "Ouvrir un essai",
+      body: "<p class='modal-text'>" + UI.escapeHtml(nom) + " — accès complet sans paiement pendant la durée choisie ; ensuite facture, puis lecture seule si elle n'est pas réglée.</p>" +
+        '<fieldset class="essai-durees"><legend>Durée de l\'essai</legend>' + choix.map(function (c, i) {
+          return '<label class="check"><input type="radio" name="essaiDuree" value="' + c[0] + '"' + (i === 0 ? " checked" : "") + "> " + c[1] + (c[2] ? ' <span class="muted">(' + c[2] + ")</span>" : "") + "</label>";
+        }).join("") + "</fieldset>",
+      footer: '<button type="button" class="btn btn-ghost btn-sm" id="essaiAnnuler">Annuler</button><button type="button" class="btn btn-lime btn-sm" id="essaiOk">Ouvrir l\'essai</button>'
+    });
+    m.querySelector("#essaiAnnuler").addEventListener("click", UI.closeModal);
+    m.querySelector("#essaiOk").addEventListener("click", function () {
+      var btn = this;
+      var jours = parseInt(m.querySelector("input[name=essaiDuree]:checked").value, 10);
+      UI.btnState(btn, "loading");
+      adminFetch("/platform/tenants/" + id, { method: "PUT", body: JSON.stringify({ extend_trial_days: jours }) }).then(function (r) {
+        if (!r.ok) { UI.btnState(btn, "error"); return UI.toast((r.body && r.body.error) || "Impossible d'ouvrir l'essai.", "error"); }
+        UI.closeModal();
+        UI.toast("Essai ouvert pour " + (jours === 15 ? "15 jours" : jours === 30 ? "1 mois" : "3 mois") + ".", "success");
+        load();
+      });
+    });
   }
 })();

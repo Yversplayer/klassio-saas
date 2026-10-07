@@ -294,6 +294,33 @@ class LEssaiAccordeParLAdministration(Base):
         self.assertNotEqual(abonnement["status"], "trial")
         self.assertIsNotNone(abonnement["open_invoice"], "fin d'essai sans facture : la gratuité deviendrait permanente")
 
+    def test_51_trois_durees_d_essai_et_aucune_autre(self):
+        """15 jours, 1 mois, 3 mois — choisis par le propriétaire. La route
+        acceptait tout entier : 3 650 jours offraient dix ans de gratuité, un
+        nombre négatif raccourcissait un essai."""
+        admin, csrf, _ = session_admin(APP)
+        for jours in (15, 30, 90):
+            jeton = self.ecole()
+            h = {"Authorization": "Bearer " + jeton}
+            tenant = APP.test_client().get("/api/me", headers=h).get_json()["tenant_id"]
+            avant = time.time()
+            r = admin.put(f"/api/platform/tenants/{tenant}", json={"extend_trial_days": jours}, headers=csrf)
+            self.assertEqual(r.status_code, 200, f"{jours} jours refusés")
+            conn = db.get_connection()
+            fin = float(conn.execute("SELECT trial_ends_at FROM subscriptions WHERE tenant_id=?", (tenant,)).fetchone()["trial_ends_at"])
+            conn.close()
+            self.assertAlmostEqual((fin - avant) / 86400, jours, delta=0.01)
+        jeton = self.ecole()
+        h = {"Authorization": "Bearer " + jeton}
+        tenant = APP.test_client().get("/api/me", headers=h).get_json()["tenant_id"]
+        for interdit in (3650, 45, 0, -5, 1):
+            r = admin.put(f"/api/platform/tenants/{tenant}", json={"extend_trial_days": interdit}, headers=csrf)
+            self.assertEqual(r.status_code, 400, f"{interdit} jours acceptés")
+        conn = db.get_connection()
+        fin = conn.execute("SELECT trial_ends_at FROM subscriptions WHERE tenant_id=?", (tenant,)).fetchone()["trial_ends_at"]
+        conn.close()
+        self.assertIsNone(fin, "une durée refusée a tout de même modifié l'essai")
+
 
 class PersonneNeDevientAdministrateurParLeWeb(Base):
     def test_40_aucun_code_du_serveur_web_ne_cree_ni_ne_modifie_un_compte(self):
