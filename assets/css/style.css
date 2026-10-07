@@ -4374,6 +4374,19 @@ body[data-page="demo"] .demo-shell { grid-template-columns: 1fr !important; }
 /* Pages d'accès : la ligne de contact reste visible sans défiler. */
 body:has(> .k-contact-line) .auth-page { min-height: calc(100vh - 64px); }
 body > .k-contact-line { padding: 0 16px 20px; margin-top: 0; }
+/* Bas de page des pages d'accès (07/10/2026) : sous le contact, l'aide et
+   les pages légales — les mêmes liens que le pied de page des écrans
+   connectés (app-visuel.js). Le propriétaire veut ces éléments sur la
+   majorité des pages. */
+.k-legal-line { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 16px; margin: 8px auto 0; max-width: 620px; font-size: 12px; line-height: 1.6; color: var(--ink-soft); }
+.k-legal-line a { color: var(--ink-soft); font-weight: 600; text-decoration: none; }
+.k-legal-line a:hover { color: var(--ink); text-decoration: underline; }
+body > .k-contact-line:has(+ .k-legal-line) { padding-bottom: 0; }
+body > .k-legal-line { padding: 0 16px 22px; }
+body:has(> .k-legal-line) .auth-page { min-height: calc(100vh - 96px); }
+.kp-legal { position: relative; display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 6px 0 0; font-size: 11.5px; color: #C9D3C4; }
+.kp-legal a { color: #DDE5D6; font-weight: 600; text-decoration: none; }
+.kp-legal a:hover { color: #F7F7F2; text-decoration: underline; }
 
 /* Écran Abonnement d'une école ouverte : les quatre offres sur une ligne
    (lecture seule, offres.js → cartesLecture). */
