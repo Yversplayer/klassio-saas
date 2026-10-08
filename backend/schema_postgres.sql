@@ -306,7 +306,8 @@ CREATE TABLE IF NOT EXISTS discipline_rules (
   category TEXT NOT NULL, -- retard | absence | comportement | bonus | autre
   points INTEGER NOT NULL DEFAULT 0,
   active INTEGER NOT NULL DEFAULT 1,
-  created_at TEXT NOT NULL
+  created_at TEXT NOT NULL,
+  measure TEXT                    -- sanction prévue par le règlement (« travail manuel », « exclusion d'un jour »…), 08/10/2026
 );
 
 -- Incident disciplinaire — enregistré par un humain (DD ou Direction).

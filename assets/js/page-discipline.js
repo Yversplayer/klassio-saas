@@ -21,12 +21,14 @@
       // disent : consulter et imprimer, pas pointer un retard au portail —
       // le pointage reste accessible, depuis l'onglet du poste de travail.
       document.getElementById("pageSub").textContent = "Vue de l'établissement : volumes, récurrences, élèves sous un seuil. Le traitement quotidien est tenu par le Directeur des disciplines.";
-      document.getElementById("pageActions").innerHTML = '<a href="registres.html" class="btn btn-ghost btn-sm">' + UI.icon("print", 15) + 'Registres</a><button type="button" class="btn btn-lime btn-sm" id="newIncBtn">' + UI.icon("plus", 15) + "Enregistrer un incident</button>";
+      document.getElementById("pageActions").innerHTML = '<a href="registres.html" class="btn btn-ghost btn-sm">' + UI.icon("print", 15) + 'Registres</a><button type="button" class="btn btn-ghost btn-sm" id="lotBtn">' + UI.icon("users", 15) + 'Faits en lot</button><button type="button" class="btn btn-lime btn-sm" id="newIncBtn">' + UI.icon("plus", 15) + "Enregistrer un incident</button>";
       document.getElementById("newIncBtn").addEventListener("click", function () { openIncidentModal(UI.qs("student")); });
+      document.getElementById("lotBtn").addEventListener("click", function () { window.KlassioDisciplineOutils.lot(students, rulesActives(), load); });
     } else {
       document.getElementById("pageSub").textContent = "Présences, faits, points, convocations — chaque décision est humaine et tracée.";
-      document.getElementById("pageActions").innerHTML = '<a href="pointage.html" class="btn btn-ghost btn-sm">' + UI.icon("clock", 15) + 'Pointage</a><a href="registres.html" class="btn btn-ghost btn-sm">' + UI.icon("print", 15) + 'Registres</a><button type="button" class="btn btn-lime btn-sm" id="newIncBtn">' + UI.icon("plus", 15) + "Enregistrer un incident</button>";
+      document.getElementById("pageActions").innerHTML = '<a href="pointage.html" class="btn btn-ghost btn-sm">' + UI.icon("clock", 15) + 'Pointage</a><a href="registres.html" class="btn btn-ghost btn-sm">' + UI.icon("print", 15) + 'Registres</a><button type="button" class="btn btn-ghost btn-sm" id="lotBtn">' + UI.icon("users", 15) + 'Faits en lot</button><button type="button" class="btn btn-lime btn-sm" id="newIncBtn">' + UI.icon("plus", 15) + "Enregistrer un incident</button>";
       document.getElementById("newIncBtn").addEventListener("click", function () { openIncidentModal(UI.qs("student")); });
+      document.getElementById("lotBtn").addEventListener("click", function () { window.KlassioDisciplineOutils.lot(students, rulesActives(), load); });
     }
     load();
   });
@@ -77,6 +79,7 @@
     var wanted = UI.qs("tab"), names = defs.map(function (d) { return d[0]; });
     tabsCtl.activate(names.indexOf(wanted) >= 0 ? wanted : (estDirection ? "ensemble" : "aujourdhui"), true);
     wireCommon(); wireDD();
+    document.querySelectorAll(".kq-recurrents").forEach(function (h) { window.KlassioDisciplineOutils.recurrents(h, students, rulesActives(), load); });
     UI.wireHrefs(host);
   }
 
@@ -107,6 +110,9 @@
     // La lecture appartient à l'établissement.
     ensemble: function () {
       if (!overview) return '<div class="panel">' + UI.emptyState("Vue d'ensemble indisponible", "", "", "reports") + "</div>";
+      return (rulesActives().length ? "" : window.KlassioDisciplineOutils.explication(thresholds, 0, true)) + vueEnsemble() + '<div class="kq-recurrents"></div>';
+    },
+    _ensemble: function () {
       var o = overview;
       var enAttente = reports.filter(function (r) { return r.status === "pending"; }).length;
       var justifsEnAttente = justifs.filter(function (j) { return j.status === "pending"; }).length;
@@ -164,7 +170,7 @@
     aujourdhui: function () {
       if (!today) return '<div class="panel">' + UI.emptyState("Vue du jour indisponible", "", "", "calendar") + "</div>";
       var t = today;
-      return '<div class="kpi-grid cols-5">' +
+      return (rulesActives().length ? "" : window.KlassioDisciplineOutils.explication(thresholds, 0, ctx.role === "directeur")) + '<div class="kpi-grid cols-5">' +
         UI.kpi("Appels manquants", String(t.classes_pending_roll.length), { icon: "clipboard", tone: t.classes_pending_roll.length ? "warn" : "ok" }) +
         UI.kpi("Absents", String(t.absent_today.length), { icon: "calendar", tone: t.absent_today.length ? "bad" : "ok" }) +
         UI.kpi("Retards", String(t.late_today.length), { icon: "clock", tone: t.late_today.length ? "warn" : "", href: "pointage.html" }) +
@@ -185,7 +191,7 @@
         }).join("") + "</tbody></table></div></div>" : "") +
         (t.convocations.length ? '<div class="panel"><div class="panel-head"><h2>Convocations du jour</h2></div><div class="table-wrap"><table class="data-table responsive"><thead><tr><th>Heure</th><th>Élève</th><th>Motif</th><th class="actions"></th></tr></thead><tbody>' + t.convocations.map(function (c) {
           return '<tr><td data-label="Heure">' + UI.escapeHtml(c.scheduled_time || "—") + '</td><td data-label="Élève"><span class="cell-main">' + UI.escapeHtml(c.first_name + " " + c.last_name) + '</span><span class="cell-sub">' + UI.escapeHtml(c.class_name || "") + '</span></td><td data-label="Motif">' + UI.escapeHtml(c.motif) + '</td><td class="actions"><button type="button" class="btn btn-lime btn-xs cv-st" data-id="' + c.id + '" data-status="held">Tenue</button> <button type="button" class="btn btn-ghost btn-xs cv-st" data-id="' + c.id + '" data-status="missed">Manquée</button></td></tr>';
-        }).join("") + "</tbody></table></div></div>" : "");
+        }).join("") + "</tbody></table></div></div>" : "") + (ctx.role === "directeur" ? "" : '<div class="kq-recurrents"></div>');
     },
 
     incidents: function () {
@@ -223,15 +229,18 @@
       var canEdit = ctx.role === "directeur";
       var active = rules.filter(function (r) { return r.active; });
       var th = thresholds || { capital: 100, thresholds: [], conduct_scale: [] };
-      return '<div class="panel"><div class="panel-head"><h2>Capital de conduite et seuils</h2>' + (canEdit ? '<button type="button" class="btn btn-ghost btn-sm" id="editThBtn">' + UI.icon("edit", 15) + "Modifier</button>" : '<span class="sub">Fixés par la Direction</span>') + "</div>" +
+      return window.KlassioDisciplineOutils.explication(th, active.length, canEdit) + '<div class="panel"><div class="panel-head"><h2>Capital de conduite et seuils</h2>' + (canEdit ? '<button type="button" class="btn btn-ghost btn-sm" id="editThBtn">' + UI.icon("edit", 15) + "Modifier</button>" : '<span class="sub">Fixés par la Direction</span>') + "</div>" +
         '<p class="muted" style="margin-bottom:12px">Chaque élève commence l\'année avec <strong>' + th.capital + " points</strong>. Les faits en retirent ; les corrections peuvent en rendre. Quand un élève franchit un seuil, vous êtes alerté — <strong>Klassio ne sanctionne jamais tout seul</strong>.</p>" +
         '<div class="threshold-list">' + (th.thresholds.length ? th.thresholds.map(function (t) { return '<div class="th"><strong>' + t.remaining_points + "</strong><span>" + UI.escapeHtml(t.label) + (t.action ? " — " + UI.escapeHtml(t.action) : "") + "</span></div>"; }).join("") : '<p class="muted">Aucun seuil défini.</p>') + "</div>" +
         '<div class="panel-head" style="margin-top:20px"><h2>Cotes de conduite</h2></div><div class="pill-row">' + (th.conduct_scale || []).map(function (s) { return UI.badge(s[0] >= 75 ? "ok" : s[0] >= 50 ? "warn" : "bad", s[1] + " — à partir de " + s[0] + " %"); }).join("") + "</div></div>" +
         '<div class="panel" id="rulesPanel"><div class="panel-head"><h2>Règles disciplinaires</h2>' + (canEdit ? '<div class="row"><button type="button" class="btn btn-ghost btn-sm" id="importRegBtn">' + UI.icon("upload", 15) + 'Importer le règlement</button><button type="button" class="btn btn-lime btn-sm" id="addRuleBtn">' + UI.icon("plus", 15) + "Ajouter une règle</button></div>" : '<span class="sub">Configurées par la Direction</span>') + "</div>" +
-        (active.length ? '<div class="table-wrap"><table class="data-table responsive"><thead><tr><th>Règle</th><th>Catégorie</th><th class="num">Points</th>' + (canEdit ? '<th class="actions"></th>' : "") + "</tr></thead><tbody>" + active.map(function (r) { return '<tr><td data-label="Règle"><span class="cell-main">' + UI.escapeHtml(r.label) + '</span></td><td data-label="Catégorie">' + UI.escapeHtml(r.category) + '</td><td data-label="Points" class="num">' + UI.badge(r.points < 0 ? "warn" : "ok", (r.points > 0 ? "+" : "") + r.points) + "</td>" + (canEdit ? '<td class="actions"><button type="button" class="btn btn-danger btn-xs del-rule" data-id="' + r.id + '">Désactiver</button></td>' : "") + "</tr>"; }).join("") + "</tbody></table></div>" : '<p class="muted">Aucune règle configurée' + (canEdit ? " — importez votre règlement intérieur ou ajoutez vos règles une par une." : ".") + "</p>") + "</div>" +
+        (active.length ? '<div class="table-wrap"><table class="data-table responsive"><thead><tr><th>Règle</th><th>Catégorie</th><th class="num">Points</th><th>Sanction prévue</th>' + (canEdit ? '<th class="actions"></th>' : "") + "</tr></thead><tbody>" + active.map(function (r) { return '<tr><td data-label="Règle"><span class="cell-main">' + UI.escapeHtml(r.label) + '</span></td><td data-label="Catégorie">' + UI.escapeHtml(r.category) + '</td><td data-label="Points" class="num">' + UI.badge(r.points < 0 ? "warn" : "ok", (r.points > 0 ? "+" : "") + r.points) + '</td><td data-label="Sanction prévue">' + UI.escapeHtml(r.measure || "—") + "</td>" + (canEdit ? '<td class="actions"><button type="button" class="btn btn-danger btn-xs del-rule" data-id="' + r.id + '">Désactiver</button></td>' : "") + "</tr>"; }).join("") + "</tbody></table></div>" : '<p class="muted">Aucune règle configurée' + (canEdit ? " — importez votre règlement intérieur ou ajoutez vos règles une par une." : ".") + "</p>") + "</div>" +
         '<div class="panel"><div class="panel-head"><h2>Registres</h2><span class="sub">Documents imprimables pour l\'inspection et les conseils</span></div><div class="row"><a class="btn btn-ghost btn-sm" href="registres.html?type=attendance">' + UI.icon("print", 15) + 'Registre de présence</a><a class="btn btn-ghost btn-sm" href="registres.html?type=discipline">' + UI.icon("print", 15) + "Registre de discipline</a></div></div>";
     },
   };
+
+  function rulesActives() { return (rules || []).filter(function (r) { return r.active; }); }
+  function vueEnsemble() { return views._ensemble(); }
 
   function justifsPanel(compact) {
     var pending = justifs.filter(function (j) { return j.status === "pending"; }), done = justifs.filter(function (j) { return j.status !== "pending"; });
@@ -460,66 +469,16 @@
     });
   }
 
-  function openReglementModal() {
-    var m = UI.modal({ title: "Importer le règlement intérieur", size: "lg", body:
-      '<p class="modal-text">Déposez votre règlement (PDF avec texte, ou fichier .txt). Klassio y repère les articles qui ressemblent à des règles et vous les propose — <strong>rien n\'est enregistré sans votre validation</strong>. Aucune règle n\'est inventée : chaque proposition cite votre texte.</p>' +
-      '<div class="field" style="margin-top:12px"><input type="file" id="regFile" accept="application/pdf,text/plain" /></div>' +
-      '<div id="regResult"></div>',
-      footer: '<button type="button" class="btn btn-ghost btn-sm" id="regCancel">Fermer</button><button type="button" class="btn btn-lime btn-sm" id="regAnalyze">Analyser</button>' });
-    m.querySelector("#regCancel").addEventListener("click", UI.closeModal);
-    m.querySelector("#regAnalyze").addEventListener("click", function () {
-      var file = m.querySelector("#regFile").files[0];
-      if (!file) return UI.toast("Choisissez un fichier.", "error");
-      var btn = this; UI.btnState(btn, "loading", "Lecture…");
-      var fd = new FormData(); fd.append("file", file);
-      api.fetch("/discipline/reglement/analyze", { method: "POST", body: fd }).then(function (r) {
-        if (!r.ok) { UI.btnState(btn, "error", "Réessayer"); m.querySelector("#regResult").innerHTML = '<p class="form-error" style="display:block">' + UI.escapeHtml(r.body.error || "Lecture impossible.") + "</p>"; return; }
-        UI.btnState(btn, "success", "Analysé");
-        var p = r.body.proposals;
-        if (!p.length) { m.querySelector("#regResult").innerHTML = '<p class="muted mt-16">Aucune règle chiffrable détectée dans ce document. Vous pouvez ajouter vos règles à la main.</p>'; return; }
-        m.querySelector("#regResult").innerHTML = '<p class="muted mt-16">' + UI.plural(p.length, "règle proposée", "règles proposées") + ' — décochez ce que vous ne voulez pas, ajustez les points, puis validez.</p><div class="table-wrap" style="max-height:46vh"><table class="data-table"><thead><tr><th style="width:34px"></th><th>Règle proposée</th><th>Catégorie</th><th class="num">Points</th></tr></thead><tbody>' + p.map(function (x, i) {
-          return '<tr' + (x.already_exists ? ' style="opacity:0.5"' : "") + '><td><input type="checkbox" class="reg-chk" data-i="' + i + '"' + (x.already_exists ? "" : " checked") + ' /></td><td><span class="cell-main">' + UI.escapeHtml(x.label) + '</span><span class="cell-sub">' + UI.escapeHtml(x.source.slice(0, 120)) + (x.already_exists ? " · déjà enregistrée" : "") + '</span></td><td><select class="reg-cat">' + ["retard", "absence", "comportement", "bonus", "autre"].map(function (c) { return '<option value="' + c + '"' + (x.category === c ? " selected" : "") + ">" + c + "</option>"; }).join("") + '</select></td><td class="num"><input type="number" class="grade-input reg-pts" value="' + x.points + '" style="width:70px" /></td></tr>';
-        }).join("") + "</tbody></table></div>";
-        var foot = m.querySelector(".modal-foot");
-        if (!foot.querySelector("#regConfirm")) foot.insertAdjacentHTML("beforeend", '<button type="button" class="btn btn-lime btn-sm" id="regConfirm">Enregistrer les règles cochées</button>');
-        foot.querySelector("#regConfirm").onclick = function () {
-          var b2 = this;
-          var rows = Array.prototype.filter.call(m.querySelectorAll("#regResult tbody tr"), function (tr) { return tr.querySelector(".reg-chk").checked; });
-          if (!rows.length) return UI.toast("Cochez au moins une règle.", "error");
-          UI.btnState(b2, "loading");
-          var payload = rows.map(function (tr) { var i = parseInt(tr.querySelector(".reg-chk").dataset.i, 10); return { label: p[i].label, category: tr.querySelector(".reg-cat").value, points: parseInt(tr.querySelector(".reg-pts").value, 10) }; });
-          api.fetch("/discipline/reglement/confirm", { method: "POST", body: JSON.stringify({ rules: payload }) }).then(function (rr) {
-            if (!rr.ok) { UI.btnState(b2, "error"); return UI.toast(rr.body.error || "Impossible.", "error"); }
-            UI.btnState(b2, "success"); UI.toast(rr.body.created + " règle(s) enregistrée(s).", "success");
-            setTimeout(function () { UI.closeModal(); load(); }, 600);
-          });
-        };
-      }).catch(function () { UI.btnState(btn, "error", "Réessayer"); });
-    });
-  }
+  // Import du règlement : discipline-outils.js (Word, PDF ; points, sanction
+  // prévue, échelle de conduite), 08/10/2026.
+  function openReglementModal() { window.KlassioDisciplineOutils.reglement(load); }
 
+  // Le professeur choisit le fait parmi les règles de la Direction
+  // (signalement.js, 08/10/2026) ; ici, il choisit aussi l'élève.
   function openReportModal(presetStudentId) {
     if (!students.length) return UI.toast("Aucun élève dans votre périmètre.", "error");
     var preset = students.find(function (s) { return s.id === presetStudentId; });
-    var m = UI.modal({ title: "Signaler un fait au Directeur des disciplines", body: '<form id="rpForm" class="form-grid"><p class="modal-text full">Vous décrivez ; le DD qualifie, décide des points et vous informe de la suite.</p>' +
-      '<div class="field full"><label for="rpStudent">Élève</label><input id="rpStudent" list="rpDl" required placeholder="Nom, prénom ou identifiant…" autocomplete="off" value="' + (preset ? UI.escapeHtml(preset.last_name + " " + preset.first_name + " — " + (preset.code || "")) : "") + '" /><datalist id="rpDl">' + students.map(function (s) { return '<option value="' + UI.escapeHtml(s.last_name + " " + s.first_name + " — " + (s.code || "")) + '">' + UI.escapeHtml(s.class_name || "") + "</option>"; }).join("") + "</datalist></div>" +
-      '<div class="field"><label for="rpDate">Date des faits</label><input id="rpDate" type="date" required max="' + UI.todayIso() + '" value="' + UI.todayIso() + '" /></div>' +
-      '<div class="field full"><label for="rpDesc">Description</label><textarea id="rpDesc" required maxlength="1500" placeholder="Ce qui s\'est passé, où, quand, qui était présent."></textarea></div><p class="form-error full" id="rpErr" hidden></p></form>',
-      footer: '<button type="button" class="btn btn-ghost btn-sm" id="rpCancel">Annuler</button><button type="submit" form="rpForm" class="btn btn-lime btn-sm" id="rpSubmit">Envoyer</button>' });
-    m.querySelector("#rpCancel").addEventListener("click", UI.closeModal);
-    m.querySelector("#rpForm").addEventListener("submit", function (e) {
-      e.preventDefault();
-      var btn = m.querySelector("#rpSubmit"), err = m.querySelector("#rpErr"); err.hidden = true;
-      var val = m.querySelector("#rpStudent").value;
-      var student = students.find(function (s) { return (s.last_name + " " + s.first_name + " — " + (s.code || "")) === val; });
-      if (!student) { err.textContent = "Choisissez un élève dans la liste."; err.hidden = false; return; }
-      UI.btnState(btn, "loading");
-      api.fetch("/incident-reports", { method: "POST", body: JSON.stringify({ student_id: student.id, description: m.querySelector("#rpDesc").value.trim(), occurred_at: m.querySelector("#rpDate").value }) }).then(function (r) {
-        if (!r.ok) { UI.btnState(btn, "error"); err.textContent = r.body.error || "Impossible."; err.hidden = false; return; }
-        UI.btnState(btn, "success", "Envoyé"); UI.toast("Signalement transmis au Directeur des disciplines.", "success");
-        setTimeout(function () { UI.closeModal(); load(); }, 600);
-      });
-    });
+    window.KlassioSignalement.ouvrir(preset ? preset.id : null, preset ? preset.first_name + " " + preset.last_name : "", { eleves: students, apres: load });
   }
 
   function openIncidentModal(presetStudentId) {

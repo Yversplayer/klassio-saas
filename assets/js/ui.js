@@ -358,6 +358,16 @@
     toast("Téléchargement du fichier « " + (fileName || "fichier") + " ».", "success");
   }
   function printSheet(el, title) {
+    // Le logo de l'école en tête de tout document imprimé (08/10/2026) :
+    // reçus, registres, conseils de classe, bulletins. admin.js le dépose
+    // dans window.KLASSIO_LOGO depuis /me ; une feuille qui l'a déjà le garde.
+    var logo = window.KLASSIO_LOGO;
+    if (logo && /^data:image\/(png|jpe?g|webp);base64,/.test(logo) && el.querySelector(".ps-school") && !el.querySelector(".ps-school img")) {
+      el = el.cloneNode(true);
+      var im = document.createElement("img");
+      im.src = logo; im.alt = ""; im.style.cssText = "height:54px;width:auto;border-radius:8px;margin-bottom:6px;display:block";
+      el.querySelector(".ps-school").insertBefore(im, el.querySelector(".ps-school").firstChild);
+    }
     var w = window.open("", "_blank", "width=820,height=1000");
     if (!w) { toast("Autorisez les fenêtres pop-up pour imprimer.", "error"); return; }
     var css = Array.prototype.map.call(document.querySelectorAll('link[rel="stylesheet"]'), function (l) { return '<link rel="stylesheet" href="' + l.href + '">'; }).join("");

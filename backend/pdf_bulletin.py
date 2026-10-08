@@ -62,14 +62,44 @@ def _mention_pour_note(cote_20):
     return "Insuffisant"
 
 
+def logo_jpeg(data_uri):
+    """(octets, largeur, hauteur, composantes) d'un logo JPEG en data URI, ou None.
+
+    Le logo de l'école sur ses bulletins (08/10/2026). Un JPEG s'incorpore tel
+    quel dans un PDF (filtre DCTDecode) : aucune bibliothèque d'image. Un PNG
+    n'est pas décodé ici — le bulletin reste alors sans logo, jamais cassé ;
+    Paramètres convertit désormais le logo en JPEG à l'envoi."""
+    import base64
+    if not data_uri or not str(data_uri).startswith(("data:image/jpeg;base64,", "data:image/jpg;base64,")):
+        return None
+    try:
+        raw = base64.b64decode(str(data_uri).split(",", 1)[1])
+    except (ValueError, IndexError):
+        return None
+    i = 2
+    while i + 9 < len(raw):
+        if raw[i] != 0xFF:
+            return None
+        marker = raw[i + 1]
+        length = int.from_bytes(raw[i + 2:i + 4], "big")
+        if marker in (0xC0, 0xC1, 0xC2):
+            h = int.from_bytes(raw[i + 5:i + 7], "big")
+            w = int.from_bytes(raw[i + 7:i + 9], "big")
+            comps = raw[i + 9]
+            return (raw, w, h, comps) if w and h and comps in (1, 3, 4) else None
+        i += 2 + length
+    return None
+
+
 class PDFDocument:
     """Moteur vectoriel léger produisant un document PDF 1.4 A4 standard."""
 
     PAGE_WIDTH = 595.28   # 210 mm en points (72 pt / pouce)
     PAGE_HEIGHT = 841.89  # 297 mm en points
 
-    def __init__(self):
+    def __init__(self, logo=None):
         self.pages = []  # Liste de listes de commandes (octets)
+        self.logo = logo_jpeg(logo) if logo else None
 
     def new_page(self):
         buf = io.BytesIO()
@@ -97,6 +127,10 @@ class PDFDocument:
             cur_id += 2
             page_info.append((p_obj_id, c_obj_id, p_buf.getvalue()))
             page_obj_ids.append(p_obj_id)
+        logo_id = None
+        if self.logo:
+            cur_id += 1
+            logo_id = cur_id
 
         def write_obj(obj_id, data):
             offsets[obj_id] = out.tell()
@@ -119,11 +153,18 @@ class PDFDocument:
         # 5: Helvetica Oblique (Italic)
         write_obj(5, b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Oblique /Encoding /WinAnsiEncoding >>")
 
+        if logo_id:
+            raw, w, h, comps = self.logo
+            espace = {1: "/DeviceGray", 3: "/DeviceRGB", 4: "/DeviceCMYK"}[comps]
+            write_obj(logo_id, f"<< /Type /XObject /Subtype /Image /Width {w} /Height {h} /ColorSpace {espace} "
+                               f"/BitsPerComponent 8 /Filter /DCTDecode /Length {len(raw)} >>\nstream\n".encode("ascii") + raw + b"\nendstream")
+        xobject = f"/XObject << /Im1 {logo_id} 0 R >> " if logo_id else ""
+
         # Pages et flux de contenu
         for p_obj_id, c_obj_id, raw_stream in page_info:
             page_dict = (
                 f"<< /Type /Page /Parent 2 0 R "
-                f"/Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> "
+                f"/Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> {xobject}>> "
                 f"/Contents {c_obj_id} 0 R >>"
             ).encode("ascii")
             write_obj(p_obj_id, page_dict)
@@ -167,6 +208,10 @@ class PageDrawer:
         else:
             self._write(f"{gray_or_r:.3f} {g:.3f} {b:.3f} rg")
 
+    def image(self, x, y, w, h):
+        """Le logo de l'école (XObject /Im1), si le document en a un."""
+        self._write(f"q {w:.2f} 0 0 {h:.2f} {x:.2f} {y:.2f} cm /Im1 Do Q")
+
     def line_width(self, w):
         self._write(f"{w:.2f} w")
 
@@ -191,12 +236,17 @@ class PageDrawer:
         self._write(f"BT {font} {size:.1f} Tf {pos_x:.2f} {y:.2f} Td ({escaped}) Tj ET")
 
 
-def _draw_single_bulletin_page(drawer, tenant_name, school_year, class_name, titulaire_name, b, page_num=1, total_pages=1):
+def _draw_single_bulletin_page(drawer, tenant_name, school_year, class_name, titulaire_name, b, page_num=1, total_pages=1, logo=None):
     """Dessine une page A4 complète de bulletin officiel pour un élève."""
     W = PDFDocument.PAGE_WIDTH
     H = PDFDocument.PAGE_HEIGHT
     M = 36.0  # Marge 36 pt (0.5 pouce)
     content_w = W - 2 * M
+    if logo:
+        # Logo de l'école en haut à gauche, proportions conservées (52 pt au plus).
+        _raw, lw, lh, _c = logo
+        k = 52.0 / max(lw, lh)
+        drawer.image(M + 12, H - M - 12 - lh * k, lw * k, lh * k)
 
     # 1. Bordure extérieure d'encadrement officiel
     drawer.stroke_color(0.15)
@@ -437,21 +487,21 @@ def _draw_single_bulletin_page(drawer, tenant_name, school_year, class_name, tit
         drawer.text(W - M - 70, M + 8, f"Page {page_num} / {total_pages}", font="/F1", size=6.5)
 
 
-def generate_student_bulletin_pdf(tenant_name, school_year, class_name, titulaire_name, bulletin_data):
+def generate_student_bulletin_pdf(tenant_name, school_year, class_name, titulaire_name, bulletin_data, logo=None):
     """Génère le bulletin d'un seul élève en PDF (1 page A4)."""
-    doc = PDFDocument()
+    doc = PDFDocument(logo)
     stream = doc.new_page()
     drawer = PageDrawer(stream)
     _draw_single_bulletin_page(
         drawer, tenant_name, school_year, class_name, titulaire_name,
-        bulletin_data, page_num=1, total_pages=1
+        bulletin_data, page_num=1, total_pages=1, logo=doc.logo
     )
     return doc.render()
 
 
-def generate_class_bulletins_pdf(tenant_name, school_year, class_name, titulaire_name, bulletins_list):
+def generate_class_bulletins_pdf(tenant_name, school_year, class_name, titulaire_name, bulletins_list, logo=None):
     """Génère l'ensemble des bulletins d'une classe en un seul document PDF multipages (1 page par élève)."""
-    doc = PDFDocument()
+    doc = PDFDocument(logo)
     total = max(1, len(bulletins_list))
     if not bulletins_list:
         # Page de garde / classe vide
@@ -460,7 +510,7 @@ def generate_class_bulletins_pdf(tenant_name, school_year, class_name, titulaire
         _draw_single_bulletin_page(
             drawer, tenant_name, school_year, class_name, titulaire_name,
             {"student": {"first_name": "Aucun", "last_name": "Élève actif"}, "period": "—", "subjects": []},
-            page_num=1, total_pages=1
+            page_num=1, total_pages=1, logo=doc.logo
         )
     else:
         for idx, b in enumerate(bulletins_list, start=1):
@@ -468,6 +518,6 @@ def generate_class_bulletins_pdf(tenant_name, school_year, class_name, titulaire
             drawer = PageDrawer(stream)
             _draw_single_bulletin_page(
                 drawer, tenant_name, school_year, class_name, titulaire_name,
-                b, page_num=idx, total_pages=total
+                b, page_num=idx, total_pages=total, logo=doc.logo
             )
     return doc.render()

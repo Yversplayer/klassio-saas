@@ -381,3 +381,28 @@ html.ka-ecole-vide .dash-body .note-inline:not(.note-garde) { display: none; }
   .ka-app .tabs { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
   .ka-app .tabs::-webkit-scrollbar { display: none; }
 }
+
+/* ---------- Discipline : explication, règlement, faits en lot (08/10/2026) ----------
+   discipline-outils.js. L'explication du capital de points pour une
+   première utilisation ; la décision commune d'un lot. Préfixe kq-. */
+.kq-explique { margin-bottom: 18px; padding: 22px 24px; border-radius: 22px; background: linear-gradient(135deg, #16301F, #23452E); color: #EEFBCB; box-shadow: var(--shadow-md); }
+.kq-sur { display: block; margin-bottom: 4px; font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: #F0C070; }
+.kq-explique h2 { margin: 0 0 14px; font-family: var(--font-display); font-weight: 600; font-size: clamp(19px, 2.2vw, 24px); color: #fff; }
+.kq-etapes { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.kq-etapes li { display: flex; gap: 10px; align-items: flex-start; padding: 14px; border-radius: 16px; background: rgba(255, 255, 255, .07); }
+.kq-etapes .kq-num, .kq-num { flex: none; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: #B8FF00; color: #16241C; font-weight: 800; font-size: 13px; }
+.kq-etapes strong { display: block; font-size: 13.5px; color: #fff; margin-bottom: 3px; }
+.kq-etapes div > span { display: block; font-size: 12.5px; line-height: 1.5; color: rgba(238, 251, 203, .85); }
+.kq-echelle { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 3px; }
+.kq-echelle li { display: flex; justify-content: space-between; gap: 8px; padding: 0; background: none; font-size: 12px; }
+.kq-echelle b { color: #fff; font-weight: 700; }
+.kq-echelle li span { display: inline; text-align: right; }
+.kq-echelle-lue { margin-top: 14px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface-soft); }
+.kq-echelle-lue .pill-row { margin-top: 8px; }
+.kq-decision { margin-top: 16px; padding: 14px 16px; border-radius: 16px; border: 1px solid var(--line); background: var(--surface-soft); }
+.kq-decision h3 { margin: 0 0 10px; font-size: 14px; font-weight: 800; }
+@media (max-width: 960px) { .kq-etapes { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .kq-etapes { grid-template-columns: 1fr; } .kq-explique { padding: 18px; } }
+
+/* ---------- Pastilles du menu (08/10/2026) ---------- */
+.s-item .s-badge { margin-left: auto; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 100px; display: inline-grid; place-items: center; background: #F0C070; color: #3A2600; font-size: 11px; font-weight: 800; line-height: 1; }

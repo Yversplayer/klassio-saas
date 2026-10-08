@@ -54,7 +54,10 @@ def create_incident(conn, ctx, student, data, report_id=None):
     incident = {
         "id": iid, "student_id": student["id"], "class_id": student["class_id"], "rule_id": rule["id"] if rule else None,
         "category": category, "title": title, "description": (data.get("description") or "").strip()[:2000] or None,
-        "severity": severity, "points": points, "action_taken": (data.get("action_taken") or "").strip()[:500] or None,
+        "severity": severity, "points": points,
+        # Sans mesure saisie, la sanction prévue par le règlement pour cette
+        # règle (08/10/2026) — le DD peut toujours en écrire une autre.
+        "action_taken": (data.get("action_taken") or "").strip()[:500] or ((rule["measure"] if rule and "measure" in rule.keys() else None) or None),
         "internal_note": (data.get("internal_note") or "").strip()[:2000] or None,
         "notify_parent": 1 if data.get("notify_parent") else 0, "occurred_at": occurred_at,
         "status": data.get("status") if data.get("status") in ("open", "convocation", "decided", "closed") else ("closed" if category in ("bonus", "correction") else "open"),

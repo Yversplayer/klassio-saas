@@ -131,12 +131,20 @@
 
   // ---------------- DIRECTEUR DES DISCIPLINES ----------------
   function renderDiscipline(d, t) {
-    actions([{ href: "pointage.html", icon: "clock", label: "Pointer un retard", primary: true }, { href: "discipline.html?new=1", icon: "plus", label: "Enregistrer un incident" }, { href: "calendrier.html", icon: "calendar", label: "Événement" }]);
     var a = d.attendance_today;
     var host = document.getElementById("dashContent");
-    if (!t) { host.innerHTML = attendancePanel(a); return; }
+    if (!t) { actions([{ href: "pointage.html", icon: "clock", label: "Pointer un retard", primary: true }]); host.innerHTML = attendancePanel(a); return; }
     var scope = ctx.scope_cycles && ctx.scope_cycles.length ? ctx.scope_cycles.join(", ") : "secondaire";
-    var html = '<div class="kpi-grid cols-5">' +
+    // Le poste du directeur des disciplines s'ouvre sur SON en-tête (08/10/2026) :
+    // qui il est (préfet de quel niveau), ce qui l'attend, ses trois gestes.
+    document.querySelector(".page-header").hidden = true;
+    var attend = (t.reports.length || 0) + (t.justifications.length || 0) + (t.convocations.length || 0);
+    var html = '<section class="kt-hero"><span class="kt-sur">' + UI.escapeHtml(new Date().toLocaleDateString(window.KLASSIO_LOCALE || "fr-FR", { weekday: "long", day: "numeric", month: "long" })) + " · " + UI.escapeHtml(ctx.title || "Directeur des disciplines") + " — " + UI.escapeHtml(scope) + "</span>" +
+      "<h1>Bonjour" + (ctx.user_name ? ", " + UI.escapeHtml(api.firstName(ctx.user_name)) : "") + ".</h1>" +
+      "<p>" + (attend ? UI.plural(attend, "sujet vous attend", "sujets vous attendent") + " : signalements, justifications et convocations." : "Rien en attente pour l'instant.") + " " + UI.plural(t.classes_pending_roll.length, "appel manquant", "appels manquants") + ", " + UI.plural(t.absent_today.length, "absent") + ".</p>" +
+      '<div class="kt-actions"><a class="kt-btn-lime" href="pointage.html">' + UI.icon("clock", 15) + 'Pointer un retard</a><a class="kt-btn-clair" href="discipline.html?tab=signalements">' + UI.icon("inbox", 15) + 'Signalements</a><a class="kt-btn-clair" href="discipline.html?tab=incidents">' + UI.icon("users", 15) + "Incidents et faits en lot</a></div>" +
+      (window.KlassioTableau ? '<div class="kt-objets" aria-hidden="true">' + window.KlassioTableau.objet("cartable", "kt-objet-a") + window.KlassioTableau.objet("telephone", "kt-objet-b", 240) + "</div>" : "") + "</section>" +
+      '<div class="kpi-grid cols-5" style="margin-top:18px">' +
       UI.kpi("Appels manquants", String(t.classes_pending_roll.length), { icon: "clipboard", tone: t.classes_pending_roll.length ? "warn" : "ok", sub: d.class_count + " classes · " + scope }) +
       UI.kpi("Absents", String(t.absent_today.length), { icon: "calendar", tone: t.absent_today.length ? "bad" : "ok", sub: t.late_today.length + " retard(s)" }) +
       UI.kpi("Signalements", String(t.reports.length), { icon: "discipline", href: "discipline.html?tab=signalements", tone: t.reports.length ? "warn" : "", sub: "à qualifier" }) +

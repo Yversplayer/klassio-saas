@@ -1263,6 +1263,41 @@ def _prochaine_proclamation(conn, tenant_id, year_id, division):
     return None
 
 
+@app.get("/api/me/badges")
+@require_auth
+def me_badges():
+    """Pastilles du menu (08/10/2026) : ce qui attend l'utilisateur, par page,
+    dès qu'il entre dans l'application. Des COMPTES seulement, calculés dans
+    son périmètre — la même source que le tableau de bord, en plus léger
+    (un appel par page affichée, à Kinshasa)."""
+    conn = db.get_connection()
+    tenant_id, role, uid = g.ctx["tenant_id"], g.ctx["role"], g.ctx["user_id"]
+    today = school.today_iso()
+    where_s, params_s = school.students_where_clause(conn, g.ctx)
+    b = {}
+    if where_s:
+        b["messages"] = conn.execute(
+            f"""SELECT COUNT(*) n FROM messages m JOIN students s ON s.id=m.student_id WHERE {where_s} AND m.sender_id<>?
+                AND NOT EXISTS (SELECT 1 FROM message_reads r WHERE r.message_id=m.id AND r.user_id=?)""", (*params_s, uid, uid)).fetchone()["n"]
+    if role in ("directeur", "discipline") and where_s:
+        b["discipline"] = (
+            conn.execute(f"SELECT COUNT(*) n FROM incident_reports r JOIN students s ON s.id=r.student_id WHERE {where_s} AND r.status='pending'", params_s).fetchone()["n"]
+            + conn.execute(f"SELECT COUNT(*) n FROM attendance_justifications j JOIN students s ON s.id=j.student_id WHERE {where_s} AND j.status='pending'", params_s).fetchone()["n"]
+            + conn.execute(f"SELECT COUNT(*) n FROM convocations cv JOIN students s ON s.id=cv.student_id WHERE {where_s} AND cv.status='planned' AND cv.scheduled_on<=?", params_s + (today,)).fetchone()["n"])
+    if role == "directeur":
+        b["finance"] = conn.execute("SELECT COUNT(*) n FROM payments WHERE tenant_id=? AND status IN ('CREATED','PENDING')", (tenant_id,)).fetchone()["n"]
+        b["boutique"] = conn.execute("SELECT COUNT(*) n FROM orders WHERE tenant_id=? AND status='paid'", (tenant_id,)).fetchone()["n"]
+    if role == "professeur":
+        ids = school.teacher_class_ids(conn, g.ctx)
+        if ids:
+            # Classes dont l'appel du jour n'est pas encore fait.
+            faites = {r["class_id"] for r in conn.execute(
+                f"SELECT DISTINCT class_id FROM attendance WHERE tenant_id=? AND date=? AND class_id IN ({','.join('?' for _ in ids)})", (tenant_id, today, *ids))}
+            b["classes"] = len([i for i in ids if i not in faites])
+    conn.close()
+    return jsonify({k: v for k, v in b.items() if v})
+
+
 @app.get("/api/dashboard")
 @require_auth
 def dashboard():

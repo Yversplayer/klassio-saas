@@ -399,8 +399,8 @@ meilleur jour ; aucune fonction absente du logiciel ne doit y figurer (la
 saisie des notes par les professeurs a été retirée pour cette raison : les
 résultats entrent par l'import). Seule tolérance : Mobile Money, présenté tel
 qu'il est — le parent annonce, l'école confirme. L'inventaire vit dans la
-section `#fonctions` de la landing (36 fonctions, six familles) et dans le mur
-d'écrans de la démo (26 écrans) : une fonction ajoutée au logiciel s'ajoute
+section `#fonctions` de la landing (38 fonctions, six familles) et dans le mur
+d'écrans de la démo (27 écrans) : une fonction ajoutée au logiciel s'ajoute
 aux deux.
 
 **Fusion du 30/09.** À propos, FAQ et Contact sont des sections de la landing
@@ -504,6 +504,26 @@ les emails restent en français. (4) Une date ou un nombre s'écrit avec
   (`ai_assistant.answer_teacher`) ; une question non comprise reçoit l'aveu
   habituel suivi de suggestions (`rich.type = "suggestions"`).
 - **Onglets** : chacun sa couleur dans les écrans connectés (`app-visuel.css`).
+
+### Discipline : règlement, faits en lot, pastilles, logo (08/10/2026)
+
+- **Règlement** : `backend/reglement.py` lit un Word (.docx, tableaux
+  « Article | Faute | Sanction » compris, sans dépendance), un PDF avec texte
+  ou du texte ; il propose fautes, points (« 10 points en conduite » → -10),
+  sanction prévue (`discipline_rules.measure`), renvois définitifs (-100) et
+  l'échelle de conduite (« De 80 à 100 points : … »). Une PHOTO n'est pas lue :
+  aucun service de reconnaissance de caractères n'est branché.
+- **Faits en lot** : `backend/discipline_lot.py` retrouve les élèves (prénom
+  ET nom, dans le périmètre de l'acteur) et la règle la plus proche ; le DD
+  confirme une décision commune (`/api/discipline/lot/*`). Tout le lot est
+  vérifié avant la première écriture.
+- **Récidivistes** : `/api/discipline/recurrents` (même fait ≥ 2 fois en 30 j).
+- **Pastilles du menu** : `/api/me/badges`, posées par `admin.js`.
+- **Logo** : converti en JPEG à l'envoi (Paramètres), incorporé dans les
+  bulletins PDF (`pdf_bulletin.logo_jpeg`) et ajouté à toute feuille
+  imprimée par `UI.printSheet`.
+- **Explication du capital de points** pour une première utilisation :
+  `discipline-outils.js` (`explication`).
 
 ### Analytics et cookies — ne décide pas seul
 

@@ -737,6 +737,8 @@ def _migrate(conn):
     _add_column_if_missing(conn, "user_preferences", "language", "TEXT")
     # Signalement d'un enseignant rattaché à une règle de la Direction (08/10/2026).
     _add_column_if_missing(conn, "incident_reports", "rule_id", "TEXT")
+    # Sanction prévue par le règlement pour une règle (08/10/2026).
+    _add_column_if_missing(conn, "discipline_rules", "measure", "TEXT")
 
     # Plans d'abonnement par défaut (modifiables par l'administration de la plateforme).
     if not conn.execute("SELECT 1 FROM plans LIMIT 1").fetchone():

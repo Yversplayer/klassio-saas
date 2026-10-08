@@ -136,6 +136,8 @@
         return '<a href="' + item[2] + '" class="s-item' + (active ? " active" : "") + '"' + (active ? ' aria-current="page"' : "") + '><span class="s-ic">' + UI.icon(item[0], 17) + "</span><span>" + item[1] + "</span></a>";
       }).join("");
       renderAccountBlock(ctx);
+      poserPastilles();
+      window.KLASSIO_LOGO = (ctx.branding && ctx.branding.logo_data) || null;
 
       // CONTEXTE, pas identité. La topbar affichait « Klassio » et le nom de
       // l'établissement — exactement ce que porte déjà la barre latérale, à
@@ -347,6 +349,26 @@
         window.location.href = "connexion.html";
       });
     });
+  }
+
+  // Pastilles du menu (08/10/2026) : ce qui attend l'utilisateur, page par
+  // page, dès qu'il entre — signalements et justifications pour le DD,
+  // paiements à confirmer et commandes pour la Direction, appels à faire pour
+  // le professeur, messages pour tous. Des comptes calculés par le serveur
+  // dans le périmètre du rôle (GET /me/badges) ; en cas d'échec, rien.
+  function poserPastilles() {
+    api.fetch("/me/badges").then(function (r) {
+      if (!r.ok || !r.body) return;
+      Object.keys(r.body).forEach(function (page) {
+        var n = r.body[page];
+        var a = document.querySelector('#sidebarNav a[href="' + page + '.html"]');
+        if (!a || !n) return;
+        var b = a.querySelector(".s-badge") || a.appendChild(document.createElement("span"));
+        b.className = "s-badge";
+        b.textContent = n > 99 ? "99+" : String(n);
+        b.setAttribute("aria-label", n + " en attente");
+      });
+    }).catch(function () {});
   }
 
   function wireNotifications(ctx) {

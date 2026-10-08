@@ -13,11 +13,17 @@
   var UI = window.KlassioUI, api = window.KlassioApi;
   var FAMILLES = { comportement: "Comportement", retard: "Retards", absence: "Absences", autre: "Autres faits" };
 
-  function ouvrir(studentId, nom) {
+  // `options.eleves` : sans élève désigné, la fenêtre propose de le choisir
+  // (page Discipline du professeur). `options.apres` : rappel après envoi.
+  function ouvrir(studentId, nom, options) {
+    options = options || {};
+    var choix = !studentId && options.eleves;
+    var libelle = function (s) { return s.last_name + " " + s.first_name + " — " + (s.code || ""); };
     var m = UI.modal({
       title: "Signaler au Directeur des disciplines",
       body: '<form id="rpForm" class="form-grid">' +
         (nom ? '<p class="modal-text full">Élève : <strong>' + UI.escapeHtml(nom) + "</strong>.</p>" : "") +
+        (choix ? '<div class="field full"><label for="rpStudent">Élève</label><input id="rpStudent" list="rpDl" required placeholder="Nom, prénom ou identifiant…" autocomplete="off" /><datalist id="rpDl">' + options.eleves.map(function (s) { return '<option value="' + UI.escapeHtml(libelle(s)) + '">' + UI.escapeHtml(s.class_name || "") + "</option>"; }).join("") + "</datalist></div>" : "") +
         '<div class="full" id="rpRegles">' + UI.skeleton("row", 2) + "</div>" +
         '<div class="field"><label for="rpDate">Date des faits</label><input id="rpDate" type="date" required max="' + UI.todayIso() + '" value="' + UI.todayIso() + '" /></div>' +
         '<div class="field full"><label for="rpDesc" id="rpDescLabel">Précision (facultative)</label><textarea id="rpDesc" maxlength="500" placeholder="Où, quand, qui était présent."></textarea></div>' +
@@ -55,16 +61,22 @@
     m.querySelector("#rpForm").addEventListener("submit", function (e) {
       e.preventDefault();
       var btn = m.querySelector("#rpSubmit"), err = m.querySelector("#rpErr"); err.hidden = true;
-      var choix = m.querySelector('input[name="rpRegle"]:checked');
-      if (regles.length && !choix) { err.textContent = "Choisissez le fait dans la liste."; err.hidden = false; return; }
+      var regle = m.querySelector('input[name="rpRegle"]:checked');
+      if (regles.length && !regle) { err.textContent = "Choisissez le fait dans la liste."; err.hidden = false; return; }
+      var eleveId = studentId;
+      if (choix) {
+        var v = m.querySelector("#rpStudent").value, e2 = options.eleves.find(function (s) { return libelle(s) === v; });
+        if (!e2) { err.textContent = "Choisissez un élève dans la liste."; err.hidden = false; return; }
+        eleveId = e2.id;
+      }
       UI.btnState(btn, "loading");
       api.fetch("/incident-reports", { method: "POST", body: JSON.stringify({
-        student_id: studentId, rule_id: choix ? choix.value : null,
+        student_id: eleveId, rule_id: regle ? regle.value : null,
         description: m.querySelector("#rpDesc").value.trim(), occurred_at: m.querySelector("#rpDate").value
       }) }).then(function (r) {
         if (!r.ok) { UI.btnState(btn, "error"); err.textContent = r.body.error || "Impossible."; err.hidden = false; return; }
         UI.btnState(btn, "success", "Envoyé"); UI.toast("Signalement transmis au Directeur des disciplines.", "success");
-        setTimeout(UI.closeModal, 600);
+        setTimeout(function () { UI.closeModal(); if (options.apres) options.apres(); }, 600);
       }).catch(function () { UI.btnState(btn, "error"); err.textContent = "Le serveur Klassio est injoignable."; err.hidden = false; });
     });
   }

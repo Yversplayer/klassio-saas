@@ -17,6 +17,8 @@ from flask import Blueprint, request, jsonify, g
 import db
 import security
 import events as events_module
+import reglement
+import discipline_lot
 import notifications as notif_module
 import school
 import discipline as disc
@@ -594,21 +596,8 @@ def _extract_text(file_storage):
         return raw.decode("latin-1"), raw
 
 
-@bp.post("/api/discipline/reglement/analyze")
-@require_auth
-def analyze_reglement():
-    """Lecture structurée du règlement (PDF ou texte) : propose des règles à
-    valider — jamais appliquées sans confirmation de la Direction. Pas de
-    modèle de langage : détection par articles numérotés et mots-clés."""
-    if g.ctx["role"] != "directeur":
-        return _denied("reglement.analyze")
-    if "file" not in request.files:
-        return jsonify({"error": "Aucun fichier reçu (PDF ou texte)."}), 400
-    text, raw = _extract_text(request.files["file"])
-    text = re.sub(r"[ \t]+", " ", text or "")
-    if len(text.strip()) < 40:
-        return jsonify({"error": "Aucun texte lisible dans ce fichier — s'il s'agit d'un scan, il faut un PDF avec texte (ou saisir les règles à la main)."}), 400
-    # Découpage : articles numérotés (« Article 12 », « Art. 3 », « 4. », « 4) », « - ») sinon phrases.
+def _propositions_par_mots_cles(text):
+    """Repli d'avant le 08/10/2026 : un règlement en prose, sans barème."""
     chunks = re.split(r"\n(?=\s*(?:article\s*\d+|art\.?\s*\d+|\d{1,2}[.)\-]\s|[•\-–]\s))", text, flags=re.I)
     if len(chunks) < 3:
         chunks = re.split(r"(?<=[.;])\s+", text)
@@ -629,14 +618,37 @@ def analyze_reglement():
         if key in seen:
             continue
         seen.add(key)
-        proposals.append({"label": label, "category": cat, "points": pts, "severity": sev, "source": line[:400]})
+        proposals.append({"label": label, "category": cat, "points": pts, "severity": sev, "measure": None, "source": line[:400]})
+    return proposals
+
+
+@bp.post("/api/discipline/reglement/analyze")
+@require_auth
+def analyze_reglement():
+    """Lecture du règlement (Word, PDF avec texte, texte) : propose des règles,
+    leurs points et leur sanction, et l'échelle de conduite — jamais
+    appliquées sans confirmation de la Direction. Voir reglement.py."""
+    if g.ctx["role"] != "directeur":
+        return _denied("reglement.analyze")
+    if "file" not in request.files:
+        return jsonify({"error": "Aucun fichier reçu (Word, PDF ou texte)."}), 400
+    f = request.files["file"]
+    try:
+        text = reglement.extraire(f.filename, f.read())
+    except reglement.Illisible as e:
+        return jsonify({"error": str(e)}), 400
+    if len((text or "").strip()) < 40:
+        return jsonify({"error": "Aucun texte lisible dans ce fichier — s'il s'agit d'un scan, il faut un PDF avec texte ou un fichier Word (ou saisir les règles à la main)."}), 400
+    lu = reglement.analyser(text)
+    proposals = lu["proposals"] or _propositions_par_mots_cles(re.sub(r"[ \t]+", " ", text))
     conn = db.get_connection()
     existing = {r["label"].lower() for r in conn.execute("SELECT label FROM discipline_rules WHERE tenant_id=? AND active=1", (g.ctx["tenant_id"],))}
     conn.close()
     for p in proposals:
         p["already_exists"] = p["label"].lower() in existing
     audit(g.ctx["tenant_id"], g.ctx["user_id"], "discipline.reglement_analyzed", "tenant", g.ctx["tenant_id"], "success", after={"proposals": len(proposals), "chars": len(text)})
-    return jsonify({"proposals": proposals[:60], "text_length": len(text), "chunks": len(chunks), "excerpt": text[:600]})
+    return jsonify({"proposals": proposals[:80], "conduct_scale": lu["conduct_scale"], "capital": lu["capital"],
+                    "text_length": len(text), "excerpt": text[:600]})
 
 
 @bp.post("/api/discipline/reglement/confirm")
@@ -646,7 +658,8 @@ def confirm_reglement():
         return _denied("reglement.confirm")
     data = json_object(request.get_json(force=True))
     rules = data.get("rules") or []
-    if not isinstance(rules, list) or not rules:
+    # Une Direction peut ne reprendre QUE l'échelle de conduite du règlement.
+    if not isinstance(rules, list) or (not rules and not data.get("conduct_scale")):
         raise ValidationError("Aucune règle à enregistrer.")
     conn = db.get_connection()
     tenant_id = g.ctx["tenant_id"]
@@ -661,12 +674,166 @@ def confirm_reglement():
             raise ValidationError(f"points invalide pour « {label} ».")
         if abs(pts) > 100:
             raise ValidationError("points doit rester entre -100 et 100.")
-        conn.execute("INSERT INTO discipline_rules (id, tenant_id, label, category, points, active, created_at) VALUES (?,?,?,?,?,1,?)", (new_id(), tenant_id, label, cat, pts, now))
+        measure = (r.get("measure") or "").strip()[:300] or None
+        conn.execute("INSERT INTO discipline_rules (id, tenant_id, label, category, points, active, created_at, measure) VALUES (?,?,?,?,?,1,?,?)",
+                     (new_id(), tenant_id, label, cat, pts, now, measure))
         created += 1
+    # Capital et échelle de conduite lus dans le règlement, appliqués
+    # seulement si la Direction les a gardés cochés.
+    if data.get("capital") not in (None, ""):
+        try:
+            cap = int(data["capital"])
+        except (TypeError, ValueError):
+            raise ValidationError("capital invalide.")
+        if not 10 <= cap <= 1000:
+            raise ValidationError("capital doit être compris entre 10 et 1000.")
+        school.save_settings(conn, tenant_id, {"discipline_capital": cap})
+    if data.get("conduct_scale"):
+        scale = data["conduct_scale"]
+        cap = int(school.get_settings(conn, tenant_id).get("discipline_capital") or 100)
+        if not isinstance(scale, list) or not all(isinstance(x, list) and len(x) == 2 for x in scale):
+            raise ValidationError("conduct_scale doit être une liste de [points, libellé].")
+        # Le règlement parle en points ; Klassio garde des pourcentages du capital.
+        school.save_settings(conn, tenant_id, {"conduct_scale": json.dumps(
+            [[max(0, min(100, round(int(a) / cap * 100))), str(b)[:40]] for a, b in scale])})
     conn.commit()
     conn.close()
     audit(tenant_id, g.ctx["user_id"], "discipline.reglement_confirmed", "tenant", tenant_id, "success", after={"rules": created})
     return jsonify({"ok": True, "created": created}), 201
+
+
+# ===========================================================================
+# FAITS EN LOT (08/10/2026) — une liste de faits (Word, PDF, texte collé) :
+# Klassio retrouve les élèves et propose la règle ; le DD décide pour tous.
+# Voir discipline_lot.py. Aucune écriture avant la confirmation.
+# ===========================================================================
+
+def _eleves_du_perimetre(conn):
+    where, params = school.students_where_clause(conn, g.ctx)
+    if where is None:
+        return []
+    return [dict(r) for r in conn.execute(
+        f"""SELECT s.id, s.first_name, s.last_name, c.name AS class_name FROM students s LEFT JOIN classes c ON c.id=s.class_id
+            WHERE {where} AND s.status='active'""", params).fetchall()]
+
+
+@bp.post("/api/discipline/lot/analyze")
+@require_auth
+def analyze_lot():
+    if not _is_dd():
+        return _denied("discipline.lot.analyze")
+    if "file" in request.files:
+        f = request.files["file"]
+        try:
+            texte = reglement.extraire(f.filename, f.read())
+        except reglement.Illisible as e:
+            return jsonify({"error": str(e)}), 400
+    else:
+        texte = (json_object(request.get_json(force=True, silent=True) or {}).get("text") or "")
+    if len(texte.strip()) < 3:
+        return jsonify({"error": "Aucun texte lisible : collez la liste ou envoyez un fichier Word, PDF ou texte."}), 400
+    if len(texte) > 200_000:
+        raise ValidationError("La liste est trop longue (200 000 caractères au plus).")
+    conn = db.get_connection()
+    eleves = _eleves_du_perimetre(conn)
+    regles = [dict(r) for r in conn.execute("SELECT id, label, category, points, measure FROM discipline_rules WHERE tenant_id=? AND active=1",
+                                            (g.ctx["tenant_id"],)).fetchall()]
+    conn.close()
+    lu = discipline_lot.analyser(texte, eleves, regles)
+    audit(g.ctx["tenant_id"], g.ctx["user_id"], "discipline.lot_analyzed", "tenant", g.ctx["tenant_id"], "success",
+          after={"lines": lu["lines"], "items": len(lu["items"])})
+    return jsonify(lu)
+
+
+@bp.post("/api/discipline/lot/confirm")
+@require_auth
+def confirm_lot():
+    """Un incident par élève, avec une décision commune (mesure, gravité,
+    information du parent) et, ligne par ligne, la règle retenue. Tout est
+    VÉRIFIÉ avant la première écriture : un élève hors périmètre ou une règle
+    étrangère refuse le lot entier, plutôt que d'en écrire la moitié."""
+    if not _is_dd():
+        return _denied("discipline.lot.confirm")
+    data = json_object(request.get_json(force=True))
+    items = data.get("items")
+    if not isinstance(items, list) or not items:
+        raise ValidationError("Aucun élève à sanctionner.")
+    if len(items) > 200:
+        raise ValidationError("200 élèves au plus par lot.")
+    commun = data.get("common") if isinstance(data.get("common"), dict) else {}
+    occurred = (commun.get("occurred_at") or school.today_iso()).strip()
+    if not ISO_DATE.match(occurred) or occurred > school.today_iso():
+        raise ValidationError("occurred_at invalide.")
+    conn = db.get_connection()
+    tenant_id = g.ctx["tenant_id"]
+    prets = []
+    for it in items:
+        if not isinstance(it, dict):
+            conn.close()
+            raise ValidationError("Ligne de lot invalide.")
+        student = school.resolve_student_access(conn, g.ctx, it.get("student_id"))
+        if not student:
+            conn.close()
+            return _not_found("discipline.lot.confirm", "Un élève du lot est introuvable ou hors de votre périmètre.")
+        rule = None
+        if it.get("rule_id"):
+            rule = conn.execute("SELECT * FROM discipline_rules WHERE id=? AND tenant_id=?", (it["rule_id"], tenant_id)).fetchone()
+            if not rule:
+                conn.close()
+                raise ValidationError("Une règle du lot est introuvable pour cet établissement.")
+        titre = (it.get("title") or (rule["label"] if rule else "") or commun.get("title") or "").strip()
+        if not titre:
+            conn.close()
+            raise ValidationError(f"Indiquez le fait pour {student['first_name']} {student['last_name']}.")
+        payload = {"rule_id": rule["id"] if rule else None, "title": titre[:160], "occurred_at": occurred,
+                   "severity": commun.get("severity") or "medium", "action_taken": commun.get("action_taken"),
+                   "notify_parent": bool(commun.get("notify_parent")), "internal_note": commun.get("internal_note"),
+                   "description": it.get("line")}
+        if commun.get("points") not in (None, ""):
+            payload["points"] = commun["points"]
+        elif it.get("points") not in (None, ""):
+            payload["points"] = it["points"]
+        prets.append((student, payload))
+    franchis, crees = [], 0
+    for student, payload in prets:
+        _incident, info = disc.create_incident(conn, g.ctx, student, payload)
+        crees += 1
+        if info["crossed"]:
+            franchis.append({"student": f"{student['first_name']} {student['last_name']}", "threshold": info["crossed"][0]["label"]})
+    conn.close()
+    audit(tenant_id, g.ctx["user_id"], "discipline.lot_confirmed", "tenant", tenant_id, "success", after={"incidents": crees})
+    return jsonify({"ok": True, "created": crees, "crossed": franchis}), 201
+
+
+@bp.get("/api/discipline/recurrents")
+@require_auth
+def recurrents():
+    """Les élèves qui reviennent : plusieurs faits du même type sur la période,
+    toutes classes du périmètre confondues (« la liste des dérangeurs »)."""
+    if not _is_dd():
+        return _denied("discipline.recurrents")
+    try:
+        jours = max(7, min(365, int(request.args.get("days") or 30)))
+        mini = max(2, min(20, int(request.args.get("min") or 2)))
+    except ValueError:
+        raise ValidationError("Paramètres invalides.")
+    conn = db.get_connection()
+    where, params = school.students_where_clause(conn, g.ctx)
+    if where is None:
+        conn.close()
+        return jsonify([])
+    depuis = (date.today() - timedelta(days=jours)).isoformat()
+    rows = conn.execute(
+        f"""SELECT s.id AS student_id, s.first_name, s.last_name, c.name AS class_name,
+                   COALESCE(dr.label, i.title) AS fait, COUNT(*) AS n, MAX(i.occurred_at) AS dernier, SUM(i.points) AS points
+            FROM incidents i JOIN students s ON s.id=i.student_id LEFT JOIN classes c ON c.id=s.class_id
+            LEFT JOIN discipline_rules dr ON dr.id=i.rule_id AND dr.tenant_id=i.tenant_id
+            WHERE {where} AND i.tenant_id=s.tenant_id AND i.occurred_at>=? AND i.category NOT IN ('bonus','correction')
+            GROUP BY s.id, s.first_name, s.last_name, c.name, COALESCE(dr.label, i.title)
+            HAVING COUNT(*)>=? ORDER BY COUNT(*) DESC, MAX(i.occurred_at) DESC LIMIT 100""",
+        (*params, depuis, mini)).fetchall()
+    conn.close()
+    return jsonify([dict(r) for r in rows])
 
 
 # ===========================================================================

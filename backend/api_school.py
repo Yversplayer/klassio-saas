@@ -225,8 +225,10 @@ def _stream_student_bulletin_pdf(student, bulletin_data):
         ).fetchone() if s.get("academic_year_id") else None
         school_year = year_row["label"] if year_row else None
 
+        logo = conn.execute("SELECT logo_data FROM tenants WHERE id=?", (tenant_id,)).fetchone()
         pdf_bytes = pdf_bulletin.generate_student_bulletin_pdf(
-            school_name, school_year, s.get("class_name"), titulaire_name, bulletin_data
+            school_name, school_year, s.get("class_name"), titulaire_name, bulletin_data,
+            logo=logo["logo_data"] if logo else None
         )
         audit(tenant_id, g.ctx["user_id"], "student.bulletin_pdf", "student", s["id"], "success",
               after={"period": bulletin_data.get("period")})
@@ -355,8 +357,9 @@ def _stream_class_bulletins_pdf(conn, tenant_id, classe, periode, sortie):
     ).fetchone() if c.get("academic_year_id") else None
     school_year = year_row["label"] if year_row else None
 
+    logo = conn.execute("SELECT logo_data FROM tenants WHERE id=?", (tenant_id,)).fetchone()
     pdf_bytes = pdf_bulletin.generate_class_bulletins_pdf(
-        school_name, school_year, c["name"], titulaire_name, sortie
+        school_name, school_year, c["name"], titulaire_name, sortie, logo=logo["logo_data"] if logo else None
     )
     audit(tenant_id, g.ctx["user_id"], "class.bulletins_pdf", "class", c["id"], "success",
           after={"count": len(sortie), "period": periode})
@@ -801,10 +804,11 @@ def create_rule():
         raise ValidationError("points doit être un entier.")
     if abs(points) > 100:
         raise ValidationError("points doit rester entre -100 et 100.")
+    measure = (data.get("measure") or "").strip()[:300] or None
     conn = db.get_connection()
     rid = new_id()
-    conn.execute("INSERT INTO discipline_rules (id, tenant_id, label, category, points, active, created_at) VALUES (?,?,?,?,?,1,?)",
-                 (rid, g.ctx["tenant_id"], label, category, points, str(time.time())))
+    conn.execute("INSERT INTO discipline_rules (id, tenant_id, label, category, points, active, created_at, measure) VALUES (?,?,?,?,?,1,?,?)",
+                 (rid, g.ctx["tenant_id"], label, category, points, str(time.time()), measure))
     conn.commit()
     conn.close()
     audit(g.ctx["tenant_id"], g.ctx["user_id"], "discipline.rule_created", "discipline_rule", rid, "success", after={"label": label, "points": points})

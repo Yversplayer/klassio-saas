@@ -308,6 +308,25 @@
     });
   }
 
+  function logoEnJpeg(file) {
+    return new Promise(function (resolve, reject) {
+      if (file.size > 15 * 1024 * 1024) return reject(new Error("Image trop lourde (15 Mo maximum)."));
+      var url = URL.createObjectURL(file), img = new Image();
+      img.onload = function () {
+        var k = Math.min(1, 400 / Math.max(img.width, img.height));
+        var c = document.createElement("canvas");
+        c.width = Math.max(1, Math.round(img.width * k)); c.height = Math.max(1, Math.round(img.height * k));
+        var g = c.getContext("2d");
+        g.fillStyle = "#ffffff"; g.fillRect(0, 0, c.width, c.height);
+        g.drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(url);
+        resolve(c.toDataURL("image/jpeg", 0.88));
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); reject(new Error("Cette image n'a pas pu être lue.")); };
+      img.src = url;
+    });
+  }
+
   function readImage(file, maxBytes, cb) {
     if (file.size > maxBytes) return UI.toast("Image trop lourde (" + Math.round(maxBytes / 1024) + " Ko maximum).", "error");
     var reader = new FileReader(); reader.onload = function () { cb(reader.result); }; reader.readAsDataURL(file);
@@ -318,7 +337,7 @@
     return '<div class="panel" id="brandingPanel"><div class="panel-head"><h2>Portail de l\'établissement</h2><span class="sub">Ce que voient parents, enseignants et DD en ouvrant votre lien</span></div>' +
       '<div class="field"><label for="bSlug">Adresse du portail</label><div class="portal-url"><span>' + UI.escapeHtml(origin) + '/app/portail.html?e=</span><input id="bSlug" value="' + UI.escapeHtml(b.slug || "") + '" /></div><span class="hint">Lettres, chiffres et tirets. C\'est ce lien que vous imprimez et partagez — <a class="link-btn" id="openPortal" href="portail.html?e=' + UI.escapeHtml(b.slug || "") + '" target="_blank" rel="noopener">ouvrir le portail</a>.</span></div>' +
       '<div class="form-grid"><div class="field full"><label for="bTagline">Phrase d\'accueil</label><input id="bTagline" maxlength="160" value="' + UI.escapeHtml(b.tagline || "") + '" placeholder="Ex. Une école, une famille" /></div>' +
-      '<div class="field"><label>Logo</label><div class="brand-upload"><div class="bu-preview" id="logoPreview">' + (b.logo_data ? '<img src="' + UI.escapeHtml(b.logo_data) + '" alt="">' : UI.icon("image", 22)) + '</div><div class="bu-text"><strong>Logo de l\'école</strong>PNG ou JPEG, carré, 300 Ko max<br><button type="button" class="link-btn" id="logoBtn">Choisir</button>' + (b.logo_data ? ' · <button type="button" class="link-btn" id="logoClear">Retirer</button>' : "") + '</div><input type="file" id="logoInput" accept="image/png,image/jpeg" hidden></div></div>' +
+      '<div class="field"><label>Logo</label><div class="brand-upload"><div class="bu-preview" id="logoPreview">' + (b.logo_data ? '<img src="' + UI.escapeHtml(b.logo_data) + '" alt="">' : UI.icon("image", 22)) + '</div><div class="bu-text"><strong>Logo de l\'école</strong>Toute image ; il apparaîtra sur les reçus, attestations, registres et bulletins<br><button type="button" class="link-btn" id="logoBtn">Choisir</button>' + (b.logo_data ? ' · <button type="button" class="link-btn" id="logoClear">Retirer</button>' : "") + '</div><input type="file" id="logoInput" accept="image/*" hidden></div></div>' +
       '<div class="field"><label>Photo de couverture</label><div class="brand-upload"><div class="bu-preview wide" id="coverPreview">' + (b.cover_data ? '<img src="' + UI.escapeHtml(b.cover_data) + '" alt="">' : UI.icon("image", 22)) + '</div><div class="bu-text"><strong>Photo de l\'établissement</strong>JPEG, paysage, 1 Mo max<br><button type="button" class="link-btn" id="coverBtn">Choisir</button>' + (b.cover_data ? ' · <button type="button" class="link-btn" id="coverClear">Retirer</button>' : "") + '</div><input type="file" id="coverInput" accept="image/png,image/jpeg" hidden></div></div>' +
       '<div class="field"><label for="bColor">Couleur de l\'école</label><div class="color-row"><input type="color" id="bColor" value="' + UI.escapeHtml(b.accent_color || "#5C9600") + '" /><span class="muted">Boutons et éléments actifs du portail</span></div></div>' +
       '<label class="check"><input type="checkbox" id="bFlag"' + (b.show_flag ? " checked" : "") + ' /> Afficher le drapeau de la RDC sur le portail</label></div>' +
@@ -336,7 +355,14 @@
     var pending = {};
     document.getElementById("logoBtn").addEventListener("click", function () { document.getElementById("logoInput").click(); });
     document.getElementById("coverBtn").addEventListener("click", function () { document.getElementById("coverInput").click(); });
-    document.getElementById("logoInput").addEventListener("change", function () { if (this.files[0]) readImage(this.files[0], 300 * 1024, function (d) { pending.logo_data = d; document.getElementById("logoPreview").innerHTML = '<img src="' + UI.escapeHtml(d) + '" alt="">'; }); });
+    // Le logo devient un JPEG carré de 400 px au plus, sur fond blanc
+    // (08/10/2026) : c'est le format que les bulletins PDF savent incorporer,
+    // et il reste léger. Toute image est acceptée — photo du tampon comprise.
+    document.getElementById("logoInput").addEventListener("change", function () {
+      var f = this.files[0]; if (!f) return;
+      logoEnJpeg(f).then(function (d) { pending.logo_data = d; document.getElementById("logoPreview").innerHTML = '<img src="' + UI.escapeHtml(d) + '" alt="">'; })
+        .catch(function (e) { UI.toast(e.message || "Image illisible.", "error"); });
+    });
     document.getElementById("coverInput").addEventListener("change", function () { if (this.files[0]) readImage(this.files[0], 900 * 1024, function (d) { pending.cover_data = d; document.getElementById("coverPreview").innerHTML = '<img src="' + UI.escapeHtml(d) + '" alt="">'; }); });
     var lc = document.getElementById("logoClear"); if (lc) lc.addEventListener("click", function () { pending.logo_data = null; document.getElementById("logoPreview").innerHTML = UI.icon("image", 22); });
     var cc = document.getElementById("coverClear"); if (cc) cc.addEventListener("click", function () { pending.cover_data = null; document.getElementById("coverPreview").innerHTML = UI.icon("image", 22); });
