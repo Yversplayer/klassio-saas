@@ -1,0 +1,212 @@
+/* =========================================================
+   KLASSIO — l'agenda (app/calendrier.html), 08/10/2026
+   Modèle du propriétaire : agenda à mini-calendrier, catégories, vues
+   Mois / Semaine / Jour, blocs pastel ; bande de jours et verre du « glass
+   calendar ». Préfixe ka-ag-. Chargé par calendrier.html seulement.
+   ========================================================= */
+:root {
+  --ag-lime: #E4F7B8; --ag-lime-ink: #2E4A00;
+  --ag-lavande: #E3DEFB; --ag-lavande-ink: #3A2F86;
+  --ag-ciel: #D9ECF4; --ag-ciel-ink: #134A60;
+  --ag-corail: #FADCD3; --ag-corail-ink: #7A2614;
+  --ag-or: #FBEBC4; --ag-or-ink: #6B4400;
+  --ag-gris: #E7E8E4; --ag-gris-ink: #353B35;
+  --ag-foret: rgba(22, 48, 31, 0.10); --ag-foret-ink: #16301F;
+  --ag-verre: rgba(255, 255, 255, 0.72);
+  --ag-ligne: rgba(22, 36, 28, 0.08);
+}
+:root[data-theme="dark"] {
+  --ag-lime: #2C3D10; --ag-lime-ink: #D9F79A;
+  --ag-lavande: #2E2A52; --ag-lavande-ink: #D4CCFF;
+  --ag-ciel: #16343F; --ag-ciel-ink: #B6E2F2;
+  --ag-corail: #45231B; --ag-corail-ink: #FFC7B8;
+  --ag-or: #3D2E0C; --ag-or-ink: #F6D58B;
+  --ag-gris: #2A302C; --ag-gris-ink: #D6DAD4;
+  --ag-foret: rgba(184, 255, 0, 0.10); --ag-foret-ink: #D9F79A;
+  --ag-verre: rgba(22, 32, 26, 0.72);
+  --ag-ligne: rgba(242, 242, 236, 0.07);
+}
+.t-lime { --t-bg: var(--ag-lime); --t-ink: var(--ag-lime-ink); --t-dot: #9FE300; }
+.t-lavande { --t-bg: var(--ag-lavande); --t-ink: var(--ag-lavande-ink); --t-dot: #8C7CF0; }
+.t-ciel { --t-bg: var(--ag-ciel); --t-ink: var(--ag-ciel-ink); --t-dot: #4FA9C9; }
+.t-corail { --t-bg: var(--ag-corail); --t-ink: var(--ag-corail-ink); --t-dot: #E5734F; }
+.t-or { --t-bg: var(--ag-or); --t-ink: var(--ag-or-ink); --t-dot: #F0B429; }
+.t-gris { --t-bg: var(--ag-gris); --t-ink: var(--ag-gris-ink); --t-dot: #8A9389; }
+.t-foret { --t-bg: var(--ag-foret); --t-ink: var(--ag-foret-ink); --t-dot: #16301F; }
+:root[data-theme="dark"] .t-foret { --t-dot: #B8FF00; }
+
+/* ---------- Mise en page : colonne de gauche + agenda ---------- */
+.ka-ag { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 18px; align-items: start; margin-bottom: 22px; }
+.ka-ag-side { display: flex; flex-direction: column; gap: 12px; position: sticky; top: 76px; }
+.ka-ag-carte { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 14px; box-shadow: var(--shadow-sm); }
+.ka-ag-carte h3 { margin: 0 0 10px; font-size: 13px; font-weight: 800; letter-spacing: .02em; }
+.ka-ag-actions { display: flex; flex-direction: column; gap: 8px; }
+.ka-ag-actions .btn { justify-content: flex-start; }
+
+/* Mini-calendrier */
+.ka-ag-mini-tete { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.ka-ag-mini-tete strong { font-size: 13.5px; text-transform: capitalize; }
+.ka-ag-mini-tete .icon-btn { width: 28px; height: 28px; border-radius: 8px; }
+.ka-ag-mini-tete span { display: flex; gap: 4px; }
+.ka-ag-mini { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; }
+.ka-ag-mini small { font-size: 10px; font-weight: 800; color: var(--ink-faint); padding-bottom: 4px; }
+.ka-ag-mini button { position: relative; height: 28px; border: none; border-radius: 8px; background: none; color: var(--ink); font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; }
+.ka-ag-mini button:hover { background: var(--surface-soft); }
+.ka-ag-mini button.a::after { content: ""; position: absolute; left: 50%; bottom: 3px; width: 4px; height: 4px; margin-left: -2px; border-radius: 50%; background: var(--lime-deep); }
+.ka-ag-mini button.auj { outline: 1.5px solid var(--lime-deep); outline-offset: -1.5px; }
+.ka-ag-mini button.sel { background: #16301F; color: #B8FF00; }
+:root[data-theme="dark"] .ka-ag-mini button.sel { background: #B8FF00; color: #16301F; }
+
+/* Filtres et listes */
+.ka-ag-filtres { display: flex; flex-direction: column; gap: 6px; }
+.ka-ag-filtre { display: flex; align-items: center; gap: 9px; font-size: 13px; cursor: pointer; }
+.ka-ag-filtre input { width: 15px; height: 15px; accent-color: var(--lime-deep); }
+.ka-ag-carre { flex: none; width: 12px; height: 12px; border-radius: 4px; background: var(--t-dot); }
+.ka-ag-periodes, .ka-ag-avenir { list-style: none; margin: 0 0 8px; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.ka-ag-periodes button { display: flex; flex-direction: column; gap: 2px; width: 100%; text-align: left; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-soft); padding: 8px 10px; font: inherit; color: var(--ink); cursor: pointer; }
+.ka-ag-periodes button:hover { border-color: var(--lime-deep); }
+.ka-ag-periodes button.encours { border-color: var(--lime-deep); background: var(--ag-lime); }
+.ka-ag-periodes button.passee { opacity: .7; }
+.ka-ag-periodes strong { font-size: 12.5px; }
+.ka-ag-periodes em, .ka-ag-avenir em { font-style: normal; font-size: 11.5px; color: var(--ink-faint); }
+.ka-ag-periodes button.encours em { color: var(--ag-lime-ink); }
+.ka-ag-avenir li { display: flex; gap: 9px; align-items: flex-start; }
+.ka-ag-avenir li .ka-ag-carre { margin-top: 4px; }
+.ka-ag-avenir div { display: flex; flex-direction: column; min-width: 0; }
+.ka-ag-avenir strong { font-size: 12.5px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ka-ag-reprise { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+
+/* ---------- En-tête de l'agenda (verre, dégradé du modèle) ---------- */
+.ka-ag-main { min-width: 0; border-radius: 24px; overflow: hidden; border: 1px solid var(--line); background: var(--surface); box-shadow: var(--shadow-md); }
+.ka-ag-head {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 18px 20px 14px;
+  background: linear-gradient(120deg, rgba(184, 255, 0, 0.32), rgba(216, 236, 244, 0.55) 55%, rgba(227, 222, 251, 0.6));
+}
+:root[data-theme="dark"] .ka-ag-head { background: linear-gradient(120deg, rgba(184, 255, 0, 0.16), rgba(22, 52, 63, 0.7) 55%, rgba(46, 42, 82, 0.7)); }
+.ka-ag-titre-bloc { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ka-ag-titre { display: inline-flex; align-items: center; gap: 6px; border: none; background: none; padding: 0; cursor: pointer; color: var(--ink); font-family: var(--font-display); font-size: clamp(24px, 3vw, 34px); font-weight: 600; letter-spacing: -.01em; text-transform: capitalize; }
+.ka-ag-titre .ic { opacity: .6; }
+.ka-ag-titre:focus-visible { box-shadow: var(--focus); border-radius: 8px; }
+.ka-ag-sous { font-size: 12.5px; color: var(--ink-soft); }
+.ka-ag-nav { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.ka-ag-fleches { display: flex; align-items: center; gap: 6px; }
+.ka-ag-fleches .icon-btn { border-radius: 50%; background: var(--ag-verre); }
+.ka-ag-fleches .btn-ghost { background: var(--ag-verre); }
+.ka-ag-vues { display: inline-flex; padding: 3px; border-radius: 12px; background: var(--ag-verre); border: 1px solid var(--line); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.ka-ag-vues button { border: none; background: none; padding: 7px 14px; border-radius: 9px; font: inherit; font-size: 13px; font-weight: 700; color: var(--ink-soft); cursor: pointer; }
+.ka-ag-vues button[aria-selected="true"] { background: var(--surface); color: var(--ink); box-shadow: var(--shadow-sm); }
+.ka-anim .ka-ag-titre-txt { animation: ka-ag-glisse .35s var(--ease-out); }
+@keyframes ka-ag-glisse { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: none; } }
+
+/* Bande des jours du mois (le « glass calendar ») */
+.ka-ag-bande { display: flex; gap: 6px; overflow-x: auto; padding: 12px 20px 14px; scrollbar-width: none; border-bottom: 1px solid var(--line); background: var(--ag-verre); }
+.ka-ag-bande::-webkit-scrollbar { display: none; }
+.ka-ag-puce { position: relative; flex: none; display: flex; flex-direction: column; align-items: center; gap: 3px; width: 40px; padding: 6px 0 8px; border: none; border-radius: 14px; background: none; color: var(--ink); font: inherit; cursor: pointer; transition: background .2s ease, transform .2s var(--ease-out); }
+.ka-ag-puce small { font-size: 10.5px; font-weight: 800; color: var(--ink-faint); }
+.ka-ag-puce b { font-size: 15px; }
+.ka-ag-puce.we b { color: var(--ink-soft); }
+.ka-ag-puce i { position: absolute; bottom: 3px; width: 4px; height: 4px; border-radius: 50%; background: var(--lime-deep); }
+.ka-ag-puce:hover { background: var(--surface-soft); }
+.ka-ag-puce.auj b { color: var(--lime-deep); }
+.ka-ag-puce[aria-selected="true"] { background: linear-gradient(140deg, #B8FF00, #F0B429); color: #16301F; box-shadow: 0 8px 18px rgba(124, 196, 0, .35); transform: translateY(-2px); }
+.ka-ag-puce[aria-selected="true"] small, .ka-ag-puce[aria-selected="true"] b { color: #16301F; }
+.ka-ag-puce[aria-selected="true"] i { background: #16301F; }
+
+/* ---------- Le « tourner de page » 3D entre deux mois / semaines ---------- */
+.ka-ag-scene { perspective: 1400px; }
+.ka-anim .ka-ag-vue.ka-ag-avant { animation: ka-ag-avant .55s var(--ease-out); transform-origin: 50% 0; }
+.ka-anim .ka-ag-vue.ka-ag-arriere { animation: ka-ag-arriere .55s var(--ease-out); transform-origin: 50% 0; }
+@keyframes ka-ag-avant { from { opacity: 0; transform: rotateX(-14deg) translate3d(40px, 12px, -60px); } to { opacity: 1; transform: none; } }
+@keyframes ka-ag-arriere { from { opacity: 0; transform: rotateX(-14deg) translate3d(-40px, 12px, -60px); } to { opacity: 1; transform: none; } }
+
+/* ---------- Vue Mois ---------- */
+.ka-ag-sem { display: grid; grid-template-columns: repeat(7, 1fr); border-bottom: 1px solid var(--line); }
+.ka-ag-sem span { padding: 10px 10px 8px; font-size: 11.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-faint); }
+.ka-ag-cases { display: grid; grid-template-columns: repeat(7, 1fr); }
+.ka-ag-case { min-height: 118px; padding: 6px 6px 8px; border-right: 1px solid var(--ag-ligne); border-bottom: 1px solid var(--ag-ligne); display: flex; flex-direction: column; gap: 3px; min-width: 0; cursor: pointer; transition: background .15s ease; }
+.ka-ag-case:nth-child(7n) { border-right: none; }
+.ka-ag-case:hover { background: var(--surface-soft); }
+.ka-ag-case.we { background: color-mix(in srgb, var(--surface-soft) 55%, transparent); }
+.ka-ag-case.hors { cursor: default; opacity: .45; }
+.ka-ag-case.exam { box-shadow: inset 0 -3px 0 var(--ag-corail); }
+.ka-ag-case.sel { background: color-mix(in srgb, var(--ag-lime) 45%, var(--surface)); }
+.ka-ag-case-tete { display: flex; align-items: center; justify-content: space-between; }
+.ka-ag-num { width: 28px; height: 28px; border-radius: 50%; border: none; background: none; font: inherit; font-size: 13px; font-weight: 700; color: var(--ink); cursor: pointer; }
+.ka-ag-num:hover { background: var(--line); }
+.ka-ag-case.auj .ka-ag-num { background: #16301F; color: #B8FF00; }
+:root[data-theme="dark"] .ka-ag-case.auj .ka-ag-num { background: #B8FF00; color: #16301F; }
+.ka-ag-plus { width: 24px; height: 24px; border-radius: 8px; border: 1px dashed var(--line); background: none; color: var(--ink-faint); display: grid; place-items: center; cursor: pointer; opacity: 0; transition: opacity .15s ease; }
+.ka-ag-case:hover .ka-ag-plus, .ka-ag-plus:focus-visible { opacity: 1; }
+.ka-ag-plus:hover { border-color: var(--lime-deep); color: var(--lime-deep); }
+.ka-ag-bandeau { display: block; padding: 2px 7px; border-radius: 6px; background: var(--ag-foret); color: var(--ag-foret-ink); font-size: 10.5px; font-weight: 800; letter-spacing: .02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ka-ag-bandeau.ex { background: var(--ag-corail); color: var(--ag-corail-ink); }
+.ka-ag-bandeau.suite { height: 4px; padding: 0; margin: 6px 0 5px; border-radius: 2px; background: var(--t-dot, #7BC400); opacity: .55; }
+.ka-ag-bandeau.suite.ex { background: #E5734F; }
+.ka-ag-pastille { display: block; width: 100%; text-align: left; padding: 3px 7px; border: none; border-radius: 7px; background: var(--t-bg); color: var(--t-ink); font: inherit; font-size: 11.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; transition: transform .15s var(--ease-out), box-shadow .15s ease; }
+.ka-ag-pastille b { font-weight: 800; }
+.ka-ag-pastille:hover { transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+.ka-ag-encore { border: none; background: none; padding: 0 4px; text-align: left; font: inherit; font-size: 11px; font-weight: 700; color: var(--ink-soft); cursor: pointer; }
+
+/* ---------- Vues Semaine et Jour : grille horaire ---------- */
+.ka-ag-grille { --ag-h: 56px; overflow-x: auto; }
+.ka-ag-g-tete, .ka-ag-g-journee, .ka-ag-g-corps { display: grid; grid-template-columns: 50px repeat(var(--ag-n), minmax(84px, 1fr)); min-width: calc(50px + var(--ag-n) * 84px); }
+.ka-ag-n7 { --ag-n: 7; } .ka-ag-n1 { --ag-n: 1; }
+.ka-ag-coin { display: grid; place-items: center; font-size: 10.5px; font-weight: 700; color: var(--ink-faint); }
+.ka-ag-col-tete { display: flex; align-items: baseline; justify-content: center; gap: 6px; padding: 12px 6px; border: none; border-left: 1px solid var(--ag-ligne); background: none; font: inherit; color: var(--ink); cursor: pointer; }
+.ka-ag-col-tete small { font-size: 12px; font-weight: 700; color: var(--ink-faint); }
+.ka-ag-col-tete b { font-size: 22px; font-weight: 800; }
+.ka-ag-col-tete.auj { background: var(--ag-lime); }
+.ka-ag-col-tete.auj b, .ka-ag-col-tete.auj small { color: var(--ag-lime-ink); }
+.ka-ag-g-journee { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: var(--surface-soft); }
+.ka-ag-journee-col { display: flex; flex-direction: column; gap: 3px; padding: 6px; border-left: 1px solid var(--ag-ligne); min-height: 38px; }
+.ka-ag-g-corps { position: relative; }
+.ka-ag-heures { display: flex; flex-direction: column; }
+.ka-ag-heure { height: var(--ag-h); position: relative; }
+.ka-ag-heure span { position: absolute; top: -8px; right: 8px; font-size: 11px; font-weight: 600; color: var(--ink-faint); }
+.ka-ag-heure:first-child span { top: 2px; }
+.ka-ag-cols { display: contents; }
+.ka-ag-col { position: relative; border-left: 1px solid var(--ag-ligne); background-image: repeating-linear-gradient(to bottom, var(--ag-ligne) 0, var(--ag-ligne) 1px, transparent 1px, transparent var(--ag-h)); height: calc(var(--ag-h) * 12); }
+.ka-ag-col.auj { background-color: color-mix(in srgb, var(--ag-lime) 25%, transparent); }
+.ka-ag-bloc { position: absolute; height: calc(var(--ag-h) - 6px); display: flex; flex-direction: column; gap: 2px; padding: 7px 9px; border: none; border-radius: 12px; background: var(--t-bg); color: var(--t-ink); text-align: left; font: inherit; overflow: hidden; cursor: pointer; box-shadow: 0 2px 6px rgba(22, 36, 28, .08); transition: transform .2s var(--ease-out), box-shadow .2s ease; }
+.ka-ag-bloc strong { font-size: 12px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ka-ag-bloc em { font-style: normal; font-size: 11px; opacity: .85; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ka-anim .ka-ag-bloc:hover { transform: perspective(500px) translateZ(14px) rotateX(4deg); box-shadow: 0 12px 26px rgba(22, 36, 28, .18); z-index: 2; }
+.ka-ag-maintenant { position: absolute; left: 0; right: 0; height: 2px; background: #E5734F; z-index: 3; }
+.ka-ag-maintenant::before { content: ""; position: absolute; left: -5px; top: -4px; width: 10px; height: 10px; border-radius: 50%; background: #E5734F; }
+
+/* ---------- Fenêtres : détail, aller à…, nouveau ---------- */
+.ka-ag-detail { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.ka-ag-quand { display: flex; align-items: center; gap: 7px; font-size: 13.5px; color: var(--ink-soft); margin: 0 0 10px; }
+.ka-ag-annee { display: flex; align-items: center; justify-content: center; gap: 18px; margin-bottom: 14px; }
+.ka-ag-annee strong { font-family: var(--font-display); font-size: 28px; font-weight: 600; }
+.ka-ag-mois-choix { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.ka-ag-mois-choix button { padding: 12px 6px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface-soft); font: inherit; font-size: 13.5px; font-weight: 700; color: var(--ink); cursor: pointer; }
+.ka-ag-mois-choix button:hover { border-color: var(--lime-deep); }
+.ka-ag-mois-choix button.sel { background: #16301F; color: #B8FF00; border-color: #16301F; }
+.ka-ag-choix { display: grid; gap: 10px; }
+.ka-ag-choix button { display: grid; grid-template-columns: 32px 1fr; grid-template-rows: auto auto; column-gap: 10px; align-items: center; text-align: left; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface-soft); font: inherit; color: var(--ink); cursor: pointer; }
+.ka-ag-choix button .ic { grid-row: span 2; justify-self: center; color: var(--lime-deep); }
+.ka-ag-choix button strong { font-size: 14px; }
+.ka-ag-choix button span { font-size: 12.5px; color: var(--ink-soft); }
+.ka-ag-choix button:hover { border-color: var(--lime-deep); }
+
+/* ---------- Petits écrans ---------- */
+@media (max-width: 1080px) {
+  .ka-ag { grid-template-columns: 1fr; }
+  .ka-ag-side { position: static; order: 2; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+}
+@media (max-width: 640px) {
+  .ka-ag-head { padding: 14px; }
+  .ka-ag-nav { width: 100%; justify-content: space-between; }
+  .ka-ag-bande { padding: 10px 12px; }
+  .ka-ag-sem span { padding: 8px 2px; text-align: center; font-size: 10px; }
+  .ka-ag-case { min-height: 64px; padding: 3px; }
+  .ka-ag-num { width: 24px; height: 24px; font-size: 12px; }
+  .ka-ag-plus, .ka-ag-encore { display: none; }
+  .ka-ag-bandeau { height: 4px; padding: 0; font-size: 0; }
+  /* Sur téléphone, une case de mois est trop étroite pour un titre : une
+     pastille devient un trait de couleur, le détail est dans la vue Jour. */
+  .ka-ag-pastille { height: 5px; padding: 0; font-size: 0; border-radius: 3px; }
+}
+@media print { .ka-ag-side, .ka-ag-bande, .ka-ag-nav { display: none !important; } }
