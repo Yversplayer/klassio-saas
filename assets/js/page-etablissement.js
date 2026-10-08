@@ -4,7 +4,7 @@
 (function () {
   "use strict";
   var UI = window.KlassioUI, api = window.KlassioApi, admin = window.KlassioAdmin;
-  var ctx = null, students = [], classes = [], team = [], settings = null, dash = null, invitations = [], years = [], calendrier = null, tabsCtl = null;
+  var ctx = null, students = [], classes = [], team = [], settings = null, dash = null, invitations = [], years = [], calendrier = null, precedent = null, tabsCtl = null;
   var selectedStudentIds = {}, selectedClassIds = {}, selectedCycles = { secondaire: true };
   var CYCLES = ["maternelle", "primaire", "secondaire"];
 
@@ -33,7 +33,7 @@
     document.getElementById("etabKpis").innerHTML = UI.skeleton("kpi", 4);
     document.getElementById("etabTabs").innerHTML = "";
     document.getElementById("etabContent").innerHTML = UI.skeleton("card", 3);
-    Promise.all([api.fetch("/dashboard"), api.fetch("/students"), api.fetch("/classes"), api.fetch("/team"), api.fetch("/settings"), api.fetch("/invitations"), api.fetch("/academic-years"), api.fetch("/academic-calendar")]).then(function (r) {
+    Promise.all([api.fetch("/dashboard"), api.fetch("/students"), api.fetch("/classes"), api.fetch("/team"), api.fetch("/settings"), api.fetch("/invitations"), api.fetch("/academic-years"), api.fetch("/academic-calendar"), api.fetch("/periods/previous-calendar")]).then(function (r) {
       if (!r[0].ok) return admin.loadError(document.getElementById("etabContent"), load);
       dash = r[0].body; students = r[1].body || []; classes = r[2].body || []; team = r[3].body || []; settings = r[4].body || {}; invitations = r[5].body || [];
       years = r[6].ok ? r[6].body : [];
@@ -41,6 +41,9 @@
       // quel jour on est et quelle période court. Le navigateur ne déduit ni
       // l'état d'une période ni la période en cours — il les affiche.
       calendrier = r[7].ok ? r[7].body : { divisions: [], current_period: null, today: null };
+      // Le calendrier de l'année précédente, proposé quand l'année en cours n'a
+      // encore aucune période. C'est le serveur qui sait s'il en existe un.
+      precedent = r[8] && r[8].ok && r[8].body.available ? r[8].body : null;
       document.getElementById("schoolSub").textContent = UI.plural(dash.student_count, "élève") + " · " + UI.plural(dash.class_count, "classe") + " · " + UI.plural(dash.teacher_count, "enseignant") + " · " + UI.plural(dash.parent_count, "parent connecté", "parents connectés");
       render();
     }).catch(function () { admin.loadError(document.getElementById("etabContent"), load, "Le serveur Klassio est injoignable"); });
@@ -224,6 +227,21 @@
         UI.fmtDate(cal.today) + " : <strong>" + UI.escapeHtml(courante.label) + "</strong>" +
         (courante.ends_on ? " — jusqu'au " + UI.fmtDate(courante.ends_on) : "") + "</span></p>" : "");
 
+    // Nouvelle année : reprendre le calendrier de la précédente, tel quel ou
+    // pour le modifier (demande du propriétaire, 08/10/2026).
+    if (aucune && precedent) {
+      return '<div class="panel" id="periodes">' + tete +
+        '<div class="reprise-cal"><h3>Reprendre le calendrier de ' + UI.escapeHtml(precedent.source_year.label) + " ?</h3>" +
+        '<p class="muted">Les mêmes périodes et pondérations, dates décalées d\'un an. Rien de l\'an dernier n\'est repris : ni proclamation, ni verrou.</p>' +
+        '<div class="table-wrap"><table class="data-table responsive"><thead><tr><th>Période</th><th>Dates proposées</th><th class="num">Pondération</th></tr></thead><tbody>' +
+        precedent.periods.map(function (p) {
+          return '<tr><td data-label="Période"><span class="cell-main">' + UI.escapeHtml(p.label) + "</span>" + (p.is_exam ? '<span class="cell-sub">Examen</span>' : "") + "</td>" +
+            '<td data-label="Dates">' + (p.starts_on ? UI.fmtDate(p.starts_on) + " → " + UI.fmtDate(p.ends_on || p.starts_on) : '<span class="muted">Non datée</span>') + "</td>" +
+            '<td data-label="Pondération" class="num">' + UI.escapeHtml(String(p.weight)) + "</td></tr>";
+        }).join("") + "</tbody></table></div>" +
+        '<div class="row mt-16"><button type="button" class="btn btn-lime btn-sm reprise-btn" data-mode="garder">' + UI.icon("check", 15) + "Garder le même calendrier</button>" +
+        '<button type="button" class="btn btn-ghost btn-sm reprise-btn" data-mode="modifier">' + UI.icon("edit", 15) + "Le reprendre pour le modifier</button></div></div></div>";
+    }
     if (aucune) {
       return '<div class="panel" id="periodes">' + tete + intro +
         UI.emptyState("Aucune période définie",
@@ -394,6 +412,17 @@
       api.fetch("/periods", { method: "POST", body: JSON.stringify({ preset: "standard" }) }).then(function (r) {
         if (!r.ok) { UI.btnState(btn, "error"); return UI.toast(r.body.error || "Impossible.", "error"); }
         UI.btnState(btn, "success"); UI.toast(r.body.created + " période(s) créée(s).", "success"); load();
+      });
+    });
+    document.querySelectorAll(".reprise-btn").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var btn = this; UI.btnState(btn, "loading");
+        api.fetch("/periods/copy-previous", { method: "POST", body: JSON.stringify({ mode: btn.dataset.mode }) }).then(function (r) {
+          if (!r.ok) { UI.btnState(btn, "error"); return UI.toast(r.body.error || "Impossible de reprendre le calendrier.", "error"); }
+          UI.btnState(btn, "success");
+          UI.toast(btn.dataset.mode === "garder" ? r.body.created + " période(s) reprise(s), prêtes." : r.body.created + " période(s) reprise(s) en brouillon : modifiez-les ci-dessous.", "success");
+          load();
+        });
       });
     });
     var ap = document.getElementById("addPeriodBtn"); if (ap) ap.addEventListener("click", function () { openPeriodModal(null); });

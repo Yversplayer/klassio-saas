@@ -75,10 +75,12 @@
   // écrase (voir ui.js, homeFor). Deviner, c'était télécharger parfois deux
   // photos pour en montrer une.
   var SELON_ROLE = { dashboard: 1 };
-  var ACCUEIL = { directeur: "mod-direction", discipline: "mod-discipline", parent: "campus2", professeur: "mod-presences" };
+  // Pas de photo à l'accueil de la Direction (demande du propriétaire, 08/10) :
+  // un inconnu en costume « représentait » le directeur de chaque école.
+  var ACCUEIL = { directeur: null, discipline: "mod-discipline", parent: "campus2", professeur: "mod-presences" };
 
   function photoDe(role) {
-    if (page === "dashboard") return ACCUEIL[role] || "campus1";
+    if (page === "dashboard") return role in ACCUEIL ? ACCUEIL[role] : "campus1";
     return ECRAN[page] || null;
   }
 
@@ -227,7 +229,7 @@
   // réponses, et une image les rendrait moins lisibles.
   var PILES = {
     students: ["campus1", "gal-sacs"], classes: ["d1000", "gal-mains"],
-    discipline: ["gal-recre", "mod-discipline"], calendar: ["d0730", "campus"],
+    discipline: ["gal-recre", "mod-discipline"], 
     book: ["gal-craie", "pub"], store: ["gal-sacs", "mod-frais"],
     reports: ["gal-proclamation", "mod-resultats"], payments: ["mod-frais", "gal-tampon"],
     finance: ["mod-frais", "gal-tampon"], mail: ["gal-parent", "d1630"],
@@ -260,6 +262,7 @@
     if (!icone) return;
     var nom = null;
     icone.classList.forEach(function (c) { if (c.indexOf("ic-") === 0) nom = c.slice(3); });
+    if (nom === "calendar") { poserCalendrier(vide, icone); return; }
     var duo = PILES[nom];
     if (!duo) return;
     var pile = document.createElement("div");
@@ -269,6 +272,29 @@
     pile.appendChild(carteDe(duo[0], "ka-carte-avant"));
     vide.insertBefore(pile, icone);
     pile.appendChild(icone);
+    vide.classList.add("ka-vide-photo");
+  }
+
+  // États vides « calendrier » (aucune période déclarée, rien de planifié) :
+  // pas de photos — le propriétaire les trouvait mal venues à cet endroit —
+  // mais un calendrier dessiné, ses journées cochées. Un décor : aucune date,
+  // aucun chiffre de l'école n'y figure.
+  var JOURS_COCHES = { 3: "ok", 8: "ok", 11: "ok", 15: "etoile", 18: "ok", 22: "ok", 25: "ok", 29: "etoile" };
+  function poserCalendrier(vide, icone) {
+    var cal = document.createElement("div");
+    cal.className = "ka-cal";
+    cal.setAttribute("aria-hidden", "true");
+    var cases = "";
+    for (var i = 0; i < 2; i++) cases += '<span class="ka-cal-j ka-cal-vide"></span>';
+    for (var j = 1; j <= 30; j++) {
+      var etat = JOURS_COCHES[j];
+      cases += '<span class="ka-cal-j' + (etat ? " ka-cal-" + etat : "") + '">' + j + "</span>";
+    }
+    cal.innerHTML = '<div class="ka-cal-feuille"><div class="ka-cal-tete"><i></i><i></i></div>' +
+      '<div class="ka-cal-sem"><span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span><span>D</span></div>' +
+      '<div class="ka-cal-grille">' + cases + "</div></div>";
+    vide.insertBefore(cal, icone);
+    cal.appendChild(icone);
     vide.classList.add("ka-vide-photo");
   }
 
@@ -350,7 +376,15 @@
     if (!ctx) return;
     // L'accueil nomme déjà l'établissement sous le titre : pas de doublon.
     if (accroche && ctx.tenant_name && page !== "dashboard") accroche.textContent = ctx.tenant_name;
-    if (SELON_ROLE[page]) poserPhoto(photoDe(ctx.role));
+    if (SELON_ROLE[page]) {
+      var cle = photoDe(ctx.role);
+      if (cle) poserPhoto(cle);
+      else if (tete) {
+        // Bandeau sans photo : il ne doit pas annoncer une « photo d'illustration ».
+        var m = tete.querySelector(".ka-hero-mention");
+        if (m) m.remove();
+      }
+    }
     ecoleVide(ctx);
   }
 

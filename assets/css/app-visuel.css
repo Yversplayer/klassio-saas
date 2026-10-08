@@ -242,6 +242,30 @@ html.ka-sans-photo .ka-hero-mention { display: none; }
 .ka-anim .ka-vide-photo:hover .ka-carte-arriere { transform: translate3d(-58px, -24px, -50px) rotateY(20deg) rotateX(6deg) rotateZ(-13deg); filter: none; }
 html.ka-sans-photo .ka-pile { display: none; }
 
+/* Calendrier dessiné des états vides « calendrier » (08/10/2026) : une feuille
+   de mois, quelques journées cochées en lime, deux étoiles dorées. */
+.ka-cal { position: relative; width: 210px; margin: 0 auto 22px; transform-style: preserve-3d; }
+.ka-cal-feuille {
+  border-radius: 14px; overflow: hidden; background: #FBF8EE; color: #16241C;
+  box-shadow: 0 18px 38px rgba(10, 22, 14, 0.30), 0 3px 8px rgba(10, 22, 14, 0.18);
+  transform: rotateX(10deg) rotateY(-12deg) rotateZ(-2deg);
+}
+.ka-cal-tete { position: relative; height: 30px; background: #16301F; }
+.ka-cal-tete i { position: absolute; top: -6px; width: 8px; height: 18px; border-radius: 4px; background: #B8FF00; box-shadow: 0 2px 4px rgba(0,0,0,.3); }
+.ka-cal-tete i:first-child { left: 46px; } .ka-cal-tete i:last-child { right: 46px; }
+.ka-cal-sem, .ka-cal-grille { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; padding: 0 10px; }
+.ka-cal-sem { padding-top: 8px; font-size: 9px; font-weight: 800; color: #646D62; text-align: center; }
+.ka-cal-grille { padding-bottom: 12px; padding-top: 4px; }
+.ka-cal-j { display: grid; place-items: center; height: 20px; border-radius: 6px; font-size: 9.5px; font-weight: 600; color: #4B5A4F; }
+.ka-cal-vide { visibility: hidden; }
+.ka-cal-ok { background: #B8FF00; color: #16301F; font-weight: 800; }
+.ka-cal-etoile { background: #F0B429; color: #16301F; font-weight: 800; }
+.ka-cal > .ic {
+  position: absolute; right: -14px; bottom: -14px; width: 44px; height: 44px; padding: 11px; border-radius: 50%;
+  background: var(--lime); color: var(--forest); box-shadow: 0 8px 20px rgba(10, 22, 14, 0.35);
+}
+.ka-anim .ka-cal { animation: ka-flotte 7s ease-in-out infinite; }
+
 /* ---------- 5. École encore vide : les notes d'aide se retirent ----------
    Seules les notes d'explication de la PAGE sont concernées : celles des
    fenêtres de saisie restent (elles ne vivent pas dans .dash-body), et les
@@ -296,3 +320,9 @@ html.ka-ecole-vide .dash-body .note-inline:not(.note-garde) { display: none; }
   .ka-hero h1 { color: #000; text-shadow: none; font-family: var(--font-sans); }
   .ka-hero p { color: #333; }
 }
+
+/* Établissement → Périodes : proposition de reprendre le calendrier de
+   l'année précédente (08/10/2026). */
+.reprise-cal { border: 1px solid var(--line); border-radius: 16px; padding: 18px; background: var(--surface-soft); }
+.reprise-cal h3 { margin: 0 0 6px; font-size: 16px; }
+.reprise-cal .table-wrap { margin-top: 12px; }

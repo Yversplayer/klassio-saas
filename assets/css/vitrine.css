@@ -1358,3 +1358,18 @@ html.kx-ancre { scroll-behavior: auto; }
   .kx-tp-modal-art { min-height: 0; aspect-ratio: 16 / 11; }
   .kx-tp-opt { padding: 0 14px; }
 }
+
+/* Bouton Connexion dans la barre (08/10/2026) : sur téléphone, les deux
+   boutons et le mot KLASSIO doivent tenir sur une ligne sans se chevaucher
+   (vu à 375 px : « Connexion » recouvrait le « O »). */
+@media (max-width: 520px) {
+  .kx-nav .nav-actions { gap: 6px; }
+  .kx-nav .nav-actions .btn { padding: 8px 11px; font-size: 12.5px; }
+  .kx-nav .nav-actions .btn-arr { display: none; }
+  .kx-brand { gap: 8px; }
+  .kx-brand img { width: 32px; height: 32px; }
+  .kx-brand b { font-size: 18px; letter-spacing: 0.04em; }
+}
+@media (max-width: 360px) {
+  .kx-brand b { display: none; }
+}

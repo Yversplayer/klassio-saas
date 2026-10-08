@@ -266,6 +266,111 @@ def create_period():
     return jsonify({"id": pid}), 201
 
 
+# ---------------------------------------------------------------------------
+# Reprendre le calendrier de l'année précédente (08/10/2026)
+#
+# Le propriétaire : à chaque début d'année, proposer à la Direction de GARDER
+# le même calendrier ou de le MODIFIER. Une année neuve naît sans période ;
+# il fallait ressaisir P1, P2, examens, dates et pondérations, chaque année.
+#
+# On reprend la dernière année qui a des périodes, dates décalées d'un an. Rien
+# n'est repris de ce qui appartient à l'année passée : ni proclamation, ni
+# verrou. « Garder » crée les périodes prêtes ; « modifier » les crée en
+# brouillon, pour relecture. La Direction seule décide, et seulement pour une
+# année encore vide : un calendrier existant n'est jamais écrasé.
+# ---------------------------------------------------------------------------
+CHAMPS_DATES_REPRIS = ("starts_on", "ends_on", "result_entry_deadline", "validation_deadline", "proclamation_at")
+
+
+def _un_an_plus_tard(iso):
+    if not iso or not ISO_DATE.match(iso):
+        return None
+    a, m, j = int(iso[:4]), int(iso[5:7]), int(iso[8:10])
+    if m == 2 and j == 29:
+        j = 28   # pas de 29 février l'année suivante
+    return f"{a + 1:04d}-{m:02d}-{j:02d}"
+
+
+def _calendrier_precedent(conn, tenant_id, annee):
+    """La dernière AUTRE année de cet établissement qui a des périodes."""
+    for autre in conn.execute(
+            "SELECT * FROM academic_years WHERE tenant_id=? AND id<>? ORDER BY created_at DESC",
+            (tenant_id, annee["id"])).fetchall():
+        periodes = conn.execute(
+            "SELECT * FROM academic_periods WHERE tenant_id=? AND academic_year_id=? ORDER BY sort, label",
+            (tenant_id, autre["id"])).fetchall()
+        if periodes:
+            return autre, periodes
+    return None, []
+
+
+def _proposition(p):
+    d = {k: p[k] for k in ("label", "division", "sort", "weight", "is_exam")}
+    for champ in CHAMPS_DATES_REPRIS:
+        d[champ] = _un_an_plus_tard(p[champ])
+    return d
+
+
+@bp.get("/api/periods/previous-calendar")
+@require_auth
+def previous_calendar():
+    if g.ctx["role"] != "directeur":
+        return _denied("period.previous_calendar")
+    conn = db.get_connection()
+    tenant_id = g.ctx["tenant_id"]
+    annee = _active_year(conn, tenant_id)
+    vide = annee is not None and not conn.execute(
+        "SELECT 1 FROM academic_periods WHERE tenant_id=? AND academic_year_id=?", (tenant_id, annee["id"])).fetchone()
+    source, periodes = _calendrier_precedent(conn, tenant_id, annee) if vide else (None, [])
+    conn.close()
+    if not source:
+        return jsonify({"available": False})
+    return jsonify({"available": True, "source_year": {"id": source["id"], "label": source["label"]},
+                    "periods": [_proposition(p) for p in periodes]})
+
+
+@bp.post("/api/periods/copy-previous")
+@require_auth
+def copy_previous_calendar():
+    if g.ctx["role"] != "directeur":
+        return _denied("period.copy_previous")
+    data = json_object(request.get_json(force=True))
+    mode = data.get("mode")
+    if mode not in ("garder", "modifier"):
+        raise ValidationError("mode doit valoir « garder » ou « modifier ».")
+    conn = db.get_connection()
+    tenant_id = g.ctx["tenant_id"]
+    try:
+        annee = _active_year(conn, tenant_id)
+        if not annee:
+            return jsonify({"error": "Aucune année scolaire."}), 409
+        if conn.execute("SELECT 1 FROM academic_periods WHERE tenant_id=? AND academic_year_id=?",
+                        (tenant_id, annee["id"])).fetchone():
+            return jsonify({"error": "Cette année a déjà un calendrier : il n'est jamais écrasé."}), 409
+        source, periodes = _calendrier_precedent(conn, tenant_id, annee)
+        if not source:
+            return jsonify({"error": "Aucune année précédente n'a de calendrier à reprendre."}), 404
+        etat = "READY" if mode == "garder" else "DRAFT"
+        now = str(time.time())
+        for p in periodes:
+            d = _proposition(p)
+            conn.execute(
+                """INSERT INTO academic_periods (id, tenant_id, academic_year_id, division, label, sort, weight,
+                                                 starts_on, ends_on, is_exam, admin_state,
+                                                 result_entry_deadline, validation_deadline, proclamation_at,
+                                                 created_at, updated_at)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                (new_id(), tenant_id, annee["id"], d["division"], d["label"], d["sort"], d["weight"],
+                 d["starts_on"], d["ends_on"], d["is_exam"], etat,
+                 d["result_entry_deadline"], d["validation_deadline"], d["proclamation_at"], now, now))
+        conn.commit()
+    finally:
+        conn.close()
+    audit(tenant_id, g.ctx["user_id"], "period.calendar_copied", "academic_year", annee["id"], "success",
+          after={"source_year": source["id"], "mode": mode, "periods": len(periodes)})
+    return jsonify({"ok": True, "created": len(periodes), "state": etat}), 201
+
+
 @bp.put("/api/periods/<period_id>")
 @require_auth
 def update_period(period_id):
