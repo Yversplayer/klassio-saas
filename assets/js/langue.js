@@ -29,11 +29,9 @@
   var LANGUES = [
     { code: "fr", nom: "Français", region: "Langue d'origine", locale: "fr-FR" },
     { code: "en", nom: "English", region: "Anglais", locale: "en-GB" },
-    { code: "es", nom: "Español", region: "Espagnol", locale: "es-ES" },
-    { code: "pt", nom: "Português", region: "Portugais", locale: "pt-PT" },
-    { code: "de", nom: "Deutsch", region: "Allemand", locale: "de-DE" },
-    { code: "sw", nom: "Kiswahili", region: "Swahili", locale: "sw-CD" },
-    { code: "ln", nom: "Lingála", region: "Lingala", locale: "fr-CD" },
+    // Une langue n'entre dans cette liste qu'avec son dictionnaire complet
+    // (assets/i18n/<code>.js) : proposer une langue sans traduction ferait
+    // croire qu'elle existe. Le serveur accepte déjà es, pt, de, sw, ln.
   ];
   var CLE = "klassio_langue";
   var parCode = {};
@@ -50,7 +48,7 @@
 
   var moi = document.currentScript && document.currentScript.src;
   var base = moi ? moi.replace(/js\/langue\.js.*$/, "") : "../assets/";
-  var VERSION = "1809480964";
+  var VERSION = "1857140596";
 
   if (langue !== "fr") {
     root.classList.add("kl-attente");

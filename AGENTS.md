@@ -464,6 +464,25 @@ un pied de page. **Elle ne vit pas dans `style.css`** :
    Aucune photo en économie de données ou en 2G ; rien ne bouge en mouvement
    réduit.
 
+### Accueil, Finance, Paramètres et langues (08/10/2026)
+
+| Fichier | Rôle |
+|---|---|
+| `assets/css/tableau.css` + `assets/js/tableau.js` | Accueil Direction et Finance « en gros » (préfixe `kt-`) : carte d'en-tête, grandes cartes, donut, histogramme. Objets 3D détourés dans `assets/objets/` (Higgsfield), flottants seulement sous `.ka-anim`, masqués en économie de données. |
+| `assets/css/reglages.css` + `assets/js/facturation.js` | Paramètres sur le modèle des réglages de Claude (préfixe `kr-`), sections par rôle ; la facturation y vit. `abonnement.html` ne sert plus qu'à l'espace pas encore ouvert. |
+| `assets/js/langue.js` | Traduction de l'interface : la phrase française AFFICHÉE est la clé. Chargé dans le `<head>` de chaque page de `app/`. |
+| `tools/i18n/` | `extraire.py` (liste des phrases → `chaines.json`), `<code>.json` (dictionnaires), `generer.py` (→ `assets/i18n/<code>.js`, version par contenu reportée dans les pages). |
+
+Rapports n'est plus une entrée du menu : onglet « Rapports » d'Établissement.
+
+**Règles des langues.** (1) Une langue n'apparaît dans `langue.js` qu'avec un
+dictionnaire complet — aujourd'hui français et anglais ; le serveur accepte
+déjà es, pt, de, sw, ln. (2) Après avoir ajouté ou changé du texte dans
+`app/` ou `assets/js/`, relancer `extraire.py`, traduire les manques, puis
+`generer.py`. (3) Les données de l'école (noms, règles saisies), les PDF et
+les emails restent en français. (4) Une date ou un nombre s'écrit avec
+`window.KLASSIO_LOCALE`, jamais `"fr-FR"` en dur.
+
 ### Analytics et cookies — ne décide pas seul
 
 Klassio manipule des dossiers d'enfants scolarisés. Brancher un outil
