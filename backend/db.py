@@ -612,6 +612,11 @@ def _migrate(conn):
     _add_column_if_missing(conn, "memberships", "title", "TEXT")
     _add_column_if_missing(conn, "memberships", "scope_cycles", "TEXT")
     _add_column_if_missing(conn, "store_products", "options", "TEXT")
+    # Boutique (08/10/2026) : description, photo, seuil d'alerte de stock.
+    _add_column_if_missing(conn, "store_products", "description", "TEXT")
+    _add_column_if_missing(conn, "store_products", "image_data", "TEXT")
+    _add_column_if_missing(conn, "store_products", "image_updated_at", "TEXT")
+    _add_column_if_missing(conn, "store_products", "min_stock", "INTEGER NOT NULL DEFAULT 3")
     _add_column_if_missing(conn, "order_items", "variant", "TEXT")
     _add_column_if_missing(conn, "orders", "pickup_code", "TEXT")
     _add_column_if_missing(conn, "orders", "ready_at", "TEXT")

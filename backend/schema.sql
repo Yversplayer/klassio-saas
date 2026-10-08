@@ -413,6 +413,24 @@ CREATE TABLE IF NOT EXISTS order_items (
   unit_price REAL NOT NULL
 );
 
+-- Mouvements de stock de la boutique (08/10/2026). Le stock d'un produit ne
+-- bouge plus sans laisser de trace : réception, vente, annulation, produit
+-- défectueux, perte, retrait (vidage), inventaire. `quantity` est signée ;
+-- `stock_after` est le stock juste après le mouvement.
+CREATE TABLE IF NOT EXISTS store_stock_movements (
+  id TEXT PRIMARY KEY,
+  tenant_id TEXT NOT NULL REFERENCES tenants(id),
+  product_id TEXT NOT NULL REFERENCES store_products(id),
+  kind TEXT NOT NULL,
+  quantity INTEGER NOT NULL,
+  stock_after INTEGER NOT NULL,
+  reason TEXT,
+  order_id TEXT REFERENCES orders(id),
+  user_id TEXT REFERENCES users(id),
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_store_movements_product ON store_stock_movements(tenant_id, product_id, created_at);
+
 -- Reçu numérique : généré UNIQUEMENT à la confirmation réelle d'un paiement
 -- (financial.confirm_payment), numéroté par établissement et par année.
 -- Demandes envoyées depuis le formulaire public de contact. Aucune donnée

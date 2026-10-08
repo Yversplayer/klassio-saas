@@ -1167,9 +1167,209 @@ def list_products():
         return _denied("store.read")
     conn = db.get_connection()
     where = "tenant_id=?" + ("" if g.ctx["role"] == "directeur" else " AND active=1")
-    rows = conn.execute(f"SELECT * FROM store_products WHERE {where} ORDER BY category, name", (g.ctx["tenant_id"],)).fetchall()
+    # La photo n'est PAS dans la liste : vingt photos de 100 Ko en JSON, c'est
+    # deux mégaoctets à chaque ouverture sur une connexion mobile. Chaque
+    # image a son adresse (…/image?v=…), que le navigateur garde en cache.
+    rows = conn.execute(
+        f"""SELECT id, tenant_id, name, category, price, currency, stock, active, created_at, options,
+                   description, min_stock, image_updated_at,
+                   CASE WHEN image_data IS NULL THEN 0 ELSE 1 END AS has_image
+              FROM store_products WHERE {where} ORDER BY category, name""", (g.ctx["tenant_id"],)).fetchall()
     conn.close()
     return jsonify([dict(r) for r in rows])
+
+
+# ---------------------------------------------------------------------------
+# Stock tracé (08/10/2026). Le propriétaire : « réfléchis à un système de
+# vente, de rupture de stock, de vidage de stock, de mauvais produit,
+# d'augmentation d'éléments ». Le stock ne change plus sans une ligne dans
+# store_stock_movements : qui, quand, combien, pourquoi.
+#
+# La décrémentation est CONDITIONNELLE (« stock + delta >= 0 » dans la même
+# requête) : deux sorties simultanées ne peuvent pas faire passer le stock
+# sous zéro, ce qu'une lecture puis une écriture laissaient faire.
+# ---------------------------------------------------------------------------
+MOUVEMENTS_MANUELS = {
+    "reception": +1,    # arrivage, réassort
+    "defectueux": -1,   # produit abîmé, mal taillé : retiré de la vente
+    "perte": -1,        # perdu, volé, introuvable
+    "retrait": -1,      # vidage : fin de saison, retrait du stock
+    "inventaire": 0,    # comptage : la quantité donnée DEVIENT le stock
+}
+
+
+def _bouger_stock(conn, tenant_id, product_id, kind, delta, reason=None, order_id=None):
+    """Applique un mouvement et l'inscrit. Renvoie le stock après, ou None si
+    le mouvement ferait passer le stock sous zéro (rien n'est alors écrit)."""
+    cur = conn.execute(
+        "UPDATE store_products SET stock = stock + ? WHERE id=? AND tenant_id=? AND stock + ? >= 0",
+        (delta, product_id, tenant_id, delta))
+    if not (cur.rowcount or 0):
+        return None
+    apres = conn.execute("SELECT stock FROM store_products WHERE id=? AND tenant_id=?",
+                         (product_id, tenant_id)).fetchone()["stock"]
+    conn.execute(
+        """INSERT INTO store_stock_movements (id, tenant_id, product_id, kind, quantity, stock_after, reason,
+                                              order_id, user_id, created_at) VALUES (?,?,?,?,?,?,?,?,?,?)""",
+        (new_id(), tenant_id, product_id, kind, delta, apres, (reason or "")[:200] or None, order_id,
+         g.ctx["user_id"], str(time.time())))
+    return apres
+
+
+@bp.post("/api/store/products/<product_id>/stock")
+@require_auth
+def move_stock(product_id):
+    if not _has("store.manage"):
+        return _denied("store.stock_move", "store_product", product_id)
+    data = json_object(request.get_json(force=True))
+    kind = data.get("kind")
+    if kind not in MOUVEMENTS_MANUELS:
+        raise ValidationError("kind doit valoir : " + ", ".join(MOUVEMENTS_MANUELS) + ".")
+    try:
+        quantite = int(data.get("quantity"))
+    except (TypeError, ValueError):
+        raise ValidationError("quantity doit être un entier.")
+    if quantite < 0 or quantite > 100000 or (kind != "inventaire" and quantite == 0):
+        raise ValidationError("Quantité invalide.")
+    raison = (data.get("reason") or "").strip()[:200] or None
+    if kind in ("defectueux", "perte", "retrait") and not raison:
+        raise ValidationError("Indiquez la raison : elle reste au journal du stock.")
+    conn = db.get_connection()
+    tenant_id = g.ctx["tenant_id"]
+    produit = conn.execute("SELECT * FROM store_products WHERE id=? AND tenant_id=?", (product_id, tenant_id)).fetchone()
+    if not produit:
+        conn.close()
+        return _not_found("store.stock_move", "store_product", product_id)
+    delta = quantite - produit["stock"] if kind == "inventaire" else MOUVEMENTS_MANUELS[kind] * quantite
+    if delta == 0:
+        conn.close()
+        return jsonify({"ok": True, "stock": produit["stock"], "unchanged": True})
+    apres = _bouger_stock(conn, tenant_id, product_id, kind, delta, raison)
+    if apres is None:
+        conn.close()
+        return jsonify({"error": f"Stock insuffisant : {produit['stock']} en stock, impossible d'en sortir {abs(delta)}."}), 409
+    conn.commit()
+    conn.close()
+    audit(tenant_id, g.ctx["user_id"], "store.stock_moved", "store_product", product_id, "success",
+          after={"kind": kind, "delta": delta, "stock": apres})
+    return jsonify({"ok": True, "stock": apres, "delta": delta}), 201
+
+
+@bp.get("/api/store/products/<product_id>/image")
+@require_auth
+def product_image(product_id):
+    if not _has("store.read"):
+        return _denied("store.image", "store_product", product_id)
+    conn = db.get_connection()
+    where = "id=? AND tenant_id=?" + ("" if g.ctx["role"] == "directeur" else " AND active=1")
+    row = conn.execute(f"SELECT image_data FROM store_products WHERE {where}", (product_id, g.ctx["tenant_id"])).fetchone()
+    conn.close()
+    if not row or not row["image_data"]:
+        return _not_found("store.image", "store_product", product_id)
+    import base64
+    entete, donnees = row["image_data"].split(",", 1)
+    mime = entete[5:].split(";")[0]
+    reponse = send_file(io.BytesIO(base64.b64decode(donnees)), mimetype=mime)
+    # Privé : la photo appartient à l'établissement ; l'adresse change avec la
+    # photo (?v=), le navigateur peut donc la garder longtemps.
+    reponse.headers["Cache-Control"] = "private, max-age=2592000"
+    return reponse
+
+
+@bp.delete("/api/store/products/<product_id>")
+@require_auth
+def delete_product(product_id):
+    """Supprimer un produit JAMAIS commandé (erreur de saisie). Un produit déjà
+    vendu reste — les commandes et les reçus le citent — : on le retire de la
+    vente (active = 0)."""
+    if not _has("store.manage"):
+        return _denied("store.product_delete", "store_product", product_id)
+    conn = db.get_connection()
+    tenant_id = g.ctx["tenant_id"]
+    if not conn.execute("SELECT 1 FROM store_products WHERE id=? AND tenant_id=?", (product_id, tenant_id)).fetchone():
+        conn.close()
+        return _not_found("store.product_delete", "store_product", product_id)
+    if conn.execute("SELECT 1 FROM order_items WHERE product_id=? AND tenant_id=? LIMIT 1", (product_id, tenant_id)).fetchone():
+        conn.close()
+        return jsonify({"error": "Ce produit a déjà été commandé : retirez-le de la vente plutôt que de le supprimer."}), 409
+    conn.execute("DELETE FROM store_stock_movements WHERE product_id=? AND tenant_id=?", (product_id, tenant_id))
+    conn.execute("DELETE FROM store_products WHERE id=? AND tenant_id=?", (product_id, tenant_id))
+    conn.commit()
+    conn.close()
+    audit(tenant_id, g.ctx["user_id"], "store.product_deleted", "store_product", product_id, "success")
+    return jsonify({"ok": True})
+
+
+@bp.get("/api/store/movements")
+@require_auth
+def list_stock_movements():
+    if not _has("store.manage"):
+        return _denied("store.movements")
+    conn = db.get_connection()
+    rows = conn.execute(
+        """SELECT m.*, p.name AS product_name, u.name AS user_name FROM store_stock_movements m
+             JOIN store_products p ON p.id = m.product_id AND p.tenant_id = m.tenant_id
+             LEFT JOIN users u ON u.id = m.user_id
+            WHERE m.tenant_id=? ORDER BY m.created_at DESC LIMIT 300""", (g.ctx["tenant_id"],)).fetchall()
+    conn.close()
+    return jsonify([dict(r) for r in rows])
+
+
+@bp.get("/api/store/stats")
+@require_auth
+def store_stats():
+    """Ce que la Direction doit savoir de sa boutique : ce qui se vend, ce qui
+    manque, ce qui dort, ce qui a été perdu. Tout est recalculé à partir des
+    commandes et des mouvements — aucun total stocké."""
+    if not _has("store.manage"):
+        return _denied("store.stats")
+    conn = db.get_connection()
+    t = g.ctx["tenant_id"]
+    produits = [dict(r) for r in conn.execute(
+        "SELECT id, name, category, price, currency, stock, min_stock, active FROM store_products WHERE tenant_id=?", (t,))]
+    vendus = {r["product_id"]: dict(r) for r in conn.execute(
+        """SELECT oi.product_id, SUM(oi.quantity) AS quantite,
+                  SUM(CASE WHEN o.status IN ('paid','ready','delivered') THEN oi.quantity * oi.unit_price ELSE 0 END) AS encaisse
+             FROM order_items oi JOIN orders o ON o.id = oi.order_id AND o.tenant_id = oi.tenant_id
+            WHERE oi.tenant_id=? AND o.status <> 'cancelled' GROUP BY oi.product_id""", (t,))}
+    sorties = {}
+    for r in conn.execute(
+            """SELECT product_id, kind, SUM(quantity) AS q FROM store_stock_movements
+                WHERE tenant_id=? AND kind IN ('defectueux','perte','retrait') GROUP BY product_id, kind""", (t,)):
+        sorties.setdefault(r["product_id"], {})[r["kind"]] = -int(r["q"] or 0)
+    for p in produits:
+        v = vendus.get(p["id"], {})
+        p["vendus"] = int(v.get("quantite") or 0)
+        p["encaisse"] = round(float(v.get("encaisse") or 0), 2)
+        p["defectueux"] = sorties.get(p["id"], {}).get("defectueux", 0)
+        p["pertes"] = sorties.get(p["id"], {}).get("perte", 0)
+        p["retires"] = sorties.get(p["id"], {}).get("retrait", 0)
+        p["etat"] = "inactif" if not p["active"] else "rupture" if p["stock"] <= 0 else "bas" if p["stock"] <= (p["min_stock"] or 0) else "ok"
+    commandes = [dict(r) for r in conn.execute(
+        "SELECT status, total, created_at FROM orders WHERE tenant_id=? AND status <> 'cancelled'", (t,))]
+    conn.close()
+    from datetime import datetime as _dt
+    mois = {}
+    for c in commandes:
+        cle = _dt.fromtimestamp(float(c["created_at"])).strftime("%Y-%m")
+        m = mois.setdefault(cle, {"mois": cle, "commandes": 0, "montant": 0.0})
+        m["commandes"] += 1
+        m["montant"] = round(m["montant"] + float(c["total"]), 2)
+    actifs = [p for p in produits if p["active"]]
+    return jsonify({
+        "totaux": {
+            "commandes": len(commandes),
+            "a_preparer": sum(1 for c in commandes if c["status"] == "paid"),
+            "encaisse": round(sum(p["encaisse"] for p in produits), 2),
+            "en_attente": round(sum(float(c["total"]) for c in commandes if c["status"] == "pending"), 2),
+            "valeur_stock": round(sum(p["stock"] * p["price"] for p in actifs), 2),
+            "ruptures": sum(1 for p in actifs if p["etat"] == "rupture"),
+            "stock_bas": sum(1 for p in actifs if p["etat"] == "bas"),
+            "defectueux": sum(p["defectueux"] for p in produits),
+        },
+        "produits": sorted(produits, key=lambda p: (-p["vendus"], p["name"])),
+        "par_mois": [mois[k] for k in sorted(mois)][-6:],
+    })
 
 
 @bp.post("/api/store/products")
@@ -1186,15 +1386,22 @@ def create_product():
         raise ValidationError("stock doit être un entier.")
     if stock < 0:
         raise ValidationError("stock ne peut pas être négatif.")
+    min_stock = _seuil(data.get("min_stock", 3))
+    image = image_data_uri(data.get("image_data"), "La photo", 400_000)
     conn = db.get_connection()
     settings = school.get_settings(conn, g.ctx["tenant_id"])
     pid = new_id()
     options = _clean_options(data.get("options"))
+    now = str(time.time())
     conn.execute(
-        "INSERT INTO store_products (id, tenant_id, name, category, price, currency, stock, active, created_at, options) VALUES (?,?,?,?,?,?,?,1,?,?)",
+        """INSERT INTO store_products (id, tenant_id, name, category, price, currency, stock, active, created_at, options,
+                                       description, min_stock, image_data, image_updated_at) VALUES (?,?,?,?,?,?,0,1,?,?,?,?,?,?)""",
         (pid, g.ctx["tenant_id"], name, (data.get("category") or "fournitures").strip()[:60], price,
-         data.get("currency") or settings["currency"], stock, str(time.time()), options),
+         data.get("currency") or settings["currency"], now, options,
+         (data.get("description") or "").strip()[:300] or None, min_stock, image, now if image else None),
     )
+    if stock:
+        _bouger_stock(conn, g.ctx["tenant_id"], pid, "reception", stock, "Stock initial")
     conn.commit()
     conn.close()
     audit(g.ctx["tenant_id"], g.ctx["user_id"], "store.product_created", "store_product", pid, "success", after={"name": name, "price": price})
@@ -1217,28 +1424,50 @@ def update_product(product_id):
         fields.append("name=?"); params.append(required_text(data["name"], "name", 120))
     if "price" in data:
         fields.append("price=?"); params.append(positive_amount(data["price"], "price"))
+    nouveau_stock = None
     if "stock" in data:
         try:
-            stock = int(data["stock"])
+            nouveau_stock = int(data["stock"])
         except (TypeError, ValueError):
             raise ValidationError("stock doit être un entier.")
-        if stock < 0:
+        if nouveau_stock < 0:
             raise ValidationError("stock ne peut pas être négatif.")
-        fields.append("stock=?"); params.append(stock)
+    if "description" in data:
+        fields.append("description=?"); params.append((data["description"] or "").strip()[:300] or None)
+    if "min_stock" in data:
+        fields.append("min_stock=?"); params.append(_seuil(data["min_stock"]))
+    if "image_data" in data:
+        image = image_data_uri(data["image_data"], "La photo", 400_000)
+        fields.append("image_data=?"); params.append(image)
+        fields.append("image_updated_at=?"); params.append(str(time.time()) if image else None)
     if "active" in data:
         fields.append("active=?"); params.append(1 if data["active"] else 0)
     if "category" in data:
         fields.append("category=?"); params.append((data["category"] or "fournitures").strip()[:60])
     if "options" in data:
         fields.append("options=?"); params.append(_clean_options(data["options"]))
-    if not fields:
+    if not fields and nouveau_stock is None:
         conn.close()
         return jsonify({"error": "Aucune modification fournie."}), 400
-    params += [product_id, g.ctx["tenant_id"]]
-    conn.execute(f"UPDATE store_products SET {', '.join(fields)} WHERE id=? AND tenant_id=?", params)
+    if fields:
+        params += [product_id, g.ctx["tenant_id"]]
+        conn.execute(f"UPDATE store_products SET {', '.join(fields)} WHERE id=? AND tenant_id=?", params)
+    # Un stock saisi à la main est un INVENTAIRE : il passe au journal.
+    if nouveau_stock is not None and nouveau_stock != row["stock"]:
+        _bouger_stock(conn, g.ctx["tenant_id"], product_id, "inventaire", nouveau_stock - row["stock"], "Stock corrigé à la main")
     conn.commit()
     conn.close()
     return jsonify({"ok": True})
+
+
+def _seuil(valeur):
+    try:
+        v = int(valeur)
+    except (TypeError, ValueError):
+        raise ValidationError("min_stock doit être un entier.")
+    if v < 0 or v > 10000:
+        raise ValidationError("min_stock doit être compris entre 0 et 10 000.")
+    return v
 
 
 def _clean_options(raw):
@@ -1351,7 +1580,12 @@ def create_order():
     for product, qty, variant in lines:
         conn.execute("INSERT INTO order_items (id, tenant_id, order_id, product_id, name, quantity, unit_price, variant) VALUES (?,?,?,?,?,?,?,?)",
                      (new_id(), tenant_id, oid, product["id"], product["name"], qty, product["price"], variant))
-        conn.execute("UPDATE store_products SET stock = stock - ? WHERE id=?", (qty, product["id"]))
+        # Décrément CONDITIONNEL : deux parents qui achètent le dernier article
+        # au même instant ne font plus passer le stock sous zéro.
+        if _bouger_stock(conn, tenant_id, product["id"], "vente", -qty, f"Commande {number}", oid) is None:
+            conn.rollback()
+            conn.close()
+            return jsonify({"error": f"Stock insuffisant pour « {product['name']} » : un autre achat vient de le prendre."}), 409
     conn.commit()
     order = dict(conn.execute("SELECT * FROM orders WHERE id=?", (oid,)).fetchone())
     event = events_module.emit(conn, tenant_id, "order.created", "order", oid, g.ctx["user_id"],
@@ -1428,7 +1662,7 @@ def update_order_status(order_id):
                      (tenant_id, order["obligation_id"]))
         conn.execute("DELETE FROM obligations WHERE id=? AND tenant_id=?", (order["obligation_id"], tenant_id))
         for it in conn.execute("SELECT product_id, quantity FROM order_items WHERE order_id=?", (order_id,)).fetchall():
-            conn.execute("UPDATE store_products SET stock = stock + ? WHERE id=?", (it["quantity"], it["product_id"]))
+            _bouger_stock(conn, tenant_id, it["product_id"], "annulation", it["quantity"], f"Commande {order['number']} annulée", order_id)
     if status == "ready" and order["status"] != "paid":
         conn.close()
         return jsonify({"error": "Une commande ne peut être préparée qu'une fois payée."}), 409

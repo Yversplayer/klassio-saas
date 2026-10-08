@@ -62,10 +62,11 @@
   // mains levées, les cartables) agrandi à la largeur d'un bandeau ne
   // laissait voir qu'un morceau de visage. Les portraits servent aux piles des
   // états vides, où le cadre est presque carré.
+  // La Boutique a son propre bandeau de vitrine (page-boutique.js) : pas de second.
   var ECRAN = {
     eleves: "campus1", classes: "mod-presences", discipline: "gal-recre", pointage: "portail",
     registres: "d1300", resultats: "gal-proclamation", deliberations: "mod-resultats",
-    passage: "campus", finance: "mod-frais", paiements: "gal-tampon", boutique: "mod-frais",
+    passage: "campus", finance: "mod-frais", paiements: "gal-tampon",
     calendrier: "d0730", messages: "d1630", notifications: "d1000", documents: "mod-eleves",
     ressources: "pub", rapports: "campus2", exports: "d1300", etablissement: "dusk",
     parametres: "portail", abonnement: "mod-direction"
