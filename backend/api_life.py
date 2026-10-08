@@ -18,13 +18,15 @@ import events as events_module
 import notifications as notif_module
 import school
 from security import require_auth, new_id, audit, has_permission
-from validation import json_object, ValidationError, required_text, file_data_uri
+from validation import json_object, ValidationError, required_text, file_data_uri, file_data_uri_libre
 
 bp = Blueprint("life", __name__)
 ISO_DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 EVENT_KINDS = ("evenement", "communique", "reunion", "fete", "deuil", "conge", "examens", "echeance")
 RESOURCE_KINDS = ("livre", "lecon", "fiche", "devoir", "autre")
-MAX_RESOURCE_BYTES = 3_500_000
+# 10 Mo de fichier réel (≈ 13,4 millions de caractères en base64). Relevé le
+# 08/10/2026 à la demande du propriétaire (3 Mo bloquaient les manuels).
+MAX_RESOURCE_BYTES = 14_000_000
 MAX_DOCUMENT_BYTES = 4_500_000
 
 
@@ -324,7 +326,7 @@ def create_resource():
         raise ValidationError("Un devoir doit avoir une date de remise.")
     if due and not ISO_DATE.match(due):
         raise ValidationError("due_date doit être au format AAAA-MM-JJ.")
-    file_data = _check_file(data.get("file_data"), ("data:application/pdf", "data:image/"), MAX_RESOURCE_BYTES, "Le fichier")
+    file_data = file_data_uri_libre(data.get("file_data"), "Le fichier", MAX_RESOURCE_BYTES)
     rid = new_id()
     now = str(time.time())
     resource = {"id": rid, "class_id": cls["id"], "kind": kind, "title": title, "subject": (data.get("subject") or "").strip()[:80] or None,

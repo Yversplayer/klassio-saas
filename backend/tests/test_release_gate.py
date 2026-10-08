@@ -161,12 +161,13 @@ class IsolationInterEtablissementsTests(unittest.TestCase):
               {"weekday": 1, "start_time": "08:00", "end_time": "09:00", "subject": "Maths"}, cls.a_dir)
         creer("examen", "POST", f"/api/classes/{klass['id']}/exams",
               {"subject": "Maths", "date": TODAY, "title": "Interro"}, cls.a_dir)
-        creer("regle", "POST", "/api/discipline/rules",
-              {"label": "Retard", "category": "retard", "points": -2}, cls.a_dir)
+        regle = creer("regle", "POST", "/api/discipline/rules",
+                      {"label": "Retard", "category": "retard", "points": -2}, cls.a_dir)
         creer("ressource", "POST", "/api/resources",
               {"class_id": klass["id"], "kind": "lecon", "title": "Chapitre 1"}, cls.a_prof)
+        # Depuis le 08/10/2026, un signalement cite une règle de l'établissement.
         creer("signalement", "POST", "/api/incident-reports",
-              {"student_id": eleve["id"], "description": "Comportement à qualifier",
+              {"student_id": eleve["id"], "rule_id": regle["id"], "description": "Comportement à qualifier",
                "occurred_at": TODAY}, cls.a_prof)
         creer("invitation", "POST", "/api/invitations", {"role": "professeur"}, cls.a_dir)
         # Un PDF minimal mais réel, pour couvrir les routes de document/fichier.

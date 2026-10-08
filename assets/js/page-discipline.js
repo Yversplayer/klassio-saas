@@ -199,7 +199,7 @@
       var pending = reports.filter(function (r) { return r.status === "pending"; }), done = reports.filter(function (r) { return r.status !== "pending"; });
       return '<div class="panel"><div class="panel-head"><h2>Signalements à qualifier</h2><span class="sub">Un enseignant décrit un fait ; vous décidez s\'il devient un incident, avec ou sans points</span></div>' +
         (pending.length ? pending.map(function (r) {
-          return '<div class="obligation-card"><div class="ob-head"><span class="ob-label">' + UI.escapeHtml(r.first_name + " " + r.last_name) + " — " + UI.escapeHtml(r.class_name || "") + "</span>" + UI.badge("warn", "En attente") + '</div><div class="ob-amounts">Signalé par ' + UI.escapeHtml(r.reporter) + " · faits du " + UI.fmtDate(r.occurred_at) + " · reçu " + UI.relTime(r.created_at) + '</div><p style="font-size:13.5px;margin:8px 0 0">' + UI.escapeHtml(r.description) + '</p><div class="row mt-16"><button type="button" class="btn btn-lime btn-sm qualify" data-id="' + r.id + '" data-student="' + r.student_id + '" data-desc="' + UI.escapeHtml(r.description) + '" data-date="' + r.occurred_at + '">Qualifier en incident</button><button type="button" class="btn btn-ghost btn-sm dismiss" data-id="' + r.id + '">Classer sans suite</button><a class="btn btn-ghost btn-sm" href="eleve-dossier.html?id=' + r.student_id + '&tab=discipline">Voir le dossier</a></div></div>';
+          return '<div class="obligation-card"><div class="ob-head"><span class="ob-label">' + UI.escapeHtml(r.first_name + " " + r.last_name) + " — " + UI.escapeHtml(r.class_name || "") + "</span>" + (r.rule_label ? UI.badge("info", r.rule_label) + " " : "") + UI.badge("warn", "En attente") + '</div><div class="ob-amounts">Signalé par ' + UI.escapeHtml(r.reporter) + " · faits du " + UI.fmtDate(r.occurred_at) + " · reçu " + UI.relTime(r.created_at) + '</div><p style="font-size:13.5px;margin:8px 0 0">' + UI.escapeHtml(r.description) + '</p><div class="row mt-16"><button type="button" class="btn btn-lime btn-sm qualify" data-id="' + r.id + '" data-student="' + r.student_id + '" data-desc="' + UI.escapeHtml(r.description) + '" data-date="' + r.occurred_at + '" data-rule="' + UI.escapeHtml(r.rule_id || "") + '">Qualifier en incident</button><button type="button" class="btn btn-ghost btn-sm dismiss" data-id="' + r.id + '">Classer sans suite</button><a class="btn btn-ghost btn-sm" href="eleve-dossier.html?id=' + r.student_id + '&tab=discipline">Voir le dossier</a></div></div>';
         }).join("") : UI.emptyState("Aucun signalement en attente", "Les faits signalés par les enseignants arrivent ici.", "", "inbox")) + "</div>" +
         (done.length ? '<div class="panel"><div class="panel-head"><h2>Signalements traités</h2></div><div class="table-wrap"><table class="data-table responsive"><thead><tr><th>Date</th><th>Élève</th><th>Fait</th><th>Signalé par</th><th>Décision</th></tr></thead><tbody>' + done.map(function (r) {
           return '<tr><td data-label="Date">' + UI.fmtDate(r.occurred_at) + '</td><td data-label="Élève"><span class="cell-main">' + UI.escapeHtml(r.first_name + " " + r.last_name) + '</span></td><td data-label="Fait">' + UI.escapeHtml(r.description) + '</td><td data-label="Signalé par">' + UI.escapeHtml(r.reporter) + '</td><td data-label="Décision">' + UI.badge(r.status === "qualified" ? "ok" : "neutral", r.status === "qualified" ? "Retenu" : "Classé") + (r.handling_note ? '<span class="cell-sub">' + UI.escapeHtml(r.handling_note) + "</span>" : "") + "</td></tr>";
@@ -293,7 +293,7 @@
         });
       });
     });
-    document.querySelectorAll(".qualify").forEach(function (b) { b.addEventListener("click", function () { openQualifyModal(b.dataset.id, b.dataset.student, b.dataset.desc, b.dataset.date); }); });
+    document.querySelectorAll(".qualify").forEach(function (b) { b.addEventListener("click", function () { openQualifyModal(b.dataset.id, b.dataset.student, b.dataset.desc, b.dataset.date, b.dataset.rule); }); });
     document.querySelectorAll(".dismiss").forEach(function (b) {
       b.addEventListener("click", function () {
         var m = UI.modal({ title: "Classer sans suite", body: '<form id="dsForm" class="form-grid"><p class="modal-text full">L\'enseignant sera informé que le signalement a été classé. Aucun point n\'est retiré.</p><div class="field full"><label for="dsNote">Motif (facultatif)</label><input id="dsNote" maxlength="300" /></div></form>',
@@ -347,7 +347,7 @@
     return rules.filter(function (r) { return r.active; }).map(function (r) { return '<option value="' + r.id + '" data-points="' + r.points + '" data-cat="' + UI.escapeHtml(r.category) + '">' + UI.escapeHtml(r.label) + " (" + (r.points > 0 ? "+" : "") + r.points + ")</option>"; }).join("");
   }
 
-  function openQualifyModal(reportId, studentId, description, date) {
+  function openQualifyModal(reportId, studentId, description, date, ruleId) {
     var m = UI.modal({ title: "Qualifier le signalement", size: "lg", body: '<form id="qForm" class="form-grid">' +
       '<p class="modal-text full">Fait signalé : « ' + UI.escapeHtml(description) + ' »</p>' +
       '<div class="field"><label for="qRule">Règle appliquée</label><select id="qRule"><option value="">Aucune (libre)</option>' + ruleOptions() + "</select></div>" +
@@ -363,6 +363,9 @@
       footer: '<button type="button" class="btn btn-ghost btn-sm" id="qCancel">Annuler</button><button type="submit" form="qForm" class="btn btn-lime btn-sm" id="qSubmit">Enregistrer l\'incident</button>' });
     m.querySelector("#qCancel").addEventListener("click", UI.closeModal);
     m.querySelector("#qRule").addEventListener("change", function () { var o = this.selectedOptions[0]; if (o.dataset.points) { m.querySelector("#qPoints").value = o.dataset.points; m.querySelector("#qCat").value = o.dataset.cat; } });
+    // La règle citée par l'enseignant est proposée d'office (08/10/2026) ;
+    // le DD reste libre d'en choisir une autre ou de corriger les points.
+    if (ruleId) { var sel = m.querySelector("#qRule"); sel.value = ruleId; if (sel.value === ruleId) sel.dispatchEvent(new Event("change")); }
     m.querySelector("#qForm").addEventListener("submit", function (e) {
       e.preventDefault();
       var btn = m.querySelector("#qSubmit"), err = m.querySelector("#qErr"); err.hidden = true; UI.btnState(btn, "loading");

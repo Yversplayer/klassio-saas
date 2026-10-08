@@ -129,6 +129,14 @@ def _find_own_child(conn, ctx, name_fragment):
 def get_student_count(conn, ctx):
     if ctx["role"] == "parent":
         return len(_own_children_ids(conn, ctx))
+    # Un professeur ou un DD compte les élèves de SON périmètre : l'effectif
+    # de toute l'école n'est pas une donnée de son espace (08/10/2026).
+    ids = school.visible_class_ids(conn, ctx)
+    if ids is not None:
+        if not ids:
+            return 0
+        return conn.execute(f"SELECT COUNT(*) n FROM students WHERE tenant_id=? AND status='active' AND class_id IN ({','.join('?' for _ in ids)})",
+                            (ctx["tenant_id"], *ids)).fetchone()["n"]
     return conn.execute("SELECT COUNT(*) n FROM students WHERE tenant_id=?", (ctx["tenant_id"],)).fetchone()["n"]
 
 
@@ -424,6 +432,138 @@ def student_overview(conn, ctx, student):
                     actions=[{"label": "Ouvrir le dossier", "target": "eleve-dossier.html?id=" + student["id"]}])
 
 
+# ===========================================================================
+# PROFESSEUR (08/10/2026) — le propriétaire : « l'assistant du professeur me
+# répond qu'il n'a pas assez d'informations ». Il ne connaissait que des
+# questions de Direction. Voici les questions d'un enseignant, toutes
+# calculées sur SES classes (school.teacher_class_rows) et en lecture seule.
+# ===========================================================================
+JOURS_FR = ["", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
+
+
+def _mes_classes(conn, ctx):
+    rows = school.teacher_class_rows(conn, ctx)
+    out = []
+    for r in rows:
+        n = conn.execute("SELECT COUNT(*) n FROM students WHERE tenant_id=? AND class_id=? AND status='active'", (ctx["tenant_id"], r["id"])).fetchone()["n"]
+        out.append({"id": r["id"], "name": r["name"], "n": n, "titulaire": bool(r["is_titulaire"]), "subject": r["subject"]})
+    return out
+
+
+def _ids_sql(ids):
+    return ",".join("?" for _ in ids)
+
+
+def answer_teacher(conn, ctx, low):
+    """Réponses propres au professeur, ou None si la question n'en relève pas."""
+    classes = _mes_classes(conn, ctx)
+    if not classes:
+        if re.search(r"classe|[ée]l[èe]ve|appel|devoir|horaire|cours|[ée]valuation|absent|retard", low):
+            return _result("Aucune classe n'est encore rattachée à votre compte. La Direction le fait depuis **Établissement → Équipe & accès** ; vos élèves apparaîtront ensuite ici.",
+                           intent="teacher_no_class")
+        return None
+    ids = [c["id"] for c in classes]
+    today = date.today()
+    t_iso = today.isoformat()
+
+    # Mes classes / mes élèves / combien d'élèves
+    if re.search(r"mes classes|mes [ée]l[èe]ves|combien.{0,20}[ée]l[èe]ves|ma classe$", low) and not re.search(r"absent|retard|pay|financ|appel|devoir|[àa] rendre|horaire|cours|[ée]valuation|examen|interro|signalement", low):
+        total = sum(c["n"] for c in classes)
+        rich = {"type": "table", "columns": ["Classe", "Élèves", "Rôle"],
+                "rows": [[c["name"], str(c["n"]), "Titulaire" if c["titulaire"] else (c["subject"] or "Enseignant")] for c in classes]}
+        return _result(f"Vous suivez **{total}** élève(s) dans **{len(classes)}** classe(s).", intent="teacher_classes", rich=rich,
+                       actions=[{"label": "Ouvrir mes classes", "target": "classes.html"}])
+
+    # L'appel du jour
+    if re.search(r"\bappels?\b", low):
+        lignes, manquants = [], []
+        for c in classes:
+            fait = conn.execute("SELECT COUNT(*) n FROM attendance WHERE tenant_id=? AND class_id=? AND date=?", (ctx["tenant_id"], c["id"], t_iso)).fetchone()["n"]
+            lignes.append([c["name"], f"{fait} / {c['n']}" if fait else "Pas encore fait"])
+            if not fait and c["n"]:
+                manquants.append(c["name"])
+        texte = ("L'appel est fait dans toutes vos classes aujourd'hui." if not manquants
+                 else f"Appel **pas encore fait** aujourd'hui en : {', '.join(manquants)}.")
+        return _result(texte, intent="teacher_roll", rich={"type": "table", "columns": ["Classe", "Appel du jour"], "rows": lignes},
+                       actions=[{"label": "Faire l'appel", "target": "classe.html?id=" + (next((c["id"] for c in classes if c["name"] in manquants), classes[0]["id"])) + "&tab=presence"}])
+
+    # Absents / retards d'aujourd'hui, toutes mes classes
+    if re.search(r"absents?|retards?|en retard", low) and re.search(r"aujourd|ce matin|du jour", low) and not _extract_class_fragment(low):
+        rows = conn.execute(f"""SELECT s.first_name, s.last_name, c.name AS class_name, a.status FROM attendance a
+                                JOIN students s ON s.id=a.student_id JOIN classes c ON c.id=a.class_id
+                                WHERE a.tenant_id=? AND a.date=? AND a.status IN ('absent','late') AND a.class_id IN ({_ids_sql(ids)})
+                                ORDER BY c.name, s.last_name""", (ctx["tenant_id"], t_iso, *ids)).fetchall()
+        if not rows:
+            return _result("Aucun absent ni retard enregistré aujourd'hui dans vos classes.", intent="teacher_absents")
+        rich = {"type": "table", "columns": ["Élève", "Classe", "Statut"],
+                "rows": [[r["first_name"] + " " + r["last_name"], r["class_name"], "Absent" if r["status"] == "absent" else "Retard"] for r in rows[:20]]}
+        na = sum(1 for r in rows if r["status"] == "absent")
+        return _result(f"Aujourd'hui dans vos classes : **{na}** absent(s) et **{len(rows) - na}** retard(s).", intent="teacher_absents", rich=rich)
+
+    # Devoirs à rendre
+    if re.search(r"devoirs?|[àa] rendre", low):
+        rows = conn.execute(f"""SELECT r.title, r.due_date, c.name AS class_name, r.subject FROM resources r JOIN classes c ON c.id=r.class_id
+                                WHERE r.tenant_id=? AND r.kind='devoir' AND r.due_date>=? AND r.class_id IN ({_ids_sql(ids)})
+                                ORDER BY r.due_date LIMIT 15""", (ctx["tenant_id"], t_iso, *ids)).fetchall()
+        if not rows:
+            return _result("Aucun devoir à rendre dans vos classes. Vous pouvez en publier un depuis **Livres & devoirs**.", intent="teacher_homework",
+                           actions=[{"label": "Livres & devoirs", "target": "ressources.html"}])
+        rich = {"type": "table", "columns": ["Devoir", "Classe", "À rendre le"],
+                "rows": [[r["title"], r["class_name"], r["due_date"]] for r in rows]}
+        return _result(f"**{len(rows)}** devoir(s) à rendre dans vos classes.", intent="teacher_homework", rich=rich,
+                       actions=[{"label": "Livres & devoirs", "target": "ressources.html"}])
+
+    # Emploi du temps : aujourd'hui / demain
+    if re.search(r"horaire|emploi du temps|cours|programme", low):
+        jour = today + timedelta(days=1) if "demain" in low else today
+        wd = jour.isoweekday()
+        rows = conn.execute(f"""SELECT sl.start_time, sl.end_time, sl.subject, sl.room, c.name AS class_name FROM schedule_slots sl JOIN classes c ON c.id=sl.class_id
+                                WHERE sl.tenant_id=? AND sl.weekday=? AND sl.class_id IN ({_ids_sql(ids)})
+                                AND (sl.teacher_user_id IS NULL OR sl.teacher_user_id=?) ORDER BY sl.start_time""",
+                            (ctx["tenant_id"], wd, *ids, ctx["user_id"])).fetchall()
+        quand = "demain" if "demain" in low else "aujourd'hui"
+        if not rows:
+            return _result(f"Aucun cours planifié {quand} ({JOURS_FR[wd]}) dans vos classes. L'horaire est saisi par la Direction.", intent="teacher_schedule")
+        rich = {"type": "table", "columns": ["Heure", "Classe", "Matière", "Salle"],
+                "rows": [[f"{r['start_time']}–{r['end_time']}", r["class_name"], r["subject"], r["room"] or "—"] for r in rows]}
+        return _result(f"**{len(rows)}** cours {quand} ({JOURS_FR[wd]}).", intent="teacher_schedule", rich=rich)
+
+    # Évaluations à venir
+    if re.search(r"[ée]valuations?|examens?|interro", low):
+        rows = conn.execute(f"""SELECT e.subject, e.date, e.start_time, e.exam_type, c.name AS class_name FROM exams e JOIN classes c ON c.id=e.class_id
+                                WHERE e.tenant_id=? AND e.date>=? AND e.class_id IN ({_ids_sql(ids)}) ORDER BY e.date LIMIT 15""",
+                            (ctx["tenant_id"], t_iso, *ids)).fetchall()
+        if not rows:
+            return _result("Aucune évaluation planifiée dans vos classes.", intent="teacher_exams")
+        rich = {"type": "table", "columns": ["Date", "Classe", "Matière", "Type"],
+                "rows": [[r["date"] + (" " + r["start_time"] if r["start_time"] else ""), r["class_name"], r["subject"], r["exam_type"]] for r in rows]}
+        return _result(f"**{len(rows)}** évaluation(s) à venir dans vos classes.", intent="teacher_exams", rich=rich)
+
+    # Mes signalements
+    if re.search(r"signalements?", low):
+        rows = conn.execute("""SELECT r.status, r.description, r.occurred_at, s.first_name, s.last_name FROM incident_reports r JOIN students s ON s.id=r.student_id
+                               WHERE r.tenant_id=? AND r.reported_by=? ORDER BY r.created_at DESC LIMIT 15""", (ctx["tenant_id"], ctx["user_id"])).fetchall()
+        if not rows:
+            return _result("Vous n'avez fait aucun signalement. Depuis la page d'une classe, le bouton **Signaler** transmet un fait au Directeur des disciplines.", intent="teacher_reports")
+        etat = {"pending": "En attente du DD", "qualified": "Retenu", "dismissed": "Classé"}
+        rich = {"type": "table", "columns": ["Date", "Élève", "Fait", "Suite"],
+                "rows": [[r["occurred_at"], r["first_name"] + " " + r["last_name"], r["description"][:60], etat.get(r["status"], r["status"])] for r in rows]}
+        attente = sum(1 for r in rows if r["status"] == "pending")
+        return _result(f"**{len(rows)}** signalement(s), dont **{attente}** en attente du Directeur des disciplines.", intent="teacher_reports", rich=rich)
+    return None
+
+
+# Questions qu'on sait traiter, par rôle — proposées quand une question
+# n'est pas comprise, plutôt qu'un simple « je ne sais pas ».
+EXEMPLES = {
+    "professeur": ["Quels élèves sont absents aujourd'hui ?", "L'appel est-il fait dans mes classes ?", "Quels devoirs sont à rendre ?",
+                   "Quels sont mes cours aujourd'hui ?", "Quelles évaluations arrivent ?", "Où en sont mes signalements ?"],
+    "directeur": ["Analyse ma situation financière", "Quels sont les plus gros impayés ?", "Quels élèves ont plusieurs absences ?", "Montre-moi les incidents récents"],
+    "discipline": ["Montre-moi les incidents récents", "Quels élèves ont plusieurs retards ?", "Combien d'élèves de la 7e sont absents aujourd'hui ?"],
+    "parent": ["Quelle est la situation de mes enfants ?", "Que reste-t-il à payer ?", "Montre-moi le reçu de mon enfant"],
+}
+
+
 def answer_question(conn, ctx, message, previous_intent=None):
     """Point d'entrée unique. Retourne un dict {text, rich, actions, intent, refused}."""
     text = (message or "").strip()
@@ -459,6 +599,11 @@ def answer_question(conn, ctx, message, previous_intent=None):
         return _result(FEATURE_EXPLANATIONS["finance_vs_paiements"], intent="explain_finance_vs_paiements")
     if re.search(r"invitation|comment.*(inviter|rejoindre)", low):
         return _result(FEATURE_EXPLANATIONS["invitations"], intent="explain_invitations")
+
+    if ctx["role"] == "professeur":
+        prof = answer_teacher(conn, ctx, low)
+        if prof:
+            return prof
 
     # --- Présences (données centrales, périmètre du rôle) ---
     absent_class = None
@@ -550,7 +695,8 @@ def answer_question(conn, ctx, message, previous_intent=None):
         if ctx["role"] == "parent":
             return _result(f"Vous avez **{n}** enfant(s) suivi(s) dans Klassio." if n else
                             "Aucun enfant n'est encore associé à votre compte.", intent="count_students")
-        return _result(f"Votre établissement compte actuellement **{n}** élèves.", intent="count_students",
+        qui = "Votre établissement compte" if ctx["role"] == "directeur" else "Votre périmètre compte"
+        return _result(f"{qui} actuellement **{n}** élèves.", intent="count_students",
                         actions=[{"label": "Voir les élèves", "target": "eleves.html"}])
 
     if re.search(r"combien.*classes?", low):
@@ -666,9 +812,10 @@ def answer_question(conn, ctx, message, previous_intent=None):
                     "rows": [[r["first_name"] + " " + r["last_name"], r["class_name"] or "—"] for r in rows[:10]]}
             return _result(f"**{len(rows)} résultat(s)** trouvé(s).", intent="search_student", rich=rich)
 
-    return _result("Je n'ai pas suffisamment d'informations pour répondre avec certitude. "
-                    "Essayez de reformuler, ou consultez directement la section concernée.",
-                    intent="fallback")
+    # L'aveu reste (test_api.test_20 : jamais de réponse inventée) ; il est
+    # désormais suivi de ce que l'assistant sait vraiment faire pour ce rôle.
+    return _result("Je n'ai pas suffisamment d'informations pour répondre à cette question. Voici ce que je peux vous dire tout de suite :",
+                    intent="fallback", rich={"type": "suggestions", "items": EXEMPLES.get(ctx["role"], EXEMPLES["parent"])})
 
 
 def _result(text, intent, rich=None, actions=None, refused=False):

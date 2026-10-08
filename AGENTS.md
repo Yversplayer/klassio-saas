@@ -483,6 +483,28 @@ déjà es, pt, de, sw, ln. (2) Après avoir ajouté ou changé du texte dans
 les emails restent en français. (4) Une date ou un nombre s'écrit avec
 `window.KLASSIO_LOCALE`, jamais `"fr-FR"` en dur.
 
+### Compte professeur (08/10/2026)
+
+- **Signalements** : dès qu'une école a des règles (`discipline_rules`
+  actives), un signalement CITE l'une d'elles (`incident_reports.rule_id`),
+  choisie dans `GET /api/incident-reports/rules` ; la précision écrite est
+  facultative. Sans aucune règle, la description libre reste possible. Le
+  professeur ne voit pas les points ; le DD qualifie, la règle citée est
+  proposée d'office. Fenêtre partagée : `assets/js/signalement.js`.
+- **Fichiers de cours** : tout format usuel jusqu'à 10 Mo
+  (`validation.file_data_uri_libre`), SAUF les formats actifs (HTML, SVG,
+  scripts, programmes : `TYPES_ACTIFS`). Le navigateur n'affiche que PDF et
+  images ; tout le reste se télécharge (`UI.openFile`). Les fichiers vivent
+  encore DANS la base (base64) : à surveiller avec le quota Supabase.
+- **Chargement** : la comète de `app.js` (`attenteDebut/attenteFin`) apparaît
+  d'elle-même après 0,7 s d'appel en cours, « Klassio se réveille » après 6 s.
+- **Livres & devoirs** : vitrine de librairie (`assets/css/bibliotheque.css`,
+  préfixe `kb-`), couvertures dessinées en CSS, aucune image à télécharger.
+- **Assistant** : questions du professeur sur SES classes
+  (`ai_assistant.answer_teacher`) ; une question non comprise reçoit l'aveu
+  habituel suivi de suggestions (`rich.type = "suggestions"`).
+- **Onglets** : chacun sa couleur dans les écrans connectés (`app-visuel.css`).
+
 ### Analytics et cookies — ne décide pas seul
 
 Klassio manipule des dossiers d'enfants scolarisés. Brancher un outil

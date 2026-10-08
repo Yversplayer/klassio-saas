@@ -59,7 +59,8 @@ security.WRITE_GUARD = api_billing.write_blocked
 # établissements. Un directeur (privilège normal, pas admin système) pouvait
 # ainsi interrompre le service pour tous les autres tenants. 10 Mo est
 # largement suffisant pour un tableur d'import.
-app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024
+# 16 Mo : un fichier de cours de 10 Mo voyage en base64 (+33 %) dans un JSON.
+app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024
 
 # Durée de validité d'une analyse d'import. Assez longue pour relire
 # tranquillement un aperçu de 2 000 élèves, assez courte pour qu'un fichier

@@ -19,7 +19,7 @@ from html.parser import HTMLParser
 
 RACINE = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 SCRIPTS = ["ui.js", "admin.js", "app.js", "app-visuel.js", "tableau.js", "facturation.js", "offres.js",
-           "motdepasse.js", "loader.js", "langue.js"]
+           "motdepasse.js", "loader.js", "langue.js", "signalement.js"]
 LETTRE = re.compile(r"[A-Za-zÀ-ÿ]")
 FRANCAIS = re.compile(r"[a-zà-ÿ]{2,}")
 

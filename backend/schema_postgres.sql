@@ -719,7 +719,8 @@ CREATE TABLE IF NOT EXISTS incident_reports (
   handled_by TEXT REFERENCES users(id),
   handled_at TEXT,
   handling_note TEXT,
-  created_at TEXT NOT NULL
+  created_at TEXT NOT NULL,
+  rule_id TEXT REFERENCES discipline_rules(id) -- règle choisie par l'enseignant (08/10/2026)
 );
 
 -- Convocation d'un parent (liée ou non à un incident).

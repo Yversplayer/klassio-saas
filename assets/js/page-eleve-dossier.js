@@ -652,22 +652,9 @@
     });
   }
 
-  function openReportModal() {
-    var m = UI.modal({ title: "Signaler au Directeur des disciplines", body: '<form id="rpForm" class="form-grid"><p class="modal-text full">Vous décrivez les faits ; le DD qualifie et décide des points et des suites. Vous serez informé(e) de la décision.</p>' +
-      '<div class="field"><label for="rpDate">Date des faits</label><input id="rpDate" type="date" required max="' + UI.todayIso() + '" value="' + UI.todayIso() + '" /></div>' +
-      '<div class="field full"><label for="rpDesc">Description</label><textarea id="rpDesc" required maxlength="1500" placeholder="Ce qui s\'est passé, où, quand, qui était présent."></textarea></div><p class="form-error full" id="rpErr" hidden></p></form>',
-      footer: '<button type="button" class="btn btn-ghost btn-sm" id="rpCancel">Annuler</button><button type="submit" form="rpForm" class="btn btn-lime btn-sm" id="rpSubmit">Envoyer au DD</button>' });
-    m.querySelector("#rpCancel").addEventListener("click", UI.closeModal);
-    m.querySelector("#rpForm").addEventListener("submit", function (e) {
-      e.preventDefault();
-      var btn = m.querySelector("#rpSubmit"), err = m.querySelector("#rpErr"); err.hidden = true; UI.btnState(btn, "loading");
-      api.fetch("/incident-reports", { method: "POST", body: JSON.stringify({ student_id: studentId, description: m.querySelector("#rpDesc").value.trim(), occurred_at: m.querySelector("#rpDate").value }) }).then(function (r) {
-        if (!r.ok) { UI.btnState(btn, "error"); err.textContent = r.body.error || "Impossible."; err.hidden = false; return; }
-        UI.btnState(btn, "success", "Envoyé"); UI.toast("Signalement transmis au Directeur des disciplines.", "success");
-        setTimeout(UI.closeModal, 600);
-      });
-    });
-  }
+  // Le signalement passe par signalement.js : le fait se choisit parmi les
+  // règles de la Direction (08/10/2026).
+  function openReportModal() { window.KlassioSignalement.ouvrir(studentId, ""); }
 
   function printAttestation() {
     api.fetch("/students/" + studentId + "/attestation").then(function (r) {

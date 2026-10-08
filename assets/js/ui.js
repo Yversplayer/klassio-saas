@@ -334,8 +334,28 @@
   function fileToDataUrl(file, maxBytes) {
     return new Promise(function (resolve, reject) {
       if (file.size > maxBytes) return reject(new Error("Fichier trop lourd (" + Math.round(maxBytes / 1024 / 1024 * 10) / 10 + " Mo maximum)."));
-      var r = new FileReader(); r.onload = function () { resolve(r.result); }; r.onerror = function () { reject(new Error("Lecture impossible.")); }; r.readAsDataURL(file);
+      // Un fichier dont le navigateur ignore le type (« .odt » sur certains
+      // téléphones) donne « data:;base64,… » : on le nomme octet-stream, sans
+      // quoi le serveur le refuserait comme illisible.
+      var r = new FileReader(); r.onload = function () { resolve(String(r.result).replace(/^data:;base64,/, "data:application/octet-stream;base64,")); }; r.onerror = function () { reject(new Error("Lecture impossible.")); }; r.readAsDataURL(file);
     });
+  }
+  // Ouvrir un fichier de cours (08/10/2026, fichiers de tout format).
+  // Seuls le PDF et les images matricielles s'affichent dans Klassio ; tout
+  // le reste — Word, PowerPoint, audio, et surtout HTML ou SVG qui pourraient
+  // exécuter du code — se TÉLÉCHARGE, et n'est jamais rendu dans la page.
+  function openFile(dataUrl, fileName, title) {
+    var d = String(dataUrl || "");
+    var image = /^data:image\/(png|jpe?g|gif|webp);base64,/.test(d), pdf = d.indexOf("data:application/pdf;base64,") === 0;
+    if (image || pdf) {
+      var mo = modal({ title: title || fileName || "Fichier", size: "lg", body: image ? '<img src="' + escapeHtml(d) + '" alt="" style="max-width:100%;border-radius:12px" />' : '<iframe src="' + escapeHtml(d) + '" style="width:100%;height:62vh;border:0;border-radius:12px"></iframe>', footer: '<button type="button" class="btn btn-ghost btn-sm" data-ferme>Fermer</button>' });
+      mo.querySelector("[data-ferme]").addEventListener("click", closeModal);
+      return;
+    }
+    var a = document.createElement("a");
+    a.href = d; a.download = fileName || "fichier"; a.rel = "noopener";
+    document.body.appendChild(a); a.click(); a.remove();
+    toast("Téléchargement du fichier « " + (fileName || "fichier") + " ».", "success");
   }
   function printSheet(el, title) {
     var w = window.open("", "_blank", "width=820,height=1000");
@@ -427,6 +447,6 @@
     skeleton: skeleton, emptyState: emptyState, errorState: errorState, btnState: btnState, toast: toast,
     modal: modal, closeModal: closeModal, confirm: confirmDialog, tabs: tabs,
     barRows: barRows, stackedBar: stackedBar, ring: ring, kpi: kpi, gauge: gauge, todoPanel: todoPanel, wireHrefs: wireHrefs, debounce: debounce, qs: qs, todayIso: todayIso,
-    EVENT_KIND_LABELS: EVENT_KIND_LABELS, EVENT_KIND_TONES: EVENT_KIND_TONES, fileToDataUrl: fileToDataUrl, printSheet: printSheet,
+    EVENT_KIND_LABELS: EVENT_KIND_LABELS, EVENT_KIND_TONES: EVENT_KIND_TONES, fileToDataUrl: fileToDataUrl, openFile: openFile, printSheet: printSheet,
   };
 })();

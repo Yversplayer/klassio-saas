@@ -174,6 +174,47 @@ DATA_URI_FICHIER = re.compile(
     r"^data:(image/(png|jpeg|jpg|gif|webp)|application/pdf);base64,[A-Za-z0-9+/]+={0,2}$")
 
 
+# Fichiers de cours (08/10/2026) : le propriétaire veut publier « n'importe
+# quel format » (Word, PowerPoint, Excel, audio…), pas seulement PDF et image.
+# Le type MIME est contrôlé dans sa FORME (type/sous-type, caractères sûrs) et
+# le contenu reste du base64 strict : une chaîne qui contiendrait un guillemet
+# ne peut toujours pas s'échapper d'un attribut. Le navigateur n'affiche en
+# ligne que les PDF et les images ; tout le reste se TÉLÉCHARGE (voir
+# page-ressources.js) — un HTML ou un SVG publié ne s'exécute jamais.
+DATA_URI_LIBRE = re.compile(
+    r"^data:[a-z0-9][a-z0-9.+-]{0,40}/[a-z0-9][a-z0-9.+-]{0,100};base64,[A-Za-z0-9+/]+={0,2}$")
+
+
+# Les formats qui EXÉCUTENT du code sont refusés, même téléchargés : une page
+# web, un SVG, un script ou un programme publiés par un compte compromis
+# deviendraient un piège pour chaque parent de la classe
+# (test_release_gate.test_43).
+TYPES_ACTIFS = re.compile(
+    r"^data:(text/html|application/xhtml\+xml|image/svg\+xml|text/xml|application/xml|"
+    r"text/javascript|application/(x-)?javascript|application/ecmascript|text/ecmascript|"
+    r"application/x-msdownload|application/x-msdos-program|application/vnd\.microsoft\.portable-executable|"
+    r"application/x-sh|application/x-bat|application/hta|application/x-ms-shortcut)[;,]", re.I)
+
+
+def file_data_uri_libre(value, field_name="fichier", max_length=14_000_000):
+    """Valide un fichier de cours en data URI base64, ou lève. None si vide.
+
+    Tout format usuel passe (Word, PowerPoint, Excel, PDF, images, audio,
+    vidéo) ; les formats actifs (TYPES_ACTIFS) sont refusés."""
+    if value in (None, "", False):
+        return None
+    if not isinstance(value, str):
+        raise ValidationError(f"{field_name} doit être un fichier.")
+    if len(value) > max_length:
+        raise ValidationError(
+            f"{field_name} dépasse la taille autorisée ({max_length * 3 // 4 // 1_000_000} Mo).")
+    if TYPES_ACTIFS.match(value):
+        raise ValidationError(f"{field_name} est d'un type refusé (page web, script ou programme).")
+    if not DATA_URI_LIBRE.match(value):
+        raise ValidationError(f"{field_name} n'a pas pu être lu. Choisissez un autre fichier.")
+    return value
+
+
 def file_data_uri(value, field_name="fichier", max_length=3_000_000):
     """Valide un PDF ou une image en data URI, ou lève. None si vide."""
     if value in (None, "", False):

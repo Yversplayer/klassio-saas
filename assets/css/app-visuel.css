@@ -338,3 +338,46 @@ html.ka-ecole-vide .dash-body .note-inline:not(.note-garde) { display: none; }
 .ka-porte span { font-size: 13.5px; line-height: 1.5; color: var(--ink-soft); }
 .ka-porte em { margin-top: 8px; display: inline-flex; align-items: center; gap: 6px; font-style: normal; font-size: 13px; font-weight: 700; color: var(--ink); }
 @media (max-width: 640px) { .ka-portes { grid-template-columns: 1fr; } }
+
+/* ---------- Signalement : le fait choisi parmi les règles (08/10/2026) ----------
+   signalement.js. Des pastilles par famille ; une seule se coche. */
+.kg-regles { border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.kg-regles legend { margin-bottom: 8px; font-size: 13px; font-weight: 700; color: var(--ink); }
+.kg-groupe > span { display: block; margin-bottom: 6px; font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); }
+.kg-groupe > div { display: flex; flex-wrap: wrap; gap: 6px; }
+.kg-regle { position: relative; cursor: pointer; }
+.kg-regle input { position: absolute; opacity: 0; pointer-events: none; }
+.kg-regle span { display: inline-block; padding: 8px 13px; border-radius: 100px; border: 1px solid var(--line); background: var(--surface); font-size: 13px; font-weight: 600; color: var(--ink); transition: background .15s ease, border-color .15s ease; }
+.kg-regle:hover span { border-color: var(--ink-faint); }
+.kg-regle input:checked + span { background: #16301F; border-color: #16301F; color: #EEFBCB; }
+.kg-regle input:focus-visible + span { box-shadow: var(--focus); }
+.kg-note { margin: 2px 0 0; font-size: 12px; color: var(--ink-soft); }
+
+/* ---------- Onglets : chacun sa couleur (08/10/2026) ----------
+   Le propriétaire : « les onglets se ressemblent tous ». Une barre posée sur
+   une carte, une pastille de couleur par onglet (palette harmonieuse :
+   bleu nuit, terracotta, prune, moutarde, sauge, canard), l'onglet actif
+   prend sa couleur. Écrans connectés seulement (.ka-app) : la démo et la
+   landing ont leurs propres onglets. */
+.ka-app .tabs { gap: 6px; padding: 6px; border: 1px solid var(--line); border-radius: 18px; background: var(--surface); box-shadow: var(--shadow-sm); }
+.ka-app .tab-btn { --tab-c: #2F5D8C; margin: 0; padding: 7px 14px 7px 7px; border-bottom: 0; border-radius: 12px; color: var(--ink-soft); }
+.ka-app .tab-btn:nth-child(6n+2) { --tab-c: #A84A2F; }
+.ka-app .tab-btn:nth-child(6n+3) { --tab-c: #6B4C96; }
+.ka-app .tab-btn:nth-child(6n+4) { --tab-c: #9A6A0C; }
+.ka-app .tab-btn:nth-child(6n+5) { --tab-c: #3F6A4D; }
+.ka-app .tab-btn:nth-child(6n+6) { --tab-c: #1F6E7D; }
+:root[data-theme="dark"] .ka-app .tab-btn { --tab-c: #8DB4E0; }
+:root[data-theme="dark"] .ka-app .tab-btn:nth-child(6n+2) { --tab-c: #F0A07E; }
+:root[data-theme="dark"] .ka-app .tab-btn:nth-child(6n+3) { --tab-c: #BFA3E6; }
+:root[data-theme="dark"] .ka-app .tab-btn:nth-child(6n+4) { --tab-c: #E8BD5C; }
+:root[data-theme="dark"] .ka-app .tab-btn:nth-child(6n+5) { --tab-c: #95C9A6; }
+:root[data-theme="dark"] .ka-app .tab-btn:nth-child(6n+6) { --tab-c: #7CCAD8; }
+.ka-app .tab-btn svg { box-sizing: content-box; flex: none; padding: 6px; border-radius: 9px; color: var(--tab-c); background: color-mix(in srgb, var(--tab-c) 14%, transparent); transition: background .15s ease, color .15s ease; }
+.ka-app .tab-btn:hover { color: var(--ink); background: var(--surface-soft); }
+.ka-app .tab-btn.active { color: var(--ink); background: color-mix(in srgb, var(--tab-c) 11%, var(--surface)); }
+.ka-app .tab-btn.active svg { background: var(--tab-c); color: #fff; }
+:root[data-theme="dark"] .ka-app .tab-btn.active svg { color: #16241C; }
+@media (max-width: 640px) {
+  .ka-app .tabs { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  .ka-app .tabs::-webkit-scrollbar { display: none; }
+}

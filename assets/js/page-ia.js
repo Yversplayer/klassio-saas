@@ -16,8 +16,9 @@
       "Combien d'élèves de la 7e sont absents aujourd'hui ?", "Combien avons-nous de classes ?",
     ],
     professeur: [
-      "Quels élèves de ma classe ont plusieurs retards ?", "Combien d'élèves sont inscrits ?",
-      "Montre-moi les incidents récents", "Quelle est la situation financière de ma classe ?",
+      "Quels élèves sont absents aujourd'hui ?", "L'appel est-il fait dans mes classes ?",
+      "Quels devoirs sont à rendre ?", "Quels sont mes cours aujourd'hui ?",
+      "Quelles évaluations arrivent ?", "Quels élèves de ma classe ont plusieurs retards ?",
     ],
     parent: [
       "Quelle est la situation de mes enfants ?", "Que reste-t-il à payer ?",
@@ -39,6 +40,12 @@
     if (rich.type === "stats") {
       return '<div class="ia-rich ia-rich-stats">' + rich.items.map(function (it) {
         return '<div class="ia-rich-stat"><div class="k">' + ui.escapeHtml(it.label) + '</div><div class="v">' + ui.escapeHtml(it.value) + "</div></div>";
+      }).join("") + "</div>";
+    }
+    if (rich.type === "suggestions") {
+      // Questions que l'assistant sait traiter : un clic les pose.
+      return '<div class="ia-suggestions ia-rich">' + rich.items.map(function (q) {
+        return '<button type="button" class="ia-suggestion-chip" data-question="' + ui.escapeHtml(q) + '">' + ui.escapeHtml(q) + "</button>";
       }).join("") + "</div>";
     }
     if (rich.type === "table") {
@@ -130,6 +137,13 @@
     document.querySelectorAll(".ia-history-item").forEach(function (el) { el.classList.remove("active"); });
   }
   document.getElementById("newConvBtn").addEventListener("click", startNewConversation);
+  // Les suggestions glissées dans une réponse (« voici ce que je sais faire »)
+  // posent leur question au clic. La question part en français, la langue
+  // que l'assistant comprend, même si l'interface est traduite.
+  document.getElementById("iaThread").addEventListener("click", function (e) {
+    var b = e.target.closest && e.target.closest(".ia-suggestion-chip[data-question]");
+    if (b) sendMessage(b.dataset.question);
+  });
 
   function renderSuggestions(role) {
     var list = SUGGESTIONS[role] || SUGGESTIONS.parent;

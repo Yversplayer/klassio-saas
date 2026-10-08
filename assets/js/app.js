@@ -43,7 +43,69 @@
   // c'est le serveur qui tranche, par un 401.
   function estConnecte() { return !!lireCookie("klassio_csrf"); }
 
+  // ------------------------------------------------------------------
+  // Chargement visible (08/10/2026). Le propriétaire : « au lieu de patienter
+  // que le logiciel se réveille, que l'utilisateur sache que ça charge ».
+  // Le serveur gratuit s'endort et met jusqu'à une minute à se réveiller ; à
+  // Kinshasa, une requête ordinaire peut aussi prendre plusieurs secondes.
+  //
+  // Une comète apparaît d'elle-même dès qu'un appel dépasse 0,7 s, et dit
+  // « Klassio se réveille » au-delà de 6 s. Elle disparaît quand le DERNIER
+  // appel en cours répond. Elle ne simule rien : elle existe exactement tant
+  // qu'une vraie requête est en vol, et ne dit jamais « réussi ».
+  // Mouvement réduit : la comète ne tourne pas, le texte suffit.
+  // ------------------------------------------------------------------
+  var attente = { n: 0, minuteur: 0, long: 0, el: null };
+  function cometeCreer() {
+    if (attente.el) return attente.el;
+    var st = document.createElement("style");
+    st.textContent =
+      ".kc-attente{position:fixed;left:50%;top:14px;z-index:9999;display:flex;align-items:center;gap:10px;padding:8px 16px 8px 10px;border-radius:100px;background:rgba(18,38,26,.94);color:#EEFBCB;font:600 13px/1.2 'Plus Jakarta Sans',system-ui,sans-serif;box-shadow:0 10px 30px rgba(0,0,0,.25);transform:translate(-50%,-140%);opacity:0;transition:transform .35s cubic-bezier(.2,.8,.2,1),opacity .25s ease;pointer-events:none}" +
+      ".kc-attente.on{transform:translate(-50%,0);opacity:1}" +
+      ".kc-comete{position:relative;width:30px;height:30px;flex:none;color:#B8FF00}" +
+      ".kc-comete i{position:absolute;inset:0;border-radius:50%;--h:5px;--r:11px;animation:kc-queue 1.7s infinite ease,kc-tour 1.7s infinite ease}" +
+      "@keyframes kc-tour{to{transform:rotate(360deg)}}" +
+      "@keyframes kc-queue{0%,5%,95%,100%{box-shadow:0 calc(var(--r)*-1) 0 calc(var(--h)*-2),0 calc(var(--r)*-1) 0 calc(var(--h)*-2.1),0 calc(var(--r)*-1) 0 calc(var(--h)*-2.2),0 calc(var(--r)*-1) 0 calc(var(--h)*-2.3),0 calc(var(--r)*-1) 0 calc(var(--h)*-2.385)}" +
+      "10%,59%{box-shadow:0 calc(var(--r)*-1) 0 calc(var(--h)*-2),calc(var(--r)*-.105) calc(var(--r)*-.994) 0 calc(var(--h)*-2.1),calc(var(--r)*-.208) calc(var(--r)*-.978) 0 calc(var(--h)*-2.2),calc(var(--r)*-.308) calc(var(--r)*-.95) 0 calc(var(--h)*-2.3),calc(var(--r)*-.358) calc(var(--r)*-.934) 0 calc(var(--h)*-2.385)}" +
+      "20%{box-shadow:0 calc(var(--r)*-1) 0 calc(var(--h)*-2),calc(var(--r)*-.407) calc(var(--r)*-.913) 0 calc(var(--h)*-2.1),calc(var(--r)*-.669) calc(var(--r)*-.743) 0 calc(var(--h)*-2.2),calc(var(--r)*-.808) calc(var(--r)*-.588) 0 calc(var(--h)*-2.3),calc(var(--r)*-.902) calc(var(--r)*-.41) 0 calc(var(--h)*-2.385)}" +
+      "38%{box-shadow:0 calc(var(--r)*-1) 0 calc(var(--h)*-2),calc(var(--r)*-.454) calc(var(--r)*-.892) 0 calc(var(--h)*-2.1),calc(var(--r)*-.777) calc(var(--r)*-.629) 0 calc(var(--h)*-2.2),calc(var(--r)*-.934) calc(var(--r)*-.358) 0 calc(var(--h)*-2.3),calc(var(--r)*-.988) calc(var(--r)*-.108) 0 calc(var(--h)*-2.385)}}" +
+      "@media (prefers-reduced-motion:reduce){.kc-comete i{animation:none;box-shadow:0 -11px 0 -10px}.kc-attente{transition:none}}";
+    document.head.appendChild(st);
+    var el = document.createElement("div");
+    el.className = "kc-attente";
+    el.setAttribute("role", "status");
+    el.setAttribute("aria-live", "polite");
+    el.innerHTML = '<span class="kc-comete" aria-hidden="true"><i></i></span><span class="kc-texte">Chargement…</span>';
+    document.body.appendChild(el);
+    attente.el = el;
+    return el;
+  }
+  function attenteDebut() {
+    attente.n++;
+    if (attente.n > 1) return;
+    attente.minuteur = setTimeout(function () {
+      if (!document.body) return;
+      var el = cometeCreer();
+      el.querySelector(".kc-texte").textContent = "Chargement…";
+      el.classList.add("on");
+    }, 700);
+    attente.long = setTimeout(function () {
+      if (attente.el) attente.el.querySelector(".kc-texte").textContent = "Klassio se réveille, encore un instant…";
+    }, 6000);
+  }
+  function attenteFin() {
+    attente.n = Math.max(0, attente.n - 1);
+    if (attente.n) return;
+    clearTimeout(attente.minuteur); clearTimeout(attente.long);
+    if (attente.el) attente.el.classList.remove("on");
+  }
+
   function apiFetch(path, options) {
+    attenteDebut();
+    return apiFetchBrut(path, options).then(function (r) { attenteFin(); return r; }, function (e) { attenteFin(); throw e; });
+  }
+
+  function apiFetchBrut(path, options) {
     options = options || {};
     options.headers = options.headers || {};
     if (!(options.body instanceof FormData)) options.headers["Content-Type"] = "application/json";

@@ -219,26 +219,56 @@ def gate_late():
 # SIGNALEMENTS (professeur → DD)
 # ===========================================================================
 
+# Le propriétaire (08/10/2026) : « le prof écrit ce qu'il veut ». Désormais,
+# dès que la Direction a défini ses règles (règlement importé ou saisi), un
+# signalement CITE l'une d'elles — l'enseignant choisit, il ne qualifie pas,
+# et le DD analyse puis décide. Les points d'une règle ne sont montrés qu'à
+# la Direction et au DD : l'enseignant signale un fait, il ne chiffre pas une
+# sanction. Une école sans aucune règle garde la description libre, sinon
+# aucun enseignant ne pourrait signaler quoi que ce soit avant l'import.
+@bp.get("/api/incident-reports/rules")
+@require_auth
+def report_rules():
+    if g.ctx["role"] not in ("professeur", "directeur", "discipline"):
+        return _denied("report.rules")
+    conn = db.get_connection()
+    rows = conn.execute("SELECT id, label, category, points FROM discipline_rules WHERE tenant_id=? AND active=1 AND category<>'bonus' ORDER BY category, label",
+                        (g.ctx["tenant_id"],)).fetchall()
+    conn.close()
+    voit_points = _is_dd()
+    return jsonify([{"id": r["id"], "label": r["label"], "category": r["category"], **({"points": r["points"]} if voit_points else {})} for r in rows])
+
+
 @bp.post("/api/incident-reports")
 @require_auth
 def create_report():
     if g.ctx["role"] not in ("professeur", "directeur", "discipline"):
         return _denied("report.create")
     data = json_object(request.get_json(force=True))
-    description = required_text(data.get("description"), "description", 1500)
     occurred = (data.get("occurred_at") or school.today_iso()).strip()
     if not ISO_DATE.match(occurred) or occurred > school.today_iso():
         raise ValidationError("occurred_at invalide.")
     conn = db.get_connection()
     tenant_id = g.ctx["tenant_id"]
+    regles = conn.execute("SELECT id, label FROM discipline_rules WHERE tenant_id=? AND active=1 AND category<>'bonus'", (tenant_id,)).fetchall()
+    rule = None
+    if regles:
+        rule = next((r for r in regles if r["id"] == data.get("rule_id")), None)
+        if not rule:
+            conn.close()
+            raise ValidationError("Choisissez le fait dans la liste des règles de l'établissement.")
+        precision = (data.get("description") or "").strip()[:500]
+        description = rule["label"] + (" — " + precision if precision else "")
+    else:
+        description = required_text(data.get("description"), "description", 1500)
     student = school.resolve_student_access(conn, g.ctx, data.get("student_id"))
     if not student:
         conn.close()
         return _not_found("report.create", "Élève introuvable ou hors de votre périmètre.")
     rid = new_id()
     now = str(time.time())
-    conn.execute("INSERT INTO incident_reports (id, tenant_id, student_id, class_id, reported_by, description, occurred_at, status, created_at) VALUES (?,?,?,?,?,?,?,'pending',?)",
-                 (rid, tenant_id, student["id"], student["class_id"], g.ctx["user_id"], description, occurred, now))
+    conn.execute("INSERT INTO incident_reports (id, tenant_id, student_id, class_id, reported_by, description, occurred_at, status, created_at, rule_id) VALUES (?,?,?,?,?,?,?,'pending',?,?)",
+                 (rid, tenant_id, student["id"], student["class_id"], g.ctx["user_id"], description, occurred, now, rule["id"] if rule else None))
     conn.commit()
     event = events_module.emit(conn, tenant_id, "discipline.report.created", "incident_report", rid, g.ctx["user_id"], payload={"student_id": student["id"]})
     notif_module.on_report_created(conn, tenant_id, student, {"description": description}, event_id=event["id"])
@@ -264,8 +294,9 @@ def list_reports():
     if status in ("pending", "qualified", "dismissed"):
         extra += " AND r.status=?"; params = params + (status,)
     rows = conn.execute(
-        f"""SELECT r.*, s.first_name, s.last_name, s.code, c.name AS class_name, u.name AS reporter, h.name AS handler
+        f"""SELECT r.*, s.first_name, s.last_name, s.code, c.name AS class_name, u.name AS reporter, h.name AS handler, dr.label AS rule_label, dr.category AS rule_category
             FROM incident_reports r JOIN students s ON s.id=r.student_id LEFT JOIN classes c ON c.id=r.class_id JOIN users u ON u.id=r.reported_by LEFT JOIN users h ON h.id=r.handled_by
+            LEFT JOIN discipline_rules dr ON dr.id=r.rule_id AND dr.tenant_id=r.tenant_id
             WHERE {where}{extra} ORDER BY (r.status<>'pending'), r.created_at DESC LIMIT 200""", params).fetchall()
     conn.close()
     return jsonify([dict(r) for r in rows])
@@ -291,6 +322,10 @@ def qualify_report(report_id):
         conn.close()
         return jsonify({"error": "Ce signalement a déjà été traité."}), 409
     payload = dict(data)
+    # La règle citée par l'enseignant est proposée par défaut ; le DD peut en
+    # choisir une autre — c'est lui qui qualifie.
+    if not payload.get("rule_id") and report["rule_id"]:
+        payload["rule_id"] = report["rule_id"]
     payload.setdefault("title", (data.get("title") or report["description"][:80]))
     payload.setdefault("description", report["description"])
     payload.setdefault("occurred_at", report["occurred_at"])

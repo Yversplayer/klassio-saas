@@ -2924,7 +2924,33 @@
   "jours": "days",
   "jour": "day",
   "semaines": "weeks",
-  "mois": "months"
+  "mois": "months",
+  "Aucun devoir à rendre pour le moment.": "No homework due for now.",
+  "Autres faits": "Other facts",
+  "Choisissez le fait dans la liste.": "Choose the fact from the list.",
+  "Klassio se réveille, encore un instant…": "Klassio is waking up, just a moment…",
+  "L'appel est-il fait dans mes classes ?": "Has the roll call been taken in my classes?",
+  "La Direction n'a pas encore défini les règles de l'établissement : décrivez le fait. Le DD le qualifiera.": "The school management has not defined the school rules yet: describe the fact. The Head of Discipline will qualify it.",
+  "La bibliothèque de vos classes": "Your classes' library",
+  "La bibliothèque de vos enfants": "Your children's library",
+  "Livres, leçons, fiches et devoirs publiés par les enseignants. Touchez une couverture pour ouvrir le fichier.": "Books, lessons, sheets and homework published by teachers. Tap a cover to open the file.",
+  "Où, quand, qui était présent.": "Where, when, who was present.",
+  "Précision (facultative)": "Detail (optional)",
+  "Quel fait signalez-vous ?": "What are you reporting?",
+  "Quelles évaluations arrivent ?": "Which assessments are coming up?",
+  "Quels devoirs sont à rendre ?": "Which homework is due?",
+  "Quels sont mes cours aujourd'hui ?": "What are my lessons today?",
+  "Quels élèves sont absents aujourd'hui ?": "Which students are absent today?",
+  "Règles indisponibles.": "Rules unavailable.",
+  "Types de ressources": "Resource types",
+  "Téléchargement du fichier «": "Downloading the file “",
+  "par date": "by date",
+  "À rendre": "Due",
+  "Échéance passée": "Past due",
+  "Choisissez le fait dans la liste des règles de l'établissement.": "Choose the fact from the school's list of rules.",
+  "Le fichier n'a pas pu être lu. Choisissez un autre fichier.": "The file could not be read. Choose another file.",
+  "Règles fixées par la Direction. Le DD qualifie et décide des suites ; vous serez informé(e).": "Rules set by the school management. The Head of Discipline qualifies and decides what happens next; you will be informed.",
+  "Fichier (PDF, Word, PowerPoint, Excel, image, audio… 10 Mo max)": "File (PDF, Word, PowerPoint, Excel, image, audio… 10 MB max)"
  },
  "p": [
   [
@@ -3034,6 +3060,14 @@
   [
    "^Rappel, puis lecture seule après (.+)\\. Vos données ne sont jamais supprimées pour un retard de paiement\\.$",
    "Reminder, then read-only after $1. Your data is never deleted for late payment."
+  ],
+  [
+   "^Téléchargement du fichier « (.+) »\\.$",
+   "Downloading the file “$1”."
+  ],
+  [
+   "^Ouvrir (.+)$",
+   "Open $1"
   ]
  ]
 }

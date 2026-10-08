@@ -443,9 +443,9 @@
     document.querySelectorAll(".res-open").forEach(function (b) {
       b.addEventListener("click", function () {
         api.fetch("/resources/" + b.dataset.id + "/file").then(function (r) {
-          if (!r.ok) return UI.toast(r.body.error || "Fichier indisponible.", "error");
-          var m = UI.modal({ title: r.body.title || r.body.file_name, size: "lg", body: (r.body.file_data || "").indexOf("data:image/") === 0 ? '<img src="' + UI.escapeHtml(r.body.file_data) + '" alt="" style="max-width:100%;border-radius:12px" />' : '<iframe src="' + UI.escapeHtml(r.body.file_data) + '" style="width:100%;height:62vh;border:0;border-radius:12px"></iframe>', footer: '<button type="button" class="btn btn-ghost btn-sm" id="rClose">Fermer</button>' });
-          m.querySelector("#rClose").addEventListener("click", UI.closeModal);
+          if (!r.ok || !r.body.file_data) return UI.toast(r.body.error || "Fichier indisponible.", "error");
+          // PDF et images s'affichent, tout autre format se télécharge (ui.js).
+          UI.openFile(r.body.file_data, r.body.file_name, r.body.title);
         });
       });
     });
@@ -495,7 +495,7 @@
       '<div class="field full"><label for="rTitle">Titre</label><input id="rTitle" required maxlength="160" placeholder="Ex. Manuel de lecture — chapitre 4" /></div>' +
       '<div class="field full"><label for="rDesc">Consigne / description</label><textarea id="rDesc" maxlength="1000" placeholder="Ce que l\'élève doit faire, pour quand."></textarea></div>' +
       '<div class="field"><label for="rDue">À rendre le</label><input id="rDue" type="date" /></div>' +
-      '<div class="field"><label for="rFile">Fichier (PDF ou image, 3,5 Mo max)</label><input type="file" id="rFile" accept="application/pdf,image/png,image/jpeg" /></div>' +
+      '<div class="field"><label for="rFile">Fichier (PDF, Word, PowerPoint, Excel, image, audio… 10 Mo max)</label><input type="file" id="rFile" /></div>' +
       '<p class="note-inline full">' + UI.icon("info", 15) + "<span>Les parents de la classe sont notifiés dès la publication.</span></p><p class=\"form-error full\" id=\"rErr\" hidden></p></form>",
       footer: '<button type="button" class="btn btn-ghost btn-sm" id="rCancel">Annuler</button><button type="submit" form="resForm" class="btn btn-lime btn-sm" id="rSubmit">Publier</button>' });
     m.querySelector("#rCancel").addEventListener("click", UI.closeModal);
@@ -511,27 +511,14 @@
           setTimeout(function () { UI.closeModal(); load(); }, 600);
         });
       };
-      if (file) UI.fileToDataUrl(file, 3500 * 1024).then(function (d) { payload.file_data = d; payload.file_name = file.name; go(); }, function (e2) { UI.btnState(btn, "error"); err.textContent = e2.message; err.hidden = false; });
+      if (file) UI.fileToDataUrl(file, 10 * 1024 * 1024).then(function (d) { payload.file_data = d; payload.file_name = file.name; go(); }, function (e2) { UI.btnState(btn, "error"); err.textContent = e2.message; err.hidden = false; });
       else go();
     });
   }
 
-  function openReportModal(studentId, name) {
-    var m = UI.modal({ title: "Signaler au Directeur des disciplines", body: '<form id="rpForm" class="form-grid"><p class="modal-text full">Élève : <strong>' + UI.escapeHtml(name) + "</strong>. Vous décrivez les faits ; le DD qualifie et décide des points et des suites.</p>" +
-      '<div class="field"><label for="rpDate">Date des faits</label><input id="rpDate" type="date" required max="' + UI.todayIso() + '" value="' + UI.todayIso() + '" /></div>' +
-      '<div class="field full"><label for="rpDesc">Description</label><textarea id="rpDesc" required maxlength="1500" placeholder="Ce qui s\'est passé, où, quand."></textarea></div><p class="form-error full" id="rpErr" hidden></p></form>',
-      footer: '<button type="button" class="btn btn-ghost btn-sm" id="rpCancel">Annuler</button><button type="submit" form="rpForm" class="btn btn-lime btn-sm" id="rpSubmit">Envoyer au DD</button>' });
-    m.querySelector("#rpCancel").addEventListener("click", UI.closeModal);
-    m.querySelector("#rpForm").addEventListener("submit", function (e) {
-      e.preventDefault();
-      var btn = m.querySelector("#rpSubmit"), err = m.querySelector("#rpErr"); err.hidden = true; UI.btnState(btn, "loading");
-      api.fetch("/incident-reports", { method: "POST", body: JSON.stringify({ student_id: studentId, description: m.querySelector("#rpDesc").value.trim(), occurred_at: m.querySelector("#rpDate").value }) }).then(function (r) {
-        if (!r.ok) { UI.btnState(btn, "error"); err.textContent = r.body.error || "Impossible."; err.hidden = false; return; }
-        UI.btnState(btn, "success", "Envoyé"); UI.toast("Signalement transmis au Directeur des disciplines.", "success");
-        setTimeout(UI.closeModal, 600);
-      });
-    });
-  }
+  // Le signalement passe par signalement.js : le fait se choisit parmi les
+  // règles de la Direction (08/10/2026).
+  function openReportModal(studentId, name) { window.KlassioSignalement.ouvrir(studentId, name); }
 
   function openConductModal(studentId, name, current) {
     var scale = results.conduct_scale || [];

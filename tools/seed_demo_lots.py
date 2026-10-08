@@ -141,10 +141,14 @@ ok(f"{late_kid['first_name']} {late_kid['last_name']} — retard 08:25", s, b)
 # 7. Signalements d'enseignants (en attente du DD) ------------------------
 print("\n[7] Signalements")
 _, reps = call("GET", "/incident-reports", token=DD)
+# Depuis le 08/10/2026, un signalement cite une règle de l'établissement
+# quand il en existe : on prend la première règle de comportement.
+_, regles = call("GET", "/incident-reports/rules", token=PROF2)
+regle = next((r["id"] for r in (regles or []) if r.get("category") == "comportement"), (regles or [{}])[0].get("id") if regles else None)
 if not [r for r in reps if r["status"] == "pending"]:
-    s, b = call("POST", "/incident-reports", {"student_id": students_b[1]["id"], "description": "A refusé de rendre son devoir et a répondu de manière irrespectueuse devant la classe.", "occurred_at": iso}, token=PROF2)
+    s, b = call("POST", "/incident-reports", {"student_id": students_b[1]["id"], "rule_id": regle, "description": "A refusé de rendre son devoir et a répondu de manière irrespectueuse devant la classe.", "occurred_at": iso}, token=PROF2)
     ok("signalement 1 (prof titulaire classe B)", s, b)
-    s, b = call("POST", "/incident-reports", {"student_id": students_b[2]["id"], "description": "Utilisation du téléphone pendant l'interrogation malgré deux rappels.", "occurred_at": (today - datetime.timedelta(days=1)).isoformat()}, token=PROF2)
+    s, b = call("POST", "/incident-reports", {"student_id": students_b[2]["id"], "rule_id": regle, "description": "Utilisation du téléphone pendant l'interrogation malgré deux rappels.", "occurred_at": (today - datetime.timedelta(days=1)).isoformat()}, token=PROF2)
     ok("signalement 2", s, b)
 else:
     print("  --  signalements déjà en attente")

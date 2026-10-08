@@ -48,7 +48,7 @@
 
   var moi = document.currentScript && document.currentScript.src;
   var base = moi ? moi.replace(/js\/langue\.js.*$/, "") : "../assets/";
-  var VERSION = "1857140596";
+  var VERSION = "1847366190";
 
   if (langue !== "fr") {
     root.classList.add("kl-attente");
