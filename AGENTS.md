@@ -399,8 +399,8 @@ meilleur jour ; aucune fonction absente du logiciel ne doit y figurer (la
 saisie des notes par les professeurs a été retirée pour cette raison : les
 résultats entrent par l'import). Seule tolérance : Mobile Money, présenté tel
 qu'il est — le parent annonce, l'école confirme. L'inventaire vit dans la
-section `#fonctions` de la landing (32 fonctions, six familles) et dans le mur
-d'écrans de la démo (24 écrans) : une fonction ajoutée au logiciel s'ajoute
+section `#fonctions` de la landing (36 fonctions, six familles) et dans le mur
+d'écrans de la démo (26 écrans) : une fonction ajoutée au logiciel s'ajoute
 aux deux.
 
 **Fusion du 30/09.** À propos, FAQ et Contact sont des sections de la landing
