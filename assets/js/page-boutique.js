@@ -91,6 +91,8 @@
         '<button type="button" role="tab" data-cat="" aria-selected="' + (categorie === "") + '">Tout</button>' +
         cats.map(function (c) { return '<button type="button" role="tab" data-cat="' + UI.escapeHtml(c) + '" aria-selected="' + (categorie === c) + '">' + UI.escapeHtml(maj(c)) + "</button>"; }).join("") + "</div>" +
         '<label class="search ks-recherche" for="ksQ">' + UI.icon("search", 16) + '<input id="ksQ" type="search" placeholder="Chercher un article…" value="' + UI.escapeHtml(recherche) + '" /></label></div>' +
+      (apercu && products.some(function (p) { return p.active && !p.has_image; })
+        ? '<div class="ks-avis" role="note">' + UI.icon("image", 18) + "<div><strong>Ces photos sont des illustrations Klassio.</strong> Remplacez-les par les photos des articles de votre école : touchez une photo pour la changer, et modifier au même endroit le prix, les tailles et la quantité en stock.</div></div>" : "") +
       '<div class="ks-grille" id="ksGrille"></div>';
   }
 
@@ -106,17 +108,32 @@
         : UI.emptyState("La boutique est vide pour le moment", apercu ? "Ajoutez votre premier produit : il apparaîtra ici pour les parents." : "L'établissement n'a pas encore publié de produits.", "", "store")) + "</div>";
       return;
     }
-    g.innerHTML = liste.map(function (p) { return carte(p, apercu); }).join("");
-    if (!apercu) wireProductCards();
+    g.innerHTML = (apercu ? '<button type="button" class="ks-carte ks-ajout" id="ksAjout">' + UI.icon("plus", 26) + "<strong>Nouvel article</strong><span>Photo, prix, tailles, stock</span></button>" : "") +
+      liste.map(function (p) { return carte(p, apercu); }).join("");
+    if (apercu) {
+      // La Direction gère sa boutique depuis la vitrine elle-même : toucher un
+      // article ouvre sa fiche (photo, prix, tailles, stock), sur ordinateur
+      // comme sur téléphone.
+      document.getElementById("ksAjout").addEventListener("click", function () { openProductModal(null); });
+      g.querySelectorAll(".ks-carte[data-pid]").forEach(function (c) {
+        var ouvrir = function () { openProductModal(products.find(function (x) { return x.id === c.dataset.pid; })); };
+        c.addEventListener("click", ouvrir);
+        c.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); ouvrir(); } });
+      });
+    } else wireProductCards();
   }
 
   function carte(p, apercu) {
     var src = photo(p), e = etat(p), dispo = p.stock > 0, opts = p.optionList && p.optionList.length;
-    return '<article class="ks-carte" data-pid="' + UI.escapeHtml(p.id) + '">' +
+    // Le parent voit l'article, ce qui reste en stock, le prix et les tailles —
+    // rien de la gestion. La Direction voit en plus de quoi modifier.
+    return '<article class="ks-carte' + (apercu ? " ks-editable" : "") + '" data-pid="' + UI.escapeHtml(p.id) + '"' + (apercu ? ' tabindex="0" role="button" aria-label="Modifier ' + UI.escapeHtml(p.name) + '"' : "") + ">" +
       '<div class="ks-photo">' + (src ? '<img src="' + UI.escapeHtml(src) + '" alt="" loading="lazy" decoding="async">' : '<span class="ks-sans-photo">' + UI.icon("store", 34) + "</span>") +
-        '<span class="ks-etat ' + e[0] + '">' + UI.escapeHtml(e[1]) + "</span></div>" +
-      '<div class="ks-corps"><span class="ks-cat">' + UI.escapeHtml(maj(p.category)) + "</span><h3>" + UI.escapeHtml(p.name) + "</h3>" +
-        (p.description ? '<p class="ks-desc">' + UI.escapeHtml(p.description) + "</p>" : "") +
+        '<span class="ks-etat ' + e[0] + '">' + UI.escapeHtml(e[1]) + "</span>" +
+        (apercu ? '<span class="ks-modifier">' + UI.icon("camera", 16) + (p.has_image ? "Modifier" : "Mettre votre photo") + "</span>" : "") + "</div>" +
+      '<div class="ks-corps">' + (apercu ? '<span class="ks-cat">' + UI.escapeHtml(maj(p.category)) + "</span>" : "") + "<h3>" + UI.escapeHtml(p.name) + "</h3>" +
+        (apercu && p.description ? '<p class="ks-desc">' + UI.escapeHtml(p.description) + "</p>" : "") +
+        (!apercu ? '<span class="ks-reste">' + (dispo ? UI.plural(p.stock, "article restant", "articles restants") : "Plus aucun article") + "</span>" : "") +
         (opts && dispo && !apercu ? '<div class="ks-tailles">' + p.optionList.map(function (o, i) { return '<button type="button" class="ks-taille var-btn' + (i === 0 ? " active" : "") + '" data-var="' + UI.escapeHtml(o) + '">' + UI.escapeHtml(o) + "</button>"; }).join("") + "</div>" : "") +
         '<div class="ks-pied"><span class="ks-prix">' + UI.money(p.price, p.currency) + "</span>" +
         (apercu ? '<span class="muted">' + p.stock + " en stock</span>"
@@ -373,7 +390,9 @@
   // 100 Ko — et le serveur refuse tout ce qui dépasse 400 Ko.
   function reduirePhoto(fichier) {
     return new Promise(function (resolve, reject) {
-      if (!/^image\/(png|jpeg|webp)$/.test(fichier.type)) return reject(new Error("Choisissez une photo JPEG, PNG ou WebP."));
+      // Sur téléphone, « image/* » propose l'appareil photo ou la galerie ; la
+      // photo est ensuite convertie en JPEG ici, quel que soit son format.
+      if (!/^image\//.test(fichier.type)) return reject(new Error("Choisissez une photo."));
       var lecteur = new FileReader();
       lecteur.onerror = function () { reject(new Error("Lecture impossible.")); };
       lecteur.onload = function () {
@@ -396,14 +415,15 @@
     var apercu = p ? photo(p, 480) : null;
     var m = UI.modal({ title: p ? "Modifier le produit" : "Ajouter un produit", size: "lg", body: '<form id="prodForm" class="form-grid">' +
       '<div class="field full ks-photo-champ"><div class="ks-photo-apercu" id="pPhotoApercu">' + (apercu ? '<img src="' + UI.escapeHtml(apercu) + '" alt="">' : UI.icon("image", 28)) + "</div>" +
-        '<div><label for="pPhoto">Photo du produit</label><input id="pPhoto" type="file" accept="image/jpeg,image/png,image/webp">' +
+        '<div><label for="pPhoto">Photo du produit</label><input id="pPhoto" type="file" accept="image/*">' +
         '<span class="hint">Une photo de votre article. Sans photo, Klassio affiche une illustration d\'après le nom (chemise, cravate, cahier…).</span>' +
         (p && p.has_image ? '<button type="button" class="link-btn" id="pPhotoRetirer">Retirer la photo</button>' : "") + "</div></div>" +
       '<div class="field full"><label for="pName">Nom</label><input id="pName" required maxlength="120" value="' + UI.escapeHtml(p ? p.name : "") + '" placeholder="Ex. Chemise blanche à manches courtes" /></div>' +
       '<div class="field full"><label for="pDesc">Description</label><input id="pDesc" maxlength="300" value="' + UI.escapeHtml(p && p.description ? p.description : "") + '" placeholder="Ex. Tissu coton, logo brodé de l\'école" /></div>' +
       '<div class="field"><label for="pCat">Catégorie</label><input id="pCat" list="pcats" value="' + UI.escapeHtml(p ? p.category : "uniformes") + '" /><datalist id="pcats"><option>uniformes</option><option>cahiers</option><option>livres</option><option>calligraphie</option><option>fournitures</option><option>matériel</option></datalist></div>' +
       '<div class="field"><label for="pPrice">Prix (' + UI.escapeHtml(ctx.currency) + ')</label><input id="pPrice" type="number" step="0.01" min="0.01" required value="' + (p ? p.price : "") + '" /></div>' +
-      (p ? "" : '<div class="field"><label for="pStock">Stock de départ</label><input id="pStock" type="number" min="0" required value="0" /></div>') +
+      '<div class="field"><label for="pStock">' + (p ? "Quantité en stock" : "Stock de départ") + '</label><input id="pStock" type="number" min="0" required value="' + (p ? p.stock : 0) + '" />' +
+        (p ? '<span class="hint">Changer ce nombre enregistre un inventaire au journal du stock.</span>' : "") + "</div>" +
       '<div class="field"><label for="pMin">Seuil d\'alerte</label><input id="pMin" type="number" min="0" value="' + (p ? (p.min_stock || 0) : 3) + '" /><span class="hint">Sous ce nombre, l\'article est signalé « stock bas ».</span></div>' +
       '<div class="field full"><label for="pOpts">Tailles ou variantes</label><input id="pOpts" value="' + UI.escapeHtml(p && p.optionList ? p.optionList.join(", ") : "") + '" placeholder="Ex. 6 ans, 8 ans, 10 ans" /><span class="hint">Séparées par des virgules. Le parent devra en choisir une.</span></div>' +
       (p ? '<label class="check full"><input type="checkbox" id="pActive"' + (p.active ? " checked" : "") + " /> En vente (visible par les parents)</label>" : "") +
@@ -436,7 +456,8 @@
       var opts = m.querySelector("#pOpts").value.split(",").map(function (x) { return x.trim(); }).filter(Boolean);
       var payload = { name: m.querySelector("#pName").value.trim(), description: m.querySelector("#pDesc").value.trim(), category: m.querySelector("#pCat").value.trim(),
         price: parseFloat(m.querySelector("#pPrice").value), min_stock: parseInt(m.querySelector("#pMin").value, 10) || 0, options: opts };
-      if (!p) payload.stock = parseInt(m.querySelector("#pStock").value, 10) || 0;
+      var qte = parseInt(m.querySelector("#pStock").value, 10) || 0;
+      if (!p || qte !== p.stock) payload.stock = qte;
       if (p) payload.active = m.querySelector("#pActive").checked;
       if (nouvellePhoto !== undefined) payload.image_data = nouvellePhoto;
       api.fetch(p ? "/store/products/" + encodeURIComponent(p.id) : "/store/products", { method: p ? "PUT" : "POST", body: JSON.stringify(payload) }).then(function (res) {

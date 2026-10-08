@@ -60,6 +60,21 @@
 .ks-pied { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: auto; padding-top: 10px; }
 .ks-prix { padding: 6px 12px; border-radius: 10px; background: var(--ks-pastille); color: var(--ks-pastille-txt); font-size: 13.5px; font-weight: 800; white-space: nowrap; }
 
+/* Direction : la vitrine se gère en touchant les articles */
+.ks-avis { display: flex; gap: 12px; align-items: flex-start; margin: 0 0 14px; padding: 14px 16px; border-radius: 16px; border: 1px solid #E8C877; background: #FDF1D6; color: #5A3A00; font-size: 13.5px; line-height: 1.5; }
+.ks-avis .ic { flex: none; margin-top: 2px; }
+:root[data-theme="dark"] .ks-avis { background: #2E2308; border-color: #6B5214; color: #F0C070; }
+.ks-editable { cursor: pointer; }
+.ks-editable:focus-visible { outline: none; box-shadow: var(--focus), var(--shadow-md); }
+.ks-modifier { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 100px; background: rgba(22, 36, 28, .86); color: #fff; font-size: 12px; font-weight: 700; white-space: nowrap; box-shadow: 0 6px 14px rgba(0, 0, 0, .25); transition: background .2s ease; }
+.ks-editable:hover .ks-modifier { background: #16301F; }
+.ks-ajout { align-items: center; justify-content: center; gap: 6px; min-height: 260px; padding: 18px; border: 2px dashed var(--line); background: var(--surface-soft); color: var(--ink-soft); font: inherit; cursor: pointer; box-shadow: none; }
+.ks-ajout .ic { color: var(--lime-deep); }
+.ks-ajout strong { font-size: 15px; color: var(--ink); }
+.ks-ajout span { font-size: 12.5px; }
+.ks-ajout:hover { border-color: var(--lime-deep); }
+.ks-reste { font-size: 12.5px; font-weight: 600; color: var(--ink-soft); }
+
 /* Direction : stock */
 .ks-ligne { display: flex; align-items: center; gap: 12px; }
 .ks-ligne img, .ks-mini-vide { flex: none; width: 46px; height: 46px; border-radius: 10px; object-fit: cover; background: var(--ks-fond-photo); display: grid; place-items: center; color: var(--ink-faint); }
