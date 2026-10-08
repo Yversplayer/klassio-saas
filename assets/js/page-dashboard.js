@@ -65,65 +65,64 @@
   }
 
   // ---------------- DIRECTION ----------------
+  //
+  // Refonte du 08/10/2026, sur les modèles du propriétaire : « quelques
+  // parties en gros, pas les détails ». L'accueil ne garde que ce qui se lit
+  // d'un coup d'œil — l'école, l'argent, ce qui attend, ce qui vient. Les
+  // détails (soldes par classe, derniers paiements, recouvrement) vivent dans
+  // Finance, où ils ont désormais leur propre mise en scène.
+  //
+  // Le calcul ne bouge pas : chaque chiffre vient toujours de GET /api/dashboard.
+  // Une carte « Période d'essai » n'y revient pas — l'abonnement est une
+  // affaire entre Klassio et l'école, il vit dans Paramètres → Abonnement.
+  var T = window.KlassioTableau;
+
   function renderDirecteur(d) {
-    actions([{ href: "eleves.html?new=1", icon: "plus", label: "Ajouter un élève", primary: true }, { href: "paiements.html?new=1", icon: "payments", label: "Enregistrer un paiement" }, { href: "calendrier.html", icon: "calendar", label: "Événement" }, { href: "etablissement.html?tab=equipe", icon: "users", label: "Inviter" }]);
-    var a = d.attendance_today, sub = d.subscription || {};
-    // Le tableau de bord est consacré à l'ACTIVITÉ DE L'ÉTABLISSEMENT.
-    //
-    // Une carte « Période d'essai — 22 jours restants » y trônait en tête, au
-    // même rang que les élèves et l'encaissement. C'est de la gestion
-    // commerciale entre Klassio et l'école : elle n'a rien à faire au-dessus du
-    // travail scolaire de la journée, et elle y revenait chaque matin.
-    //
-    // Le calcul, lui, n'a pas bougé d'un iota : statut, dates, jours restants,
-    // palier et montant estimé continuent d'être produits par `api_billing`.
-    // Seule sa PRÉSENTATION a déménagé — Paramètres → Abonnement.
-    //
-    // Le bandeau de lecture seule (abonnement impayé) reste, lui, dans la
-    // coquille : il ne vend rien, il explique pourquoi l'enregistrement est
-    // suspendu. Sans lui, l'utilisateur verrait ses actions échouer sans savoir
-    // pourquoi.
-    var html =
-      '<div class="kpi-grid">' +
-      UI.kpi("Élèves", d.student_count.toLocaleString("fr-FR"), { icon: "students", href: "eleves.html", sub: d.class_count + " classes · " + d.teacher_count + " enseignants" }) +
-      UI.kpi("Attendu", UI.compactMoney(d.total_due, d.currency), { icon: "finance", href: "finance.html", sub: "sur l'année en cours" }) +
-      UI.kpi("Encaissé", UI.compactMoney(d.total_paid, d.currency), { icon: "payments", href: "paiements.html", tone: "ok", sub: d.collection_rate + " % de recouvrement" }) +
-      UI.kpi("Restant à encaisser", UI.compactMoney(d.outstanding, d.currency), { icon: "alert", href: "finance.html#impayes", tone: d.outstanding > 0 ? "warn" : "ok" }) +
-      "</div>" +
-      '<div class="kpi-grid cols-5">' +
-      UI.kpi("Appels faits", a.classes_recorded + " / " + a.class_count, { icon: "clipboard", href: "classes.html", sub: "classes appelées aujourd'hui", tone: a.class_count && a.classes_recorded < a.class_count ? "warn" : "ok" }) +
-      UI.kpi("Absents aujourd'hui", String(a.absent), { icon: "calendar", tone: a.absent ? "bad" : "ok", href: "classes.html", sub: a.late + " retard(s)" }) +
-      UI.kpi("Signalements", String(d.pending_reports || 0), { icon: "discipline", href: "discipline.html?tab=signalements", tone: d.pending_reports ? "warn" : "", sub: "à qualifier par le DD" }) +
-      UI.kpi("Justifications", String(d.pending_justifications || 0), { icon: "file", href: "discipline.html?tab=justifications", tone: d.pending_justifications ? "warn" : "", sub: "demandes de parents" }) +
-      UI.kpi("Messages non lus", String(d.unread_messages || 0), { icon: "mail", href: "messages.html", tone: d.unread_messages ? "warn" : "" }) +
-      "</div>" +
-      '<div class="two-col">' +
-      UI.todoPanel([
-        { count: d.pending_reports || 0, label: "Signalements d'enseignants à qualifier", sub: "Le DD ou vous décidez : incident ou classement", href: "discipline.html?tab=signalements", icon: "discipline" },
-        { count: d.pending_justifications || 0, label: "Justifications d'absence à décider", sub: "Accepter transforme l'absence en « excusée »", href: "discipline.html?tab=justifications", icon: "file" },
-        { count: d.convocations_today || 0, label: "Convocations de parents aujourd'hui", sub: "À tenir ou à reporter", href: "discipline.html?tab=convocations", icon: "users", tone: "bad" },
-        { count: d.pending_payments, label: "Paiements Mobile Money à confirmer", sub: "Après vérification réelle de la transaction", href: "paiements.html?filter=pending", icon: "phone" },
-        { count: d.orders_to_prepare || 0, label: "Commandes boutique payées à préparer", sub: "Retrait par l'élève avec son code", href: "boutique.html", icon: "store" },
-        { count: d.pending_orders, label: "Commandes en attente de paiement", sub: "Aucune action requise de votre part", href: "boutique.html", icon: "cart", tone: "neutral" },
-        { count: d.pending_invitations, label: "Invitations non encore acceptées", sub: "Relancez ou révoquez dans Établissement → Équipe & accès", href: "etablissement.html?tab=equipe", icon: "users", tone: "neutral" },
-      ], "À traiter aujourd'hui",
-        "Tout est à jour. Les signalements, justifications, convocations, commandes et paiements à traiter apparaîtront ici.") +
-      eventsPanel(d.upcoming_events) +
-      "</div>" +
-      '<div class="two-col">' +
-      attendancePanel(a, a.classes_recorded ? "" : "Les titulaires n'ont pas encore envoyé l'appel") +
-      '<div class="panel"><div class="panel-head"><h2>Recouvrement</h2><a class="link-btn" href="finance.html">Voir Finance</a></div><div class="row" style="gap:22px;">' +
-      UI.ring(d.collection_rate, "encaissé", d.collection_rate < 50 ? "warn" : "") +
-      '<div class="grow"><dl class="dl"><dt>Attendu</dt><dd>' + UI.money(d.total_due, d.currency) + "</dd><dt>Encaissé</dt><dd>" + UI.money(d.total_paid, d.currency) + "</dd><dt>Restant</dt><dd>" + UI.money(d.outstanding, d.currency) + "</dd></dl></div></div></div>" +
-      "</div>" +
-      '<div class="two-col">' +
-      '<div class="panel"><div class="panel-head"><h2>Classes — solde restant</h2><span class="sub">les plus élevés</span></div>' +
-      UI.barRows(d.classes_outstanding.filter(function (c) { return c.student_count > 0; }).map(function (c) { return { label: c.name, value: c.outstanding, display: UI.compactMoney(c.outstanding, d.currency), cls: c.outstanding > 0 ? "warn" : "", href: "classe.html?id=" + c.id }; }), { empty: "Aucune classe avec élèves pour le moment." }) + "</div>" +
-      '<div class="panel"><div class="panel-head"><h2>Derniers paiements</h2><a class="link-btn" href="paiements.html">Tout voir</a></div>' +
-      (d.recent_payments.length ? '<div class="timeline">' + d.recent_payments.map(function (p) {
-        return '<div class="tl-item"><span class="tl-dot ok"></span><div class="tl-body"><strong>' + UI.money(p.amount, p.currency) + " — " + UI.escapeHtml(p.first_name + " " + p.last_name) + "</strong><span>" + UI.escapeHtml(UI.METHODS[p.method] || p.method) + (p.receipt_number ? " · Reçu " + UI.escapeHtml(p.receipt_number) : "") + "</span><em>" + UI.fmtDateTime(p.confirmed_at) + "</em></div></div>";
-      }).join("") + "</div>" : UI.emptyState("Aucun paiement confirmé", "Les paiements enregistrés apparaîtront ici.", "", "payments")) + "</div>" +
+    var a = d.attendance_today;
+    // La carte d'en-tête porte le titre et les actions : l'en-tête générique
+    // de la page les répéterait juste au-dessus.
+    document.querySelector(".page-header").hidden = true;
+    var todo = [
+      { count: d.pending_reports || 0, label: "Signalements à qualifier", sub: "Incident ou classement", href: "discipline.html?tab=signalements", icon: "discipline" },
+      { count: d.pending_justifications || 0, label: "Justifications d'absence", sub: "Demandes de parents", href: "discipline.html?tab=justifications", icon: "file" },
+      { count: d.convocations_today || 0, label: "Convocations aujourd'hui", sub: "À tenir ou à reporter", href: "discipline.html?tab=convocations", icon: "users" },
+      { count: d.pending_payments || 0, label: "Paiements Mobile Money à confirmer", sub: "Après vérification de la transaction", href: "paiements.html?filter=pending", icon: "phone" },
+      { count: d.orders_to_prepare || 0, label: "Commandes boutique à préparer", sub: "Retrait par l'élève avec son code", href: "boutique.html", icon: "store" },
+      { count: d.unread_messages || 0, label: "Messages non lus", sub: "Cahier de communication", href: "messages.html", icon: "mail" },
+      { count: d.pending_invitations || 0, label: "Invitations non acceptées", sub: "Établissement → Équipe & accès", href: "etablissement.html?tab=equipe", icon: "users" },
+    ].filter(function (t) { return t.count > 0; });
+    var enAttente = todo.reduce(function (s, t) { return s + t.count; }, 0);
+
+    var hero = '<section class="kt-hero kt-3d"><span class="kt-sur">' + UI.escapeHtml(new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })) + "</span>" +
+      "<h1 class=\"kt-titre\">Bonjour" + (ctx.user_name ? ", " + UI.escapeHtml(api.firstName(ctx.user_name)) : "") + ".</h1>" +
+      "<p>" + UI.escapeHtml(ctx.tenant_name || "") + (ctx.tenant_name ? " — " : "") + (enAttente ? UI.plural(todo.length, "sujet vous attend", "sujets vous attendent") + " aujourd'hui." : "tout est à jour ce matin.") + "</p>" +
+      '<div class="kt-actions"><a class="kt-btn-lime" href="eleves.html?new=1">' + UI.icon("plus", 15) + 'Ajouter un élève</a><a class="kt-btn-clair" href="paiements.html?new=1">' + UI.icon("payments", 15) + 'Enregistrer un paiement</a><a class="kt-btn-clair" href="etablissement.html?tab=equipe">' + UI.icon("users", 15) + "Inviter</a></div>" +
+      '<div class="kt-objets" aria-hidden="true">' + T.objet("cartable", "kt-objet-a") + T.objet("pieces", "kt-objet-b", 240) + T.objet("telephone", "kt-objet-c", 240) + "</div></section>";
+
+    var appel = a.recorded ? T.donut([{ value: a.present, color: "#7BC400" }, { value: a.late, color: "#F0C070" }, { value: a.absent, color: "#D9643A" }, { value: a.excused, color: "#9AA59C" }], a.recorded, "appels reçus", a.classes_recorded + " / " + a.class_count) +
+        '<div class="kt-legende"><span>' + a.present + " présents</span><span style=\"--c:#F0C070\" class=\"kt-l2\">" + a.late + " retards</span><span class=\"kt-l3\">" + a.absent + " absents</span></div>"
+      : T.donut([], 0, "appels reçus", a.classes_recorded + " / " + a.class_count) + '<p class="kt-vide" style="text-align:center">Les titulaires n\'ont pas encore envoyé l\'appel.</p>';
+    var aujourdhui = '<section class="kt-carte kt-3d"><div class="kt-tete"><h2>Présence du jour</h2><a class="link-btn" href="classes.html">Classes</a></div>' + appel + "</section>";
+
+    var trio = '<div class="kt-trio">' +
+      '<a class="kt-stat t1 kt-3d" href="eleves.html"><span class="kt-stat-ic">' + UI.icon("students", 20) + '</span><span class="kt-stat-lbl">Élèves</span><span class="kt-stat-val">' + d.student_count.toLocaleString("fr-FR") + '</span><span class="kt-stat-sub">' + UI.plural(d.class_count, "classe") + " · " + UI.plural(d.teacher_count, "enseignant") + "</span>" + "</a>" +
+      '<a class="kt-stat t2 kt-3d" href="finance.html"><span class="kt-stat-ic">' + UI.icon("payments", 20) + '</span><span class="kt-stat-lbl">Encaissé</span><span class="kt-stat-val">' + UI.compactMoney(d.total_paid, d.currency) + '</span><span class="kt-stat-sub">' + d.collection_rate + " % de " + UI.compactMoney(d.total_due, d.currency) + ' attendus</span><span class="kt-jauge"><span style="width:' + Math.max(0, Math.min(100, d.collection_rate)) + '%"></span></span>' + "</a>" +
+      '<a class="kt-stat t3 kt-3d" href="finance.html#impayes"><span class="kt-stat-ic">' + UI.icon("alert", 20) + '</span><span class="kt-stat-lbl">Restant à encaisser</span><span class="kt-stat-val">' + UI.compactMoney(d.outstanding, d.currency) + '</span><span class="kt-stat-sub">' + (d.outstanding > 0 ? "Voir les impayés dans Finance" : "Aucun impayé") + "</span>" + "</a>" +
       "</div>";
+
+    var attente = '<section class="kt-carte"><div class="kt-tete"><h2>À traiter</h2><span class="sub">' + (todo.length ? UI.plural(todo.length, "sujet en attente", "sujets en attente") : "Rien en attente") + "</span></div>" +
+      (todo.length ? '<div class="kt-liste">' + todo.map(function (t) {
+        return '<a class="kt-ligne" href="' + t.href + '"><span class="kt-rond">' + UI.icon(t.icon, 16) + "</span><span><strong>" + UI.escapeHtml(t.label) + "</strong><small>" + UI.escapeHtml(t.sub) + '</small></span><span class="kt-montant">' + t.count + "</span></a>";
+      }).join("") + "</div>" : '<p class="kt-vide">Tout est à jour. Signalements, justifications, paiements à confirmer et commandes apparaîtront ici.</p>') + "</section>";
+
+    var ev = d.upcoming_events || [];
+    var avenir = '<section class="kt-carte"><div class="kt-tete"><h2>À venir</h2><a class="link-btn" href="calendrier.html">Calendrier</a></div>' +
+      (ev.length ? '<div class="kt-liste">' + ev.slice(0, 5).map(function (e) {
+        var j = new Date(e.starts_on + "T00:00:00");
+        return '<a class="kt-ligne" href="calendrier.html"><span class="kt-rond clair">' + j.getDate() + "</span><span><strong>" + UI.escapeHtml(e.title) + "</strong><small>" + UI.escapeHtml(UI.EVENT_KIND_LABELS[e.kind] || e.kind) + " · " + UI.fmtDate(e.starts_on) + (e.starts_time ? " · " + UI.escapeHtml(e.starts_time) : "") + "</small></span><span></span></a>";
+      }).join("") + "</div>" : '<p class="kt-vide">Aucun événement planifié — <a class="link-btn" href="calendrier.html">publier un événement</a>.</p>') + "</section>";
+
+    var html = '<div class="kt-grille">' + hero + aujourdhui + "</div>" + trio + '<div class="kt-grille kt-egal">' + attente + avenir + "</div>";
     if (d.student_count === 0) {
       html = '<div class="panel"><div class="panel-head"><h2>Votre espace est prêt — il attend ses élèves</h2></div><p class="muted" style="font-size:14px;">Importez votre fichier Excel ou ajoutez vos premiers élèves ; les indicateurs se construiront à partir de données réelles.</p><div class="row mt-16"><a href="inscription.html#import" class="btn btn-lime btn-sm">' + UI.icon("upload", 15) + 'Importer un fichier</a><a href="eleves.html?new=1" class="btn btn-ghost btn-sm">' + UI.icon("plus", 15) + "Ajouter un élève</a></div></div>" + html;
     }

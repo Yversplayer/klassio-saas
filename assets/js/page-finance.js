@@ -23,20 +23,60 @@
     }).catch(function () { admin.loadError(host, load, "Le serveur Klassio est injoignable"); });
   }
 
+  // Refonte du 08/10/2026, sur le modèle « cartes » du propriétaire : deux
+  // grandes cartes (encaissé, restant) qui s'inclinent, des pastilles
+  // d'action, les derniers paiements en lignes, un donut et un histogramme.
+  // Les chiffres n'ont pas bougé : /reports/summary, /dashboard et
+  // /catalog-items, exactement comme avant. Le mouvement vit dans tableau.css,
+  // sous .ka-anim — rien ne bouge en mouvement réduit.
   function render(rep, dash, items) {
+    var T = window.KlassioTableau;
     var cur = rep.currency, f = rep.financial;
-    var monthly = rep.monthly_collections.map(function (m) { var d = new Date(m.month + "-01T00:00:00"); return { label: d.toLocaleDateString("fr-FR", { month: "short", year: "2-digit" }), value: m.total, display: UI.compactMoney(m.total, cur) }; });
+    var monthly = rep.monthly_collections.map(function (m) { var d = new Date(m.month + "-01T00:00:00"); return { label: d.toLocaleDateString("fr-FR", { month: "short" }), value: m.total, display: UI.compactMoney(m.total, cur) }; });
     var classRows = dash.classes_outstanding.filter(function (c) { return c.student_count > 0; }).map(function (c) { return { label: c.name, value: c.outstanding, display: UI.compactMoney(c.outstanding, cur), cls: c.outstanding > 0 ? "warn" : "", href: "classe.html?id=" + c.id + "&tab=situation" }; });
-    var html = '<div class="kpi-grid">' + UI.kpi("Montant attendu", UI.money(f.total_due, cur), { icon: "finance", sub: "obligations émises" }) + UI.kpi("Encaissé", UI.money(f.total_paid, cur), { icon: "payments", tone: "ok", sub: "paiements confirmés" }) +
-      UI.kpi("Solde restant", UI.money(f.outstanding, cur), { icon: "alert", tone: f.outstanding > 0 ? "warn" : "ok" }) + UI.kpi("Taux de recouvrement", rep.collection_rate + " %", { icon: "trend", tone: rep.collection_rate >= 70 ? "ok" : "warn", sub: rep.students_without_payment_count + " élève(s) sans aucun paiement" }) + "</div>" +
-      '<div class="two-col"><div class="panel"><div class="panel-head"><h2>Encaissements par mois</h2><span class="sub">6 derniers mois</span></div>' + UI.barRows(monthly, { empty: "Aucun paiement confirmé pour le moment." }) + "</div>" +
-      '<div class="panel"><div class="panel-head"><h2>Recouvrement</h2></div><div class="row" style="gap:22px">' + UI.ring(rep.collection_rate, "recouvré", rep.collection_rate < 50 ? "warn" : "") + '<div class="grow">' + UI.stackedBar([{ value: f.total_paid, cls: "ok", label: "Encaissé" }, { value: f.outstanding, cls: "warn", label: "Restant" }], f.total_due) + '<div class="legend"><span class="ok">Encaissé ' + UI.compactMoney(f.total_paid, cur) + '</span><span class="warn">Restant ' + UI.compactMoney(f.outstanding, cur) + "</span></div></div></div></div></div>" +
-      '<div class="two-col"><div class="panel"><div class="panel-head"><h2>Solde restant par classe</h2></div>' + UI.barRows(classRows, { empty: "Aucune classe avec élèves." }) + "</div>" +
-      '<div class="panel" id="impayes"><div class="panel-head"><h2>Les plus gros impayés</h2><a class="link-btn" href="eleves.html?finance=due">Voir tous</a></div>' + (rep.biggest_unpaid.length ? '<div class="table-wrap"><table class="data-table"><thead><tr><th>Élève</th><th>Classe</th><th class="num">Solde</th></tr></thead><tbody>' + rep.biggest_unpaid.map(function (r) { return '<tr class="clickable" data-href="eleve-dossier.html?id=' + r.id + '&tab=finance"><td><span class="cell-main">' + UI.escapeHtml(r.first_name + " " + r.last_name) + "</span></td><td>" + UI.escapeHtml(r.class_name || "—") + '</td><td class="num text-warn">' + UI.money(r.balance, cur) + "</td></tr>"; }).join("") + "</tbody></table></div>" : '<p class="muted">Aucun impayé — situation à jour.</p>') + "</div></div>" +
-      '<div class="panel"><div class="panel-head"><h2>Catalogue des frais</h2><span class="sub">Ce que l\'établissement peut facturer. Les obligations se créent depuis chaque dossier élève.</span></div>' + (items.filter(function (i) { return i.category !== "boutique"; }).length ? '<div class="table-wrap"><table class="data-table responsive"><thead><tr><th>Article</th><th>Catégorie</th><th class="num">Montant</th></tr></thead><tbody>' + items.filter(function (i) { return i.category !== "boutique"; }).map(function (it) { return '<tr><td data-label="Article"><span class="cell-main">' + UI.escapeHtml(it.name) + '</span></td><td data-label="Catégorie">' + UI.escapeHtml(it.category) + '</td><td data-label="Montant" class="num">' + UI.money(it.amount, it.currency) + "</td></tr>"; }).join("") + "</tbody></table></div>" : UI.emptyState("Aucun article", "Ajoutez vos frais (scolarité, inscription, transport…) pour pouvoir les facturer.", '<button type="button" class="btn btn-lime btn-sm" id="emptyItem">' + UI.icon("plus", 15) + "Ajouter un article</button>", "finance")) + "</div>";
-    document.getElementById("financeContent").innerHTML = html;
+    var catalogue = items.filter(function (i) { return i.category !== "boutique"; });
+    var aConfirmer = dash.pending_payments || 0;
+
+    var cartes = '<div class="kt-cartes">' +
+      '<a class="kt-banque sombre kt-3d" href="paiements.html"><span class="kt-banque-lbl">Encaissé</span><span class="kt-banque-val">' + UI.money(f.total_paid, cur) + '</span><span>paiements confirmés</span>' + T.objet("pieces", "", 240) +
+        '<span class="kt-banque-pied"><span>' + rep.collection_rate + ' % de l\'attendu</span><span class="kt-puce" aria-hidden="true"></span></span></a>' +
+      '<a class="kt-banque clair kt-3d" href="#impayes"><span class="kt-banque-lbl">Restant à encaisser</span><span class="kt-banque-val">' + UI.money(f.outstanding, cur) + '</span><span>sur ' + UI.money(f.total_due, cur) + " attendus</span>" + T.objet("telephone", "", 240) +
+        '<span class="kt-banque-pied"><span>' + UI.plural(rep.students_without_payment_count, "élève sans aucun paiement", "élèves sans aucun paiement") + '</span><span class="kt-puce" aria-hidden="true"></span></span></a>' +
+      "</div>";
+
+    var pastilles = '<div class="kt-pastilles">' +
+      '<a class="kt-pastille on" href="paiements.html?new=1"><span class="ic-rond">' + UI.icon("plus", 15) + "</span>Enregistrer</a>" +
+      '<a class="kt-pastille" href="paiements.html?filter=pending"><span class="ic-rond">' + UI.icon("phone", 15) + "</span>À confirmer" + (aConfirmer ? '<span class="cnt">' + aConfirmer + "</span>" : "") + "</a>" +
+      '<a class="kt-pastille" href="#impayes"><span class="ic-rond">' + UI.icon("alert", 15) + "</span>Impayés</a>" +
+      '<button type="button" class="kt-pastille" id="pastilleCatalogue"><span class="ic-rond">' + UI.icon("finance", 15) + "</span>Catalogue</button>" +
+      "</div>";
+
+    var recents = dash.recent_payments || [];
+    var derniers = '<section class="kt-carte"><div class="kt-tete"><h2>Derniers paiements</h2><a class="link-btn" href="paiements.html">Tout voir</a></div>' +
+      (recents.length ? '<div class="kt-liste">' + recents.map(function (p) {
+        return '<div class="kt-ligne"><span class="kt-rond">' + UI.escapeHtml(UI.initials(p)) + "</span><span><strong>" + UI.escapeHtml(p.first_name + " " + p.last_name) + "</strong><small>" + UI.escapeHtml(UI.METHODS[p.method] || p.method) + " · " + UI.fmtDateTime(p.confirmed_at) + (p.receipt_number ? " · Reçu " + UI.escapeHtml(p.receipt_number) : "") + '</small></span><span class="kt-montant">' + UI.money(p.amount, p.currency) + "<br>" + UI.badge("ok", "Confirmé") + "</span></div>";
+      }).join("") + "</div>" : '<p class="kt-vide">Aucun paiement confirmé pour le moment.</p>') + "</section>";
+
+    var stat = '<section class="kt-carte kt-3d"><div class="kt-tete"><h2>Recouvrement</h2><span class="sub">année en cours</span></div>' +
+      T.donut([{ value: f.total_paid, color: "#7BC400" }, { value: f.outstanding, color: "var(--kt-donut-att, #16301F)" }], f.total_due, "attendu", UI.compactMoney(f.total_due, cur)) +
+      '<div class="kt-legende"><span>Encaissé ' + rep.collection_rate + ' %</span><span class="att">Restant ' + UI.compactMoney(f.outstanding, cur) + "</span></div>" +
+      '<div class="kt-tete" id="impayes"><h2>Plus gros impayés</h2><a class="link-btn" href="eleves.html?finance=due">Tous</a></div>' +
+      (rep.biggest_unpaid.length ? '<div class="kt-liste">' + rep.biggest_unpaid.slice(0, 6).map(function (r) {
+        return '<div class="kt-ligne" data-href="eleve-dossier.html?id=' + r.id + '&tab=finance"><span class="kt-rond clair">' + UI.escapeHtml(UI.initials(r)) + "</span><span><strong>" + UI.escapeHtml(r.first_name + " " + r.last_name) + "</strong><small>" + UI.escapeHtml(r.class_name || "—") + '</small></span><span class="kt-montant text-warn">−' + UI.money(r.balance, cur) + "</span></div>";
+      }).join("") + "</div>" : '<p class="kt-vide">Aucun impayé — situation à jour.</p>') + "</section>";
+
+    var mois = '<section class="kt-carte"><div class="kt-tete"><h2>Encaissements par mois</h2><span class="sub">6 derniers mois</span></div>' + T.histo(monthly, "Aucun paiement confirmé pour le moment.") + "</section>";
+    var parClasse = '<section class="kt-carte"><div class="kt-tete"><h2>Solde restant par classe</h2></div>' + UI.barRows(classRows, { empty: "Aucune classe avec élèves." }) + "</section>";
+
+    var cat = '<section class="kt-carte" id="catalogue"><div class="kt-tete"><h2>Catalogue des frais</h2><span class="sub">Les obligations se créent depuis chaque dossier élève</span></div>' + (catalogue.length ? '<div class="table-wrap"><table class="data-table responsive"><thead><tr><th>Article</th><th>Catégorie</th><th class="num">Montant</th></tr></thead><tbody>' + catalogue.map(function (it) { return '<tr><td data-label="Article"><span class="cell-main">' + UI.escapeHtml(it.name) + '</span></td><td data-label="Catégorie">' + UI.escapeHtml(it.category) + '</td><td data-label="Montant" class="num">' + UI.money(it.amount, it.currency) + "</td></tr>"; }).join("") + "</tbody></table></div>" : UI.emptyState("Aucun article", "Ajoutez vos frais (scolarité, inscription, transport…) pour pouvoir les facturer.", '<button type="button" class="btn btn-lime btn-sm" id="emptyItem">' + UI.icon("plus", 15) + "Ajouter un article</button>", "finance")) + "</section>";
+
+    var html = '<div class="kt-grille"><div class="kt-pile"><div>' + cartes + pastilles + "</div>" + derniers + "</div>" + stat + "</div>" +
+      '<div class="kt-grille kt-egal">' + mois + parClasse + "</div>" + cat;
+    var host = document.getElementById("financeContent");
+    host.innerHTML = html;
     var e = document.getElementById("emptyItem"); if (e) e.addEventListener("click", openItemModal);
-    UI.wireHrefs(document.getElementById("financeContent"));
+    document.getElementById("pastilleCatalogue").addEventListener("click", function () { document.getElementById("catalogue").scrollIntoView({ behavior: "smooth", block: "start" }); });
+    UI.wireHrefs(host);
     if (location.hash === "#impayes") document.getElementById("impayes").scrollIntoView();
   }
 

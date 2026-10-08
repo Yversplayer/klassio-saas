@@ -110,7 +110,9 @@
         // Exporter ses données, c'est les faire sortir — la même famille que
         // les rapports. Une douzième entrée de menu pour une page qu'on
         // ouvre trois fois par an encombrerait la navigation quotidienne.
-        exports: ["rapports"],
+        exports: ["etablissement"],
+        // Depuis le 08/10/2026, les rapports se rangent dans Établissement.
+        rapports: ["etablissement"],
         // La délibération examine les résultats de l'année : elle appartient
         // au domaine Résultats, pas à une entrée de menu à elle.
         deliberations: ["resultats"],

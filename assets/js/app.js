@@ -136,7 +136,10 @@
       ["book", "Résultats", "resultats.html"], ["finance", "Finance", "finance.html"],
       ["discipline", "Discipline", "discipline.html"], ["calendar", "Calendrier", "calendrier.html"],
       ["mail", "Messages", "messages.html"], ["store", "Boutique", "boutique.html"],
-      ["reports", "Rapports", "rapports.html"], ["ai", "Assistant", "ia.html"],
+      // Rapports et exports vivent dans Établissement (demande du propriétaire,
+      // 08/10/2026) : ce sont des vues de l'école entière, pas un domaine
+      // quotidien. Les deux pages restent ; l'onglet « Rapports » y mène.
+      ["ai", "Assistant", "ia.html"],
     ],
     discipline: [
       ["home", "Aujourd'hui", "dashboard.html"], ["clock", "Pointage", "pointage.html"], ["discipline", "Discipline", "discipline.html"],

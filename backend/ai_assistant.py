@@ -446,7 +446,10 @@ def answer_question(conn, ctx, message, previous_intent=None):
                              ("élèves", "eleves.html"), ("classes", "classes.html"),
                              ("établissement", "etablissement.html"), ("rapports", "rapports.html")]:
             if label.rstrip("s") in low or label in low:
-                return _result(f"Vous trouverez cela dans **{label.capitalize()}**, dans le menu principal.",
+                # Les rapports ne sont plus une entrée du menu (08/10/2026) :
+                # ils vivent dans Établissement → onglet Rapports.
+                ou = "dans **Établissement**, onglet Rapports" if label == "rapports" else f"dans **{label.capitalize()}**, dans le menu principal"
+                return _result(f"Vous trouverez cela {ou}.",
                                 intent="navigate", actions=[{"label": "Ouvrir " + label.capitalize(), "target": path}])
 
     # --- Explications produit (ne dépendent d'aucune permission) ---

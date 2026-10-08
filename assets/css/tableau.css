@@ -1,0 +1,167 @@
+/* =========================================================
+   KLASSIO — Accueil Direction et Finance (08/10/2026)
+   Modèles du propriétaire : tableaux de bord « en gros » — une carte
+   d'en-tête, trois grandes cartes pastel, deux colonnes, un donut ; des
+   objets 3D (Higgsfield, assets/objets/) qui flottent et des cartes qui
+   s'inclinent sous le pointeur. Préfixe kt-. Chargée par dashboard.html et
+   finance.html seulement.
+   Règle de la couche visuelle : rien ne bouge sans .ka-anim (posée par
+   app-visuel.js, absente en mouvement réduit) ; aucun objet en économie de
+   données (.ka-sans-photo).
+   ========================================================= */
+:root {
+  --kt-vert: #16301F; --kt-vert-2: #23452E;
+  --kt-pastel-1: #EEFBCB; --kt-pastel-2: #FBF0D9; --kt-pastel-3: #E3F1EA;
+  --kt-trait: #DCE9C8;
+}
+:root[data-theme="dark"] {
+  --kt-vert: #12261A; --kt-vert-2: #1E3A27;
+  --kt-pastel-1: #223300; --kt-pastel-2: #33270F; --kt-pastel-3: #16302A;
+  --kt-trait: #2C3A22;
+  --kt-donut-att: #F0C070;
+}
+
+/* ---------- Grilles ---------- */
+.kt-grille { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 18px; margin-bottom: 18px; align-items: start; }
+.kt-trio { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-bottom: 18px; }
+.kt-grille.kt-egal { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.kt-pile { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.kt-carte { position: relative; border-radius: 24px; border: 1px solid var(--line); background: var(--surface); padding: 22px; box-shadow: var(--shadow-sm); min-width: 0; }
+.kt-carte h2 { margin: 0; font-size: 17px; font-weight: 800; }
+.kt-tete { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 16px; }
+.kt-tete .sub { font-size: 12.5px; color: var(--ink-faint); }
+
+/* ---------- Carte d'en-tête (accueil) ---------- */
+.kt-hero { position: relative; overflow: hidden; min-height: 240px; padding: 30px 280px 30px 32px; border-radius: 28px; color: #fff;
+  background: radial-gradient(120% 140% at 100% 0%, #2F5A3A 0%, transparent 55%), linear-gradient(125deg, var(--kt-vert), var(--kt-vert-2)); box-shadow: var(--shadow-md); }
+.kt-hero::before { content: ""; position: absolute; right: -60px; bottom: -90px; width: 320px; height: 320px; border-radius: 50%; border: 1px solid rgba(184, 255, 0, .18); }
+.kt-hero::after { content: ""; position: absolute; right: 40px; bottom: -40px; width: 200px; height: 200px; border-radius: 50%; border: 1px solid rgba(240, 192, 112, .2); }
+.kt-sur { display: block; margin-bottom: 8px; font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: #F0C070; }
+.kt-hero h1, .kt-hero h2 { position: relative; z-index: 1; max-width: 15ch; margin: 0 0 8px; font-family: var(--font-display); font-weight: 600; font-size: clamp(26px, 3.2vw, 38px); line-height: 1.08; color: #fff; }
+.kt-hero p { position: relative; z-index: 1; max-width: 40ch; margin: 0 0 20px; font-size: 14px; line-height: 1.55; color: rgba(255, 255, 255, .86); }
+.kt-hero .kt-actions { position: relative; z-index: 1; display: flex; flex-wrap: wrap; gap: 8px; }
+.kt-btn-clair { display: inline-flex; align-items: center; gap: 7px; padding: 9px 16px; border-radius: 100px; background: rgba(255, 255, 255, .12); color: #fff; font-size: 13px; font-weight: 700; text-decoration: none; border: 1px solid rgba(255, 255, 255, .18); transition: background .2s ease; }
+.kt-btn-clair:hover { background: rgba(255, 255, 255, .2); }
+.kt-btn-lime { display: inline-flex; align-items: center; gap: 7px; padding: 9px 16px; border-radius: 100px; background: #B8FF00; color: #16241C; font-size: 13px; font-weight: 800; text-decoration: none; }
+.kt-objets { position: absolute; right: 12px; top: 50%; width: 260px; height: 220px; transform: translateY(-50%); pointer-events: none; perspective: 700px; }
+.kt-objet { position: absolute; display: block; filter: drop-shadow(0 18px 22px rgba(0, 0, 0, .35)); }
+.kt-objet-a { width: 170px; right: 60px; top: 0; }
+.kt-objet-b { width: 110px; right: 0; bottom: 4px; }
+.kt-objet-c { width: 84px; right: 176px; bottom: 0; }
+.ka-sans-photo .kt-objets, .ka-sans-photo .kt-objet { display: none; }
+
+/* ---------- Grandes cartes pastel ---------- */
+.kt-stat { overflow: hidden; display: flex; flex-direction: column; gap: 6px; min-height: 170px; padding: 20px 22px; border-radius: 24px; border: 1px solid transparent; color: var(--ink); text-decoration: none; transform-style: preserve-3d; }
+.kt-stat.t1 { background: var(--kt-pastel-1); } .kt-stat.t2 { background: var(--kt-pastel-2); } .kt-stat.t3 { background: var(--kt-pastel-3); }
+.kt-stat-ic { display: grid; place-items: center; width: 42px; height: 42px; margin-bottom: 6px; border-radius: 14px; background: var(--surface); color: var(--ink); box-shadow: var(--shadow-sm); }
+.kt-stat-lbl { font-size: 13px; font-weight: 700; color: var(--ink-soft); }
+.kt-stat-val { font-size: clamp(24px, 2.4vw, 32px); font-weight: 800; letter-spacing: -.02em; line-height: 1.1; }
+.kt-stat-sub { margin-top: auto; font-size: 12.5px; font-weight: 600; color: var(--ink-soft); }
+.kt-stat .kt-objet { width: 96px; right: -8px; bottom: -10px; opacity: .95; }
+.kt-jauge { height: 8px; margin-top: 8px; border-radius: 100px; background: rgba(22, 36, 28, .1); overflow: hidden; }
+:root[data-theme="dark"] .kt-jauge { background: rgba(255, 255, 255, .1); }
+.kt-jauge > span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #7BC400, #B8FF00); transform-origin: left; }
+
+/* ---------- Cartes bancaires (finance) ---------- */
+.kt-cartes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.kt-banque { position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 6px; min-height: 196px; padding: 22px 24px; border-radius: 26px; text-decoration: none; transform-style: preserve-3d; box-shadow: var(--shadow-md); }
+.kt-banque.sombre { color: #fff; background: radial-gradient(90% 120% at 100% 0%, #3A6B47 0%, transparent 60%), linear-gradient(140deg, #10261A, #1D3B27); }
+.kt-banque.clair { color: var(--ink); background: var(--surface); border: 1px solid var(--line); }
+.kt-banque-lbl { font-size: 13px; font-weight: 700; opacity: .8; }
+.kt-banque-val { font-size: clamp(26px, 3vw, 36px); font-weight: 800; letter-spacing: -.02em; }
+.kt-banque-pied { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; margin-top: auto; font-size: 13px; font-weight: 600; opacity: .85; }
+.kt-puce { width: 44px; height: 32px; border-radius: 8px; background: linear-gradient(135deg, #F6D98C, #C9A04A); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .12); }
+.kt-banque.clair .kt-puce { background: linear-gradient(135deg, #DDF7A0, #9FE300); }
+.kt-banque::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity .3s ease;
+  background: radial-gradient(300px circle at var(--ka-mx, 50%) var(--ka-my, 50%), rgba(255, 255, 255, .16), transparent 60%); }
+.kt-banque .kt-objet { width: 92px; right: 8px; top: 8px; }
+.kt-banque > span:not(.kt-puce) { position: relative; z-index: 1; padding-right: 70px; }
+.kt-banque > .kt-banque-pied { padding-right: 0; }
+
+/* Pastilles d'action (« Transfer, Utility… » du modèle) */
+.kt-pastilles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-top: 16px; }
+.kt-pastille { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 18px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: inherit; font-size: 13.5px; font-weight: 700; text-decoration: none; cursor: pointer; transition: transform .2s var(--ease-out), border-color .2s ease; }
+.kt-pastille:hover { transform: translateY(-2px); border-color: var(--lime-deep); }
+.kt-pastille .ic-rond { flex: none; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--ink); color: var(--surface); }
+.kt-pastille.on { background: #B8FF00; border-color: #B8FF00; color: #16241C; }
+.kt-pastille.on .ic-rond { background: #16241C; color: #B8FF00; }
+.kt-pastille .cnt { margin-left: auto; padding: 2px 8px; border-radius: 100px; background: #F0C070; color: #3A2600; font-size: 11.5px; }
+
+/* ---------- Listes (paiements, impayés, à traiter) ---------- */
+.kt-liste { display: flex; flex-direction: column; gap: 8px; }
+.kt-ligne { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 16px; background: var(--surface-soft); color: inherit; text-decoration: none; transition: transform .2s var(--ease-out), background .2s ease; }
+a.kt-ligne:hover, .kt-ligne[data-href]:hover { transform: translateX(3px); }
+.kt-rond { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; background: var(--kt-vert); color: #B8FF00; font-size: 12.5px; font-weight: 800; }
+.kt-rond.clair { background: var(--surface); color: var(--ink); border: 1px solid var(--line); }
+.kt-ligne strong { display: block; font-size: 14px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kt-ligne small { display: block; font-size: 12px; color: var(--ink-faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kt-montant { font-size: 14px; font-weight: 800; white-space: nowrap; text-align: right; }
+.kt-montant small { font-weight: 600; }
+.kt-vide { margin: 0; padding: 18px 4px; font-size: 13.5px; color: var(--ink-soft); }
+
+/* ---------- Donut ---------- */
+.kt-donut { position: relative; width: 190px; height: 190px; margin: 4px auto 14px; }
+.kt-donut svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.kt-donut .fond { fill: none; stroke: var(--kt-trait); stroke-width: 16; }
+.kt-donut .arc { fill: none; stroke-width: 16; stroke-linecap: round; }
+.kt-donut .arc.ok { stroke: #7BC400; } .kt-donut .arc.att { stroke: #16301F; }
+:root[data-theme="dark"] .kt-donut .arc.att { stroke: #F0C070; }
+.kt-donut-centre { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.kt-donut-centre small { font-size: 12px; color: var(--ink-faint); font-weight: 600; }
+.kt-donut-centre strong { font-size: 22px; font-weight: 800; letter-spacing: -.02em; }
+.kt-legende { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; margin-bottom: 16px; font-size: 12.5px; font-weight: 600; color: var(--ink-soft); }
+.kt-legende span::before { content: ""; display: inline-block; width: 10px; height: 10px; margin-right: 6px; border-radius: 3px; vertical-align: -1px; background: #7BC400; }
+.kt-legende span.att::before { background: #16301F; }
+:root[data-theme="dark"] .kt-legende span.att::before { background: #F0C070; }
+.kt-legende span.kt-l2::before { background: #F0C070; }
+.kt-legende span.kt-l3::before { background: #D9643A; }
+
+/* ---------- Histogramme vertical ---------- */
+.kt-histo { display: flex; align-items: flex-end; gap: 10px; height: 200px; padding-top: 22px; }
+.kt-histo-col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 6px; height: 100%; min-width: 0; }
+.kt-histo-barre { position: relative; width: 74%; max-width: 54px; min-height: 4px; border-radius: 12px 12px 6px 6px; background: var(--kt-pastel-1); border: 1px solid var(--kt-trait); transform-origin: bottom; }
+.kt-histo-col.max .kt-histo-barre { background: linear-gradient(180deg, #B8FF00, #7BC400); border-color: transparent; }
+.kt-histo-val { font-size: 11px; font-weight: 700; color: var(--ink-soft); white-space: nowrap; }
+.kt-histo-mois { font-size: 11.5px; font-weight: 700; color: var(--ink-faint); text-transform: capitalize; }
+
+/* ---------- Mouvement (seulement avec .ka-anim) ---------- */
+@keyframes kt-flotte { 0%, 100% { transform: translate3d(0, 0, 40px) rotate(-2deg); } 50% { transform: translate3d(0, -10px, 40px) rotate(3deg); } }
+@keyframes kt-flotte-2 { 0%, 100% { transform: translate3d(0, 0, 60px) rotate(4deg); } 50% { transform: translate3d(0, 8px, 60px) rotate(-3deg); } }
+@keyframes kt-trace { from { stroke-dasharray: 0 600; } }
+@keyframes kt-pousse { from { transform: scaleY(0); } }
+@keyframes kt-remplit { from { transform: scaleX(0); } }
+@keyframes kt-monte { from { opacity: 0; transform: translateY(16px); } }
+.ka-anim .kt-objet-a, .ka-anim .kt-stat .kt-objet, .ka-anim .kt-banque .kt-objet { animation: kt-flotte 6s ease-in-out infinite; }
+.ka-anim .kt-objet-b { animation: kt-flotte-2 7s ease-in-out infinite; }
+.ka-anim .kt-objet-c { animation: kt-flotte-2 8s ease-in-out -2s infinite; }
+.ka-anim .kt-donut .arc { animation: kt-trace 1.2s var(--ease-out) .2s backwards; }
+.ka-anim .kt-histo-barre { animation: kt-pousse .9s var(--ease-out) backwards; }
+.ka-anim .kt-jauge > span { animation: kt-remplit 1.1s var(--ease-out) .25s backwards; }
+.ka-anim .kt-hero, .ka-anim .kt-stat, .ka-anim .kt-banque, .ka-anim .kt-carte, .ka-anim .kt-pastille { animation: kt-monte .6s var(--ease-out) backwards; }
+.ka-anim .kt-trio > :nth-child(2), .ka-anim .kt-cartes > :nth-child(2), .ka-anim .kt-pastilles > :nth-child(2) { animation-delay: .06s; }
+.ka-anim .kt-trio > :nth-child(3), .ka-anim .kt-pastilles > :nth-child(3) { animation-delay: .12s; }
+.ka-anim .kt-pastilles > :nth-child(4) { animation-delay: .18s; }
+/* Inclinaison 3D (app-visuel.js pose --ka-rx/--ka-ry et .ka-incline) */
+.ka-anim .kt-3d { transition: transform .5s var(--ease-out), box-shadow .25s var(--ease-out); }
+.ka-anim .kt-3d.ka-incline { transform: perspective(900px) rotateX(var(--ka-rx, 0deg)) rotateY(var(--ka-ry, 0deg)) translateY(-3px); transition: transform .12s linear, box-shadow .25s var(--ease-out); box-shadow: var(--shadow-md); }
+.ka-anim .kt-3d.ka-incline::after { opacity: 1; }
+
+/* ---------- Petits écrans ---------- */
+@media (max-width: 1080px) {
+  .kt-grille, .kt-grille.kt-egal { grid-template-columns: 1fr; }
+  .kt-pastilles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 720px) {
+  .kt-trio { grid-template-columns: 1fr; }
+  .kt-cartes { grid-template-columns: 1fr; }
+  .kt-hero { padding: 24px 20px 160px; }
+  .kt-objets { top: auto; bottom: 0; right: 50%; width: 260px; height: 150px; transform: translateX(50%); }
+  .kt-objet-a { width: 130px; right: 70px; top: 0; }
+  .kt-objet-b { width: 86px; }
+  .kt-objet-c { width: 70px; right: 190px; }
+}
+@media (max-width: 420px) {
+  .kt-pastilles { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .kt-pastille { padding: 10px; font-size: 12.5px; }
+  .kt-carte { padding: 18px 16px; }
+}

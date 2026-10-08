@@ -193,7 +193,7 @@
     function appliquer() {
       raf = 0;
       var e = dernier;
-      var cible = e.target && e.target.closest ? e.target.closest(".dash-body .kpi-card") : null;
+      var cible = e.target && e.target.closest ? e.target.closest(".dash-body .kpi-card, .dash-body .kt-3d") : null;
       if (carte && carte !== cible) relacher(carte);
       carte = cible;
       if (!carte) return;

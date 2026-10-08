@@ -90,6 +90,9 @@
       ["identite", "Identité & structure", "building", html],
       ["periodes", "Périodes & proclamation", "calendar", renderPeriods(activeYear)],
       ["equipe", "Équipe & accès", "users", renderTeam() + renderInvitations()],
+      // Les rapports ont quitté le menu pour vivre ici (08/10/2026) : une vue
+      // de l'école entière, rangée avec l'école.
+      ["rapports", "Rapports", "reports", renderRapports()],
     ];
     document.getElementById("etabTabs").innerHTML = defs.map(function (d) {
       var compte = d[0] === "equipe" && dash.pending_invitations ? '<span class="cnt">' + dash.pending_invitations + "</span>" : "";
@@ -106,6 +109,13 @@
 
     wire();
     UI.wireHrefs(document.getElementById("etabContent"));
+  }
+
+  function renderRapports() {
+    return '<div class="ka-portes">' +
+      '<a class="ka-porte" href="rapports.html"><span class="ka-porte-ic">' + UI.icon("reports", 22) + '</span><strong>Rapport de l\'établissement</strong><span>Finances, effectifs, présence, discipline et personnel — calculés sur vos données, prêts à imprimer.</span><em>Ouvrir le rapport ' + UI.icon("chevronRight", 14) + "</em></a>" +
+      '<a class="ka-porte" href="exports.html"><span class="ka-porte-ic">' + UI.icon("download", 22) + '</span><strong>Données &amp; exports</strong><span>Élèves, résultats, présences, paiements, reçus : un classeur Excel par type de données, dans une archive à télécharger.</span><em>Exporter ' + UI.icon("chevronRight", 14) + "</em></a>" +
+      "</div>";
   }
 
   // Quel onglet ouvrir en arrivant.
