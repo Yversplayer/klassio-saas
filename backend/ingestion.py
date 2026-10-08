@@ -167,228 +167,12 @@ def parse_uploaded_table(file_storage):
 
 
 def analyze_raw_data(data_rows, filename="import.xlsx"):
-    """Analyse les données brutes tabulaires :
-    - Détecte les en-têtes et propose les mappings avec niveau de confiance.
-    - Détecte les entités (classes, élèves, montants).
-    - Identifie les anomalies (doublons, téléphones invalides, incohérences financières).
-    - Produit une prévisualisation 'Ce qui sera créé'.
-    """
-    if not data_rows or len(data_rows) == 0:
+    """Une seule feuille déjà lue : même moteur que le classeur entier
+    (analyze_workbook, plus bas). Deux moteurs auraient divergé au premier
+    correctif — c'est arrivé avec la colonne Prénom."""
+    if not data_rows:
         return {"error": "Fichier vide ou données non reconnues."}
-
-    headers = [str(h).strip() for h in data_rows[0]]
-    rows = data_rows[1:]
-
-    # 1. AI Mapping des colonnes avec indices de confiance
-    mapping = {}
-    detected_fields = {}
-
-    for idx, header in enumerate(headers):
-        clean_h = header.lower()
-        matched = False
-        for field, config in COLUMN_PATTERNS.items():
-            if field in detected_fields:
-                continue
-            for pat in config["patterns"]:
-                if re.search(pat, clean_h):
-                    mapping[idx] = {
-                        "header": header,
-                        "field": field,
-                        "label": config["label"],
-                        "confidence": config["confidence"]
-                    }
-                    detected_fields[field] = idx
-                    matched = True
-                    break
-            if matched:
-                break
-        if not matched:
-            mapping[idx] = {
-                "header": header,
-                "field": "unmapped",
-                "label": "Colonne non mappée (ignorée)",
-                "confidence": 0.40
-            }
-
-    # 2. Analyse des enregistrements et détection des entités
-    classes_set = set()
-    students_list = []
-    seen_names = {}
-    duplicates = []
-    anomalies = []
-    total_fee_sum = 0.0
-    total_paid_sum = 0.0
-    missing_guardians = 0
-
-    name_col = detected_fields.get("student_name")
-    first_name_col = detected_fields.get("student_first_name")
-    last_name_col = detected_fields.get("student_last_name")
-    class_col = detected_fields.get("class_name")
-    phone_col = detected_fields.get("guardian_phone")
-    parent_col = detected_fields.get("guardian_name")
-    fee_col = detected_fields.get("fee_total")
-    pay_col = detected_fields.get("payment_amount")
-
-    for row_idx, r in enumerate(rows):
-        if not r or len(r) == 0:
-            continue
-
-        # Résolution du nom
-        full_name = ""
-        first_name = ""
-        last_name = ""
-
-        # Une colonne PRÉNOM dédiée fait toujours foi.
-        #
-        # Trouvé à l'audit : le motif de détection du « nom complet » est
-        # `nom`, qui matche aussi un en-tête valant simplement « Nom ». Un
-        # fichier organisé en deux colonnes Nom | Prénom — la forme la plus
-        # courante d'un listing scolaire — était donc traité comme s'il ne
-        # portait qu'un nom complet : la colonne Prénom était détectée,
-        # affichée dans l'aperçu de mapping… puis jamais lue. Tous les élèves
-        # entraient sans prénom, sans le moindre avertissement.
-        #
-        # Le cas « nom complet seul » (celui du fichier d'exemple, colonne
-        # « Nom complet ») passe par la branche suivante, inchangée.
-        prenom_dedie = (first_name_col is not None and first_name_col < len(r)
-                        and r[first_name_col] and str(r[first_name_col]).strip())
-        if prenom_dedie:
-            first_name = str(r[first_name_col]).strip()
-            col_nom = last_name_col if last_name_col is not None else name_col
-            if col_nom is not None and col_nom < len(r) and r[col_nom]:
-                last_name = str(r[col_nom]).strip()
-            full_name = f"{last_name} {first_name}".strip()
-        elif name_col is not None and name_col < len(r) and r[name_col]:
-            full_name = str(r[name_col]).strip()
-            parts = full_name.split()
-            if len(parts) > 1:
-                last_name = parts[0]
-                first_name = " ".join(parts[1:])
-            else:
-                last_name = full_name
-                first_name = ""
-        elif last_name_col is not None and last_name_col < len(r):
-            last_name = str(r[last_name_col]).strip() if r[last_name_col] else ""
-            if first_name_col is not None and first_name_col < len(r):
-                first_name = str(r[first_name_col]).strip() if r[first_name_col] else ""
-            full_name = f"{last_name} {first_name}".strip()
-
-        if not full_name:
-            continue
-
-        # Résolution de la classe — jamais une classe inventée : sans colonne
-        # classe, l'élève est explicitement "Non affecté" (la Direction
-        # l'affectera depuis son dossier).
-        raw_class = str(r[class_col]).strip() if class_col is not None and class_col < len(r) and r[class_col] else None
-        norm_class = normalize_class_name(raw_class)
-        classes_set.add(norm_class)
-
-        # Détection de doublon
-        name_key = full_name.lower()
-        if name_key in seen_names:
-            duplicates.append({
-                "row": row_idx + 2,
-                "name": full_name,
-                "first_seen_row": seen_names[name_key],
-                "type": "Doublon potentiel détecté"
-            })
-        else:
-            seen_names[name_key] = row_idx + 2
-
-        # Téléphone
-        phone = None
-        if phone_col is not None and phone_col < len(r) and r[phone_col]:
-            phone = normalize_phone(r[phone_col])
-            if not phone:
-                anomalies.append({
-                    "row": row_idx + 2,
-                    "name": full_name,
-                    "field": "phone",
-                    "issue": f"Format de téléphone incomplet ou invalide : '{r[phone_col]}'"
-                })
-
-        # Montants financiers — AUCUN montant par défaut : sans colonne de frais
-        # dans le fichier, aucune obligation n'est créée (la Direction la
-        # créera depuis le dossier). Un chiffre inventé fausserait tout le
-        # Financial Core.
-        fee_amount = None
-        if fee_col is not None and fee_col < len(r) and r[fee_col] not in (None, ""):
-            try:
-                fee_amount = float(str(r[fee_col]).replace("$", "").replace("FC", "").replace(" ", "").replace(",", ".").strip())
-            except ValueError:
-                anomalies.append({"row": row_idx + 2, "name": full_name, "field": "finance",
-                                  "issue": f"Montant de frais illisible : '{r[fee_col]}' — aucune obligation ne sera créée pour cette ligne"})
-                fee_amount = None
-
-        paid_amount = 0.0
-        if pay_col is not None and pay_col < len(r) and r[pay_col] not in (None, ""):
-            try:
-                paid_amount = float(str(r[pay_col]).replace("$", "").replace("FC", "").replace(" ", "").replace(",", ".").strip())
-            except ValueError:
-                anomalies.append({"row": row_idx + 2, "name": full_name, "field": "finance",
-                                  "issue": f"Montant payé illisible : '{r[pay_col]}' — ignoré"})
-                paid_amount = 0.0
-
-        # Anomalie financière : payé > dû, ou payé sans montant dû
-        if fee_amount is not None and paid_amount > fee_amount:
-            anomalies.append({
-                "row": row_idx + 2,
-                "name": full_name,
-                "field": "finance",
-                "issue": f"Montant payé ({paid_amount:g}) supérieur au total facturé ({fee_amount:g})"
-            })
-        if fee_amount is None and paid_amount > 0:
-            anomalies.append({"row": row_idx + 2, "name": full_name, "field": "finance",
-                              "issue": f"Un paiement ({paid_amount:g}) est indiqué sans montant dû — il ne sera pas importé"})
-            paid_amount = 0.0
-
-        total_fee_sum += fee_amount or 0.0
-        total_paid_sum += paid_amount
-
-        guardian_name = str(r[parent_col]).strip() if parent_col is not None and parent_col < len(r) and r[parent_col] else None
-        if not guardian_name and not phone:
-            missing_guardians += 1
-
-        students_list.append({
-            "first_name": first_name or "",
-            "last_name": last_name or "",
-            "class_name": norm_class,
-            "guardian_phone": phone,
-            "guardian_name": guardian_name,  # jamais un "Parent X" inventé
-            "fee_amount": fee_amount,
-            "paid_amount": paid_amount
-        })
-
-    # Calcul du score de qualité des données
-    quality_score = 100
-    quality_score -= min(30, len(duplicates) * 3)
-    quality_score -= min(30, len(anomalies) * 2)
-    quality_score = max(55, quality_score)
-
-    guardians_count = sum(1 for s in students_list if s["guardian_name"] or s["guardian_phone"])
-    return {
-        "filename": filename,
-        "total_rows_detected": len(rows),
-        "students_count": len(students_list),
-        "classes_count": len(classes_set),
-        "classes_detected": sorted(list(classes_set)),
-        "guardians_count": guardians_count,
-        "columns_recognized": sum(1 for m in mapping.values() if m["field"] != "unmapped"),
-        "columns_total": len(headers),
-        "missing_info_count": missing_guardians + sum(1 for s in students_list if s["fee_amount"] is None),
-        "fees_detected": fee_col is not None,
-        "mapping": mapping,
-        "duplicates": duplicates,
-        "anomalies": anomalies,
-        "data_quality_score": quality_score,
-        "financial_projection": {
-            "total_obligations_sum": round(total_fee_sum, 2),
-            "total_payments_sum": round(total_paid_sum, 2),
-            "total_outstanding_sum": round(total_fee_sum - total_paid_sum, 2)
-        },
-        "preview_records": students_list[:6],  # Échantillon représentatif
-        "normalized_records": students_list
-    }
+    return analyze_workbook([("Fichier", data_rows)], filename)
 
 
 def _valider_tous_les_enregistrements(records):
@@ -598,4 +382,450 @@ def bootstrap_school(conn, tenant_id, user_id, bootstrap_payload):
         "guardians_count": created_guardians,
         "obligations_count": created_obligations,
         "payments_count": created_payments
+    }
+
+
+# ===========================================================================
+# LECTURE D'UN CLASSEUR RÉEL — 08/10/2026
+#
+# Le propriétaire a déposé le classeur d'une école : plusieurs feuilles
+# (classes, élèves, paiements…), un titre au-dessus de chaque tableau. Klassio
+# a répondu « Aucune ligne exploitable ». Sa phrase : « c'est comme si on
+# demandait aux écoles de s'adapter à notre logiciel — inacceptable ».
+#
+# Reproduit sur deux classeurs fictifs typiques (0 élève détecté sur chacun).
+# Trois causes, toutes dans l'hypothèse d'un fichier « propre » :
+#   1. les titres de colonnes étaient attendus en LIGNE 1 — or une école écrit
+#      d'abord son nom, l'année, « LISTE DES ÉLÈVES », puis le tableau ;
+#   2. UNE SEULE feuille était lue — or beaucoup d'écoles tiennent une feuille
+#      par classe, ou séparent élèves et paiements ;
+#   3. le nom de la feuille (« 6e A ») et la ligne « CLASSE : 6e A » au-dessus
+#      du tableau étaient ignorés : sans colonne Classe, tout devenait
+#      « Non affecté ».
+#
+# Ce qui suit lit TOUTES les feuilles, trouve le tableau dans chacune, sait ce
+# qu'est une feuille de paiements et rattache ses lignes aux élèves. La règle
+# de toujours tient : rien n'est inventé, tout ce qui n'est pas sûr est
+# signalé, et c'est la Direction qui confirme.
+# ===========================================================================
+
+import unicodedata
+
+LIBELLES_CHAMPS = {
+    "student_name": "Identité Élève (Nom / Prénom)",
+    "student_first_name": "Prénom de l'Élève",
+    "student_last_name": "Nom de Famille",
+    "student_middle_name": "Postnom de l'Élève",
+    "class_name": "Classe / Section",
+    "guardian_phone": "Téléphone Parent / Responsable",
+    "guardian_name": "Nom du Responsable Légal",
+    "fee_total": "Montant Total des Frais",
+    "payment_amount": "Montant Déjà Encaissé",
+    "payment_date": "Date du paiement (repère)",
+}
+CHAMPS_NOM = ("student_name", "student_first_name", "student_last_name", "student_middle_name")
+
+# Une feuille dont le NOM parle d'argent se lit comme une feuille de paiements :
+# ses lignes ne sont pas de nouveaux élèves, ce sont les versements des élèves
+# déjà listés ailleurs.
+TITRE_FINANCIER = re.compile(r"paie|paiement|versement|caisse|recette|encaiss|recu|transaction|finance|comptab|frais|minerval|tranche")
+
+
+def _sans_accents(texte):
+    texte = unicodedata.normalize("NFD", str(texte))
+    return "".join(c for c in texte if unicodedata.category(c) != "Mn")
+
+
+def _norm(texte):
+    return re.sub(r"\s+", " ", _sans_accents(texte).lower().replace("_", " ")).strip()
+
+
+def _texte(valeur):
+    """Une cellule en texte. Excel range « 0812345678 » en NOMBRE 812345678.0 :
+    lu tel quel, le « .0 » devenait un chiffre de plus dans le téléphone."""
+    if valeur is None:
+        return ""
+    if isinstance(valeur, float) and valeur.is_integer():
+        valeur = int(valeur)
+    if hasattr(valeur, "strftime"):
+        return valeur.strftime("%d/%m/%Y")
+    return str(valeur).strip()
+
+
+def classer_entete(entete):
+    """Ce que désigne un titre de colonne, ou None. Les mots du parent passent
+    AVANT ceux de l'élève : « Nom du parent » contient « nom », et le motif
+    élève l'emportait — la colonne du parent devenait le nom de l'élève."""
+    h = _norm(entete)
+    if not h or re.fullmatch(r"n ?[°o]?\.?|no|num(ero)?|#|n°", h):
+        return None
+    parent = re.search(r"parent|tuteur|responsable|\bpere\b|\bmere\b|guardian|famille", h)
+    if re.search(r"\btel\b|tel\.|telephone|phone|contact|mobile|gsm|whatsapp|portable|numero", h):
+        return "guardian_phone"
+    if parent:
+        return "guardian_name"
+    if re.search(r"reste|solde|restant|arriere", h):
+        return None  # un solde n'est ni un dû ni un payé : on ne le devine pas
+    if re.search(r"date|jour", h):
+        return "payment_date"
+    if re.search(r"(?<!a )(?<!a\s)\bpaye[es]?\b|deja|verse|versement|acompte|tranche|regle|encaiss|percu|avance|montant paye", h) and not re.search(r"a payer", h):
+        return "payment_amount"
+    if re.search(r"total|frais|minerval|montant|scolarit|a payer|\bdu\b|prix|cout", h):
+        return "fee_total"
+    if re.search(r"classe|section|niveau|promotion|grade|option|\bclass\b", h):
+        return "class_name"
+    sans_post = re.sub(r"post ?-? ?noms?", " ", h)
+    a_post = sans_post != h
+    a_prenom = re.search(r"prenom|first", h)
+    a_nom = re.search(r"\bnoms?\b", sans_post)
+    if a_prenom and a_nom:
+        return "student_name"           # « Nom et prénom », « Noms, postnoms et prénoms »
+    if a_prenom:
+        return "student_first_name"
+    if a_post and not a_nom:
+        return "student_middle_name"    # « Post-nom », « Postnoms »
+    if re.search(r"nom complet|identite|eleve|etudiant|apprenant|student", h):
+        return "student_name"
+    if re.search(r"nom de famille|last ?name", h):
+        return "student_last_name"
+    if a_nom:
+        return "nom_ambigu"             # « Nom », « Noms et post-noms » : tranché plus bas
+    return None
+
+
+def _lire_entetes(ligne):
+    """Colonne → champ, pour une ligne candidate. Un champ ne prend que sa
+    PREMIÈRE colonne. « Nom » seul vaut nom de famille s'il existe une colonne
+    Prénom à côté, nom complet sinon."""
+    champs, vus = {}, set()
+    remplies = [_texte(c) for c in ligne if _texte(c)]
+    # Un TITRE de document n'est pas une ligne de titres de colonnes : une
+    # seule cellule remplie, une phrase ou une année (« LISTE DES ÉLÈVES —
+    # 2025-2026 » contient « élèves » et passait pour l'en-tête du tableau).
+    if len(remplies) == 1 and (len(remplies[0].split()) > 3 or re.search(r"(19|20)\d\d", remplies[0])):
+        return {}
+    for i, cellule in enumerate(ligne):
+        champ = classer_entete(_texte(cellule))
+        if champ and champ not in vus:
+            champs[i] = champ
+            vus.add(champ)
+    for i, champ in list(champs.items()):
+        if champ == "nom_ambigu":
+            cible = "student_last_name" if "student_first_name" in vus else "student_name"
+            if cible in vus:
+                del champs[i]
+            else:
+                champs[i] = cible
+                vus.add(cible)
+    return champs
+
+
+def _score(champs):
+    return len(champs) if any(c in CHAMPS_NOM for c in champs.values()) else 0
+
+
+def trouver_tableau(lignes, profondeur=30):
+    """L'index de la ligne de titres et sa lecture. On cherche dans les
+    premières lignes la mieux reconnue, à condition qu'elle désigne un nom
+    d'élève ; à égalité, la plus haute."""
+    meilleur, meilleurs_champs, meilleur_score = None, {}, 0
+    for idx, ligne in enumerate(lignes[:profondeur]):
+        champs = _lire_entetes(ligne or [])
+        s = _score(champs)
+        if s > meilleur_score:
+            meilleur, meilleurs_champs, meilleur_score = idx, champs, s
+    return meilleur, meilleurs_champs
+
+
+CLASSE_EN_TITRE = re.compile(r"^\s*(?:classe|class|section)\s*[:\-–]\s*(.+)$", re.I)
+
+
+def _classe_du_titre(ligne):
+    """« CLASSE : 6e A », écrit au-dessus d'un tableau ou entre deux blocs."""
+    remplies = [_texte(c) for c in (ligne or []) if _texte(c)]
+    if not remplies or len(remplies) > 2:
+        return None
+    texte = " ".join(remplies)
+    m = CLASSE_EN_TITRE.match(texte)
+    if m and m.group(1).strip():
+        return m.group(1).strip()
+    if len(remplies) == 2 and _norm(remplies[0]).rstrip(" :") in ("classe", "class", "section"):
+        return remplies[1]
+    return None
+
+
+def _classe_du_nom_de_feuille(titre):
+    """« 6e A », « 1re Primaire B » : une feuille par classe. Pas « Feuil1 »,
+    pas « 2025-2026 », pas « Élèves »."""
+    t = (titre or "").strip()
+    n = _norm(t)
+    if not re.search(r"\d", n) or re.fullmatch(r"(feuil(le)?|sheet|tableau|onglet|page)\s*\d+", n) or re.search(r"(19|20)\d\d", n):
+        return None
+    if TITRE_FINANCIER.search(n):
+        return None
+    return t
+
+
+def parse_uploaded_workbook(file_storage):
+    """Toutes les feuilles d'un classeur : [(nom de feuille, lignes)]. Un CSV
+    est un classeur d'une feuille. Mêmes refus que parse_uploaded_table."""
+    filename = (file_storage.filename or "").lower()
+    if filename.endswith(".xlsx"):
+        import openpyxl
+        raw = file_storage.read()
+        try:
+            wb = openpyxl.load_workbook(filename=io.BytesIO(raw), data_only=True, read_only=True)
+        except Exception:
+            raise ValidationError(
+                "Ce fichier n'est pas un classeur Excel valide. S'il s'agit d'un CSV, "
+                "renommez-le en .csv ; sinon, ré-enregistrez-le depuis Excel ou "
+                "téléchargez-le à nouveau.")
+        return [(ws.title, [list(r) for r in ws.iter_rows(values_only=True)]) for ws in wb.worksheets]
+    if filename.endswith(".xls"):
+        raise ValidationError(
+            "Ce fichier est au format Excel 97-2003 (.xls). Ouvrez-le dans Excel et choisissez "
+            "« Enregistrer sous » → « Classeur Excel (.xlsx) », puis déposez la nouvelle version.")
+    return [("Fichier", parse_uploaded_table(file_storage))]
+
+
+def _montant(texte):
+    t = re.sub(r"[^\d,.\-]", "", texte.replace("FC", "").replace("$", ""))
+    if t.count(",") == 1 and t.count(".") == 0:
+        t = t.replace(",", ".")
+    elif t.count(",") and t.count("."):
+        t = t.replace(".", "").replace(",", ".") if t.rfind(",") > t.rfind(".") else t.replace(",", "")
+    return float(t)
+
+
+def _telephone(texte):
+    tel = normalize_phone(texte)
+    # « 0812345678 » enregistré comme nombre perd son zéro : 812345678.
+    if tel and re.fullmatch(r"[89]\d{8}", tel):
+        tel = "0" + tel
+    return tel
+
+
+def _cle_nom(texte):
+    return frozenset(re.findall(r"[a-z0-9]+", _norm(texte)))
+
+
+def _lire_feuille(titre, lignes):
+    """Les lignes d'une feuille, champ par champ, avec leur numéro Excel et
+    leur classe. Gère les tableaux en plusieurs blocs (« CLASSE : 6e A »,
+    tableau, « CLASSE : 6e B », tableau) et ignore les lignes de total."""
+    debut, champs = trouver_tableau(lignes)
+    if debut is None:
+        return None
+    classe_courante = None
+    for ligne in lignes[:debut]:
+        classe_courante = _classe_du_titre(ligne) or classe_courante
+    classe_feuille = _classe_du_nom_de_feuille(titre)
+    entetes = [_texte(c) for c in lignes[debut]]
+    enregistrements = []
+    for pos in range(debut + 1, len(lignes)):
+        ligne = lignes[pos] or []
+        cellules = [_texte(c) for c in ligne]
+        if not any(cellules):
+            continue
+        nouvelle_classe = _classe_du_titre(ligne)
+        if nouvelle_classe:
+            classe_courante = nouvelle_classe
+            continue
+        nouveaux = _lire_entetes(ligne)
+        if _score(nouveaux) >= 2:
+            champs, entetes = nouveaux, cellules   # un second bloc, avec ses titres
+            continue
+        premieres = [c for c in cellules if c][:2]
+        if any(re.match(r"(sous.?)?total|effectif|nombre", _norm(c)) for c in premieres):
+            continue
+        valeurs = {champ: cellules[i] if i < len(cellules) else "" for i, champ in champs.items()}
+        enregistrements.append({"ligne": pos + 1, "valeurs": valeurs,
+                                "classe_hors_colonne": classe_courante or classe_feuille})
+    return {"titre": titre, "ligne_titres": debut + 1, "champs": champs, "entetes": entetes,
+            "enregistrements": enregistrements}
+
+
+def _identite(v):
+    premier = v.get("student_first_name", "")
+    nom = " ".join(x for x in (v.get("student_last_name", ""), v.get("student_middle_name", "")) if x)
+    complet = v.get("student_name", "")
+    if premier:
+        if not nom and complet:
+            nom = complet
+        return premier, nom
+    if complet:
+        parts = complet.split()
+        return (" ".join(parts[1:]), parts[0]) if len(parts) > 1 else ("", complet)
+    return "", nom
+
+
+def analyze_workbook(feuilles, filename="import.xlsx"):
+    """Analyse un classeur entier. Même résultat qu'analyze_raw_data (l'écran
+    et la confirmation n'ont pas à changer), plus `sheets` : ce qui a été lu
+    dans chaque feuille, et pourquoi une feuille a été laissée de côté."""
+    lues = []
+    for titre, lignes in feuilles:
+        lecture = _lire_feuille(titre, lignes or [])
+        lues.append((titre, lecture))
+
+    avec_noms = [(t, l) for t, l in lues if l and l["enregistrements"]]
+    financieres = [(t, l) for t, l in avec_noms if TITRE_FINANCIER.search(_norm(t))]
+    eleves = [(t, l) for t, l in avec_noms if (t, l) not in financieres]
+    if not eleves:          # un seul tableau, quel que soit son nom : c'est la liste
+        eleves, financieres = avec_noms, []
+
+    plusieurs = len(feuilles) > 1
+    mapping, cols_total, cols_reconnues = {}, 0, 0
+    for n, (titre, lecture) in enumerate(lues):
+        if not lecture or (titre, lecture) not in avec_noms:
+            continue
+        for i, entete in enumerate(lecture["entetes"]):
+            if not entete:
+                continue
+            champ = lecture["champs"].get(i)
+            cols_total += 1
+            cols_reconnues += 1 if champ else 0
+            mapping[f"{n}:{i}"] = {
+                "header": f"{titre} › {entete}" if plusieurs else entete,
+                "field": champ or "unmapped",
+                "label": LIBELLES_CHAMPS.get(champ, "Colonne non mappée (ignorée)"),
+                "confidence": 0.95 if champ else 0.40,
+            }
+
+    students, duplicates, anomalies = [], [], []
+    vus, missing_guardians, fee_col_seen, pay_col_seen = {}, 0, False, False
+    for titre, lecture in eleves:
+        champs = set(lecture["champs"].values())
+        fee_col_seen = fee_col_seen or "fee_total" in champs
+        pay_col_seen = pay_col_seen or "payment_amount" in champs
+        for enr in lecture["enregistrements"]:
+            v, ligne = enr["valeurs"], enr["ligne"]
+            premier, nom = _identite(v)
+            complet = f"{nom} {premier}".strip()
+            if not complet:
+                continue
+            ref = {"row": ligne, "sheet": titre if plusieurs else None, "name": complet}
+            classe = normalize_class_name(v.get("class_name") or enr["classe_hors_colonne"])
+            cle = (_cle_nom(complet), classe)
+            if cle in vus:
+                duplicates.append({**ref, "first_seen_row": vus[cle], "type": "Doublon potentiel détecté"})
+            else:
+                vus[cle] = f"{titre}, ligne {ligne}" if plusieurs else ligne
+            tel = None
+            if v.get("guardian_phone"):
+                tel = _telephone(v["guardian_phone"])
+                if not tel:
+                    anomalies.append({**ref, "field": "phone",
+                                      "issue": f"Format de téléphone incomplet ou invalide : '{v['guardian_phone']}'"})
+            fee = None
+            if v.get("fee_total"):
+                try:
+                    fee = _montant(v["fee_total"])
+                except ValueError:
+                    anomalies.append({**ref, "field": "finance",
+                                      "issue": f"Montant de frais illisible : '{v['fee_total']}' — aucune obligation ne sera créée pour cette ligne"})
+            paye = 0.0
+            if v.get("payment_amount"):
+                try:
+                    paye = _montant(v["payment_amount"])
+                except ValueError:
+                    anomalies.append({**ref, "field": "finance", "issue": f"Montant payé illisible : '{v['payment_amount']}' — ignoré"})
+            parent = v.get("guardian_name") or None
+            if not parent and not tel:
+                missing_guardians += 1
+            students.append({"first_name": premier, "last_name": nom, "class_name": classe,
+                             "guardian_phone": tel, "guardian_name": parent,
+                             "fee_amount": fee, "paid_amount": paye, "_ref": ref})
+
+    # Feuilles de paiements : chaque ligne se rattache à UN élève de la liste,
+    # par son nom (ordre des mots indifférent : « KABONGO MUTOMBO Grace » et
+    # « Grace KABONGO MUTOMBO » sont la même personne), départagé par la classe.
+    # Rien n'est rattaché au hasard : un nom introuvable ou porté par deux
+    # élèves est signalé, et son montant n'entre pas.
+    notes_feuilles = {}
+    par_nom = {}
+    for s in students:
+        par_nom.setdefault(_cle_nom(f"{s['last_name']} {s['first_name']}"), []).append(s)
+    for titre, lecture in financieres:
+        if pay_col_seen:
+            notes_feuilles[titre] = ("La liste des élèves a déjà une colonne « payé » : "
+                                     "les montants de cette feuille ne sont pas ajoutés (ils seraient comptés deux fois).")
+            continue
+        rattaches = 0
+        for enr in lecture["enregistrements"]:
+            v, ligne = enr["valeurs"], enr["ligne"]
+            premier, nom = _identite(v)
+            complet = f"{nom} {premier}".strip()
+            if not complet:
+                continue
+            ref = {"row": ligne, "sheet": titre, "name": complet}
+            candidats = par_nom.get(_cle_nom(complet), [])
+            classe = v.get("class_name") or enr["classe_hors_colonne"]
+            if len(candidats) > 1 and classe:
+                candidats = [c for c in candidats if c["class_name"] == normalize_class_name(classe)]
+            if len(candidats) != 1:
+                anomalies.append({**ref, "field": "finance", "issue":
+                                  "Paiement non rattaché : " + ("élève introuvable dans la liste" if not candidats
+                                                                else "plusieurs élèves portent ce nom") + " — non importé"})
+                continue
+            eleve = candidats[0]
+            try:
+                if v.get("payment_amount"):
+                    eleve["paid_amount"] += _montant(v["payment_amount"])
+                if v.get("fee_total") and eleve["fee_amount"] is None:
+                    eleve["fee_amount"] = _montant(v["fee_total"])
+                    fee_col_seen = True
+                rattaches += 1
+            except ValueError:
+                anomalies.append({**ref, "field": "finance", "issue": "Montant illisible — ignoré"})
+        notes_feuilles[titre] = f"{rattaches} ligne(s) rattachée(s) à un élève."
+
+    total_fee = total_paid = 0.0
+    for s in students:
+        ref = s.pop("_ref")
+        if s["fee_amount"] is not None and s["paid_amount"] > s["fee_amount"]:
+            anomalies.append({**ref, "field": "finance",
+                              "issue": f"Montant payé ({s['paid_amount']:g}) supérieur au total facturé ({s['fee_amount']:g})"})
+        if s["fee_amount"] is None and s["paid_amount"] > 0:
+            anomalies.append({**ref, "field": "finance",
+                              "issue": f"Un paiement ({s['paid_amount']:g}) est indiqué sans montant dû — il ne sera pas importé"})
+            s["paid_amount"] = 0.0
+        total_fee += s["fee_amount"] or 0.0
+        total_paid += s["paid_amount"]
+
+    sheets = []
+    for titre, lecture in lues:
+        if lecture and (titre, lecture) in eleves:
+            role, detail = "eleves", f"{len(lecture['enregistrements'])} ligne(s) d'élèves, titres en ligne {lecture['ligne_titres']}"
+        elif lecture and (titre, lecture) in financieres:
+            role, detail = "paiements", notes_feuilles.get(titre, "")
+        else:
+            role, detail = "ignoree", "Aucune colonne de nom d'élève reconnue (liste de classes, texte explicatif…)"
+        sheets.append({"name": titre, "role": role, "detail": detail})
+
+    classes = sorted({s["class_name"] for s in students})
+    quality = max(55, 100 - min(30, len(duplicates) * 3) - min(30, len(anomalies) * 2))
+    return {
+        "filename": filename,
+        "total_rows_detected": sum(len(l["enregistrements"]) for _, l in eleves),
+        "students_count": len(students),
+        "classes_count": len(classes),
+        "classes_detected": classes,
+        "guardians_count": sum(1 for s in students if s["guardian_name"] or s["guardian_phone"]),
+        "columns_recognized": cols_reconnues,
+        "columns_total": cols_total,
+        "missing_info_count": missing_guardians + sum(1 for s in students if s["fee_amount"] is None),
+        "fees_detected": fee_col_seen,
+        "mapping": mapping,
+        "duplicates": duplicates,
+        "anomalies": anomalies,
+        "data_quality_score": quality,
+        "financial_projection": {
+            "total_obligations_sum": round(total_fee, 2),
+            "total_payments_sum": round(total_paid, 2),
+            "total_outstanding_sum": round(total_fee - total_paid, 2),
+        },
+        "sheets": sheets,
+        "preview_records": students[:6],
+        "normalized_records": students,
     }

@@ -1547,11 +1547,14 @@ def analyze_import():
     if "file" not in request.files:
         return jsonify({"error": "Aucun fichier reçu."}), 400
     file_storage = request.files["file"]
+    # TOUTES les feuilles du classeur sont lues (ingestion.analyze_workbook,
+    # 08/10/2026) : un fichier d'école réel — titre au-dessus du tableau, une
+    # feuille par classe, une feuille de paiements — donnait « 0 élève ».
     try:
-        data_rows = _parse_uploaded_table(file_storage)
+        feuilles = ingestion.parse_uploaded_workbook(file_storage)
     except ValidationError as e:
         return jsonify({"error": str(e)}), 400
-    analysis = ingestion.analyze_raw_data(data_rows, filename=file_storage.filename or "import")
+    analysis = ingestion.analyze_workbook(feuilles, filename=file_storage.filename or "import")
     if not analysis.get("students_count"):
         # Échouer clairement ici plutôt que de renvoyer une analyse "réussie"
         # à 0 élève que l'étape de confirmation rejetterait ensuite sans
@@ -1559,10 +1562,15 @@ def analyze_import():
         # n'a livré aucune ligne exploitable, pas après avoir cliqué "confirmer".
         audit(g.ctx["tenant_id"], g.ctx["user_id"], "import.analyzed", "tenant", g.ctx["tenant_id"], "denied",
               after={"filename": file_storage.filename, "reason": "no_exploitable_rows"})
+        # Dire ce qui a été lu, feuille par feuille : « vérifiez votre fichier »
+        # renvoyait l'école chercher seule une faute qu'elle n'a pas commise.
+        lues = ", ".join(f"« {f['name']} »" for f in analysis.get("sheets") or []) or "aucune"
         return jsonify({
-            "error": "Aucune ligne exploitable détectée dans ce fichier. Vérifiez qu'il contient une feuille "
-                     "avec une colonne nom/prénom d'élève, et que ce n'est pas la première feuille du classeur "
-                     "si celle-ci ne contient qu'un texte explicatif.",
+            "error": "Klassio n'a trouvé aucune liste d'élèves dans ce fichier (feuilles lues : " + lues + "). "
+                     "Il cherche, dans chaque feuille, une ligne de titres contenant au moins le nom des élèves "
+                     "(par exemple « Nom », « Noms et post-noms », « Élève »). Si votre fichier en a une, "
+                     "écrivez-nous : nous l'adapterons à votre fichier, pas l'inverse.",
+            "sheets": analysis.get("sheets") or [],
         }), 400
     # L'analyse est PERSISTÉE. C'est elle, et rien d'autre, qui sera écrite à la
     # confirmation : ce que la personne a vu à l'écran est exactement ce qui

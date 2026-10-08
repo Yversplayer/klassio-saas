@@ -292,12 +292,21 @@
       document.getElementById("resAnomalies").textContent = a.anomalies.length;
       document.getElementById("feesNote").hidden = a.fees_detected;
       var mapping = Object.keys(a.mapping).map(function (k) { return a.mapping[k]; });
-      document.getElementById("mappingList").innerHTML = mapping.map(function (m) {
+      // Classeur à plusieurs feuilles : dire ce que Klassio a fait de CHACUNE
+      // (liste d'élèves, paiements rattachés, feuille laissée de côté et
+      // pourquoi). Sans cela, l'école ne savait pas que sa feuille Classes
+      // n'avait pas été lue, ni que ses paiements l'avaient été.
+      var ROLES = { eleves: "Élèves", paiements: "Paiements", ignoree: "Non lue" };
+      var feuilles = (a.sheets || []).length > 1 ? a.sheets.map(function (f) {
+        return '<div class="map-row' + (f.role === "ignoree" ? " unmapped" : "") + '"><span class="map-src">Feuille « ' + escapeHtml(f.name) + ' »</span><span class="map-arrow">' + UI.icon("chevronRight", 14) + '</span><span class="map-dst">' + escapeHtml(ROLES[f.role] || f.role) + '</span><span class="map-conf">' + escapeHtml(f.detail || "") + "</span></div>";
+      }).join("") : "";
+      document.getElementById("mappingList").innerHTML = feuilles + mapping.map(function (m) {
         var ok = m.field !== "unmapped";
         return '<div class="map-row' + (ok ? "" : " unmapped") + '"><span class="map-src">' + escapeHtml(m.header) + '</span><span class="map-arrow">' + UI.icon("chevronRight", 14) + '</span><span class="map-dst">' + escapeHtml(m.label) + '</span><span class="map-conf">' + Math.round(m.confidence * 100) + ' %</span></div>';
       }).join("");
-      var issues = a.duplicates.map(function (d) { return "Ligne " + d.row + " — doublon potentiel : " + d.name + " (déjà vu ligne " + d.first_seen_row + ")"; })
-        .concat(a.anomalies.map(function (x) { return "Ligne " + x.row + " — " + x.name + " : " + x.issue; }));
+      var ou = function (x) { return (x.sheet ? "Feuille « " + x.sheet + " », ligne " : "Ligne ") + x.row; };
+      var issues = a.duplicates.map(function (d) { return ou(d) + " — doublon potentiel : " + d.name + " (déjà vu " + (d.sheet ? "" : "ligne ") + d.first_seen_row + ")"; })
+        .concat(a.anomalies.map(function (x) { return ou(x) + " — " + x.name + " : " + x.issue; }));
       var panel = document.getElementById("anomaliesPanel");
       panel.hidden = !issues.length;
       document.getElementById("anomaliesList").innerHTML = issues.slice(0, 15).map(function (t) { return "<div>" + UI.icon("alert", 13) + escapeHtml(t) + "</div>"; }).join("") +
