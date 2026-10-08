@@ -456,8 +456,10 @@ un pied de page. **Elle ne vit pas dans `style.css`** :
    Direction dont l'école n'a ni élève ni classe.** Un avertissement qui doit
    rester affiché porte `note-garde` (abonnement, suppression du seul compte
    Direction). Les notes des fenêtres de saisie ne sont pas concernées.
-3. **Une photo est une illustration, annoncée comme telle** (« Photo
-   d'illustration ») : jamais une donnée, jamais une fonction absente. Bandeaux
+3. **Une photo est une illustration** : jamais une donnée, jamais une
+   fonction absente. La mention « Photo d'illustration » et la photo de
+   l'accueil Direction ont été retirées à la demande du propriétaire (08/10) :
+   ne pas les remettre. Bandeaux
    en paysage seulement — un portrait n'y montrait qu'un morceau de visage.
    Aucune photo en économie de données ou en 2G ; rien ne bouge en mouvement
    réduit.

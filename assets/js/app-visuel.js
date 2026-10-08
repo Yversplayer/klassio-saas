@@ -8,7 +8,7 @@
 // Ce fichier ajoute, sans toucher ni aux données ni aux états :
 //   1. un BANDEAU PHOTO en tête de chaque écran (photos d'illustration déjà
 //      publiées sur la landing : adultes de face, élèves de dos ou au loin,
-//      aucun drapeau, aucun texte lisible), signalé comme illustration ;
+//      aucun drapeau, aucun texte lisible) ;
 //   2. une PILE DE PHOTOS en 3D dans les états vides ;
 //   3. un PIED DE PAGE sur chaque écran : contact et pages légales. L'adresse
 //      vivait dans la barre latérale, qui se replie par défaut — elle n'était
@@ -112,13 +112,8 @@
       titre.parentNode.insertBefore(accroche, titre);
     }
 
-    // Ce ne sont pas les élèves ni l'équipe de l'école connectée : le bandeau
-    // le dit, comme la landing annonce ses données fictives.
-    var mention = document.createElement("span");
-    mention.className = "ka-hero-mention";
-    mention.setAttribute("aria-hidden", "true");
-    mention.textContent = "Photo d'illustration";
-    tete.appendChild(mention);
+    // La mention « Photo d'illustration » a été retirée à la demande du
+    // propriétaire (08/10/2026).
 
     if (!SELON_ROLE[page]) poserPhoto(ECRAN[page]);
   }
@@ -379,11 +374,6 @@
     if (SELON_ROLE[page]) {
       var cle = photoDe(ctx.role);
       if (cle) poserPhoto(cle);
-      else if (tete) {
-        // Bandeau sans photo : il ne doit pas annoncer une « photo d'illustration ».
-        var m = tete.querySelector(".ka-hero-mention");
-        if (m) m.remove();
-      }
     }
     ecoleVide(ctx);
   }
