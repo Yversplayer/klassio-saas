@@ -37,11 +37,11 @@
     var n = Number(v), dec = Math.round(n) === n ? 0 : 2;
     // L'espace fine (U+202F) du français n'existe pas dans la police du site :
     // « 1499 $ » s'affichait collé. Espace insécable ordinaire à la place.
-    return n.toLocaleString("fr-FR", { minimumFractionDigits: dec, maximumFractionDigits: 2 }).replace(/\u202f/g, "\u00a0") + (!cur || cur === "USD" ? "\u00a0$" : " " + cur);
+    return n.toLocaleString((window.KLASSIO_LOCALE || "fr-FR"), { minimumFractionDigits: dec, maximumFractionDigits: 2 }).replace(/\u202f/g, "\u00a0") + (!cur || cur === "USD" ? "\u00a0$" : " " + cur);
   }
   function tranche(p) {
-    return p.max_students ? (p.min_students ? "De " + p.min_students.toLocaleString("fr-FR") + " à " : "Jusqu'à ") + p.max_students.toLocaleString("fr-FR") + " élèves"
-                          : "Plus de " + (p.min_students - 1).toLocaleString("fr-FR") + " élèves ou plusieurs établissements";
+    return p.max_students ? (p.min_students ? "De " + p.min_students.toLocaleString((window.KLASSIO_LOCALE || "fr-FR")) + " à " : "Jusqu'à ") + p.max_students.toLocaleString((window.KLASSIO_LOCALE || "fr-FR")) + " élèves"
+                          : "Plus de " + (p.min_students - 1).toLocaleString((window.KLASSIO_LOCALE || "fr-FR")) + " élèves ou plusieurs établissements";
   }
   function surDevis(p) { return p.max_students == null && !Number(p.base_price); }
   function annuelPossible(p) { return p.yearly_price != null && !surDevis(p); }
@@ -73,7 +73,7 @@
       var jusqua = S.provisional && S.provisional_until ? new Date(parseFloat(S.provisional_until) * 1000) : null;
       host.innerHTML = testeur() + '<div class="of-wait"><span class="of-wait-ic">' + UI.icon("clock", 20) + "</span><div><strong>Paiement déclaré — " + (jusqua ? "en cours de vérification" : "en attente de confirmation") + "</strong>" +
         "<p>Facture " + UI.escapeHtml(inv.number) + " · " + montant(inv.amount, inv.currency) + " · référence " + UI.escapeHtml(inv.reference || "—") + ". " +
-        (jusqua ? "Votre espace est ouvert pendant la vérification, jusqu'au " + jusqua.toLocaleDateString("fr-FR", { day: "numeric", month: "long" }) + " à " + jusqua.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }) + "." : "Votre espace s'ouvre dès que Klassio a vérifié le paiement.") + "</p>" +
+        (jusqua ? "Votre espace est ouvert pendant la vérification, jusqu'au " + jusqua.toLocaleDateString((window.KLASSIO_LOCALE || "fr-FR"), { day: "numeric", month: "long" }) + " à " + jusqua.toLocaleTimeString((window.KLASSIO_LOCALE || "fr-FR"), { hour: "2-digit", minute: "2-digit" }) + "." : "Votre espace s'ouvre dès que Klassio a vérifié le paiement.") + "</p>" +
         (jusqua ? '<a class="btn btn-lime btn-sm" href="dashboard.html">Entrer dans mon espace</a> ' : "") +
         '<a class="btn btn-ghost btn-sm" target="_blank" rel="noopener" href="' + wa("Bonjour, je viens de déclarer le paiement de la facture " + inv.number + " pour " + (S.school_name || "mon établissement") + ".") + '">' + UI.icon("phone", 15) + "Prévenir Klassio sur WhatsApp</a></div></div>";
       wireBypass(host, opts);
@@ -104,7 +104,7 @@
           '<span class="of-range">' + UI.escapeHtml(tranche(p)) + "</span>" +
           '<p class="of-price">' + (devis ? "<b>Sur devis</b>" : "<b>" + montant(prix, p.currency) + "</b> <small>" + (annuel ? "/ an" : "/ mois") + "</small>") + "</p>" +
           (annuel ? '<span class="of-eq">soit ' + montant(Math.round(prix / 12 * 100) / 100, p.currency) + " par mois</span>" : '<span class="of-eq">Toutes les fonctionnalités</span>') +
-          (trop ? '<span class="of-note">Votre établissement compte ' + S.students.toLocaleString("fr-FR") + " élèves</span>"
+          (trop ? '<span class="of-note">Votre établissement compte ' + S.students.toLocaleString((window.KLASSIO_LOCALE || "fr-FR")) + " élèves</span>"
             : devis ? '<a class="of-cta" target="_blank" rel="noopener" href="' + wa("Bonjour, je souhaite un devis Klassio pour " + (S.school_name || "notre réseau d'établissements") + ".") + '">Demander un devis</a>'
             : '<button type="button" class="of-cta' + (choisi === p.code ? " is-primary" : "") + '" data-plan="' + UI.escapeHtml(p.code) + '">Choisir ' + UI.escapeHtml(p.name) + "</button>") +
           "</article>";

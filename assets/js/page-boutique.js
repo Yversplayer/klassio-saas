@@ -368,7 +368,7 @@
       '<div class="two-col"><div class="panel"><div class="panel-head"><h2>Ventes par mois</h2><span class="sub">6 derniers mois</span></div>' +
         (stats.par_mois.length ? '<div class="ks-barres">' + stats.par_mois.map(function (m) {
           var d = new Date(m.mois + "-01T00:00:00");
-          return '<div class="ks-barre-col"><span class="ks-barre-val">' + UI.escapeHtml(UI.compactMoney ? UI.compactMoney(m.montant, cur) : String(m.montant)) + '</span><span class="ks-histo-barre" style="height:' + Math.max(4, Math.round(m.montant / max * 100)) + '%"></span><span class="ks-barre-mois">' + d.toLocaleDateString("fr-FR", { month: "short" }) + "</span></div>";
+          return '<div class="ks-barre-col"><span class="ks-barre-val">' + UI.escapeHtml(UI.compactMoney ? UI.compactMoney(m.montant, cur) : String(m.montant)) + '</span><span class="ks-histo-barre" style="height:' + Math.max(4, Math.round(m.montant / max * 100)) + '%"></span><span class="ks-barre-mois">' + d.toLocaleDateString((window.KLASSIO_LOCALE || "fr-FR"), { month: "short" }) + "</span></div>";
         }).join("") + "</div>" : '<p class="muted">Aucune vente pour le moment.</p>') + "</div>" +
       '<div class="panel"><div class="panel-head"><h2>Ce qui se vend</h2><span class="sub">quantités vendues</span></div>' +
         UI.barRows(vendus.slice(0, 8).map(function (p) { return { label: p.name, value: p.vendus }; }), { empty: "Aucune vente pour le moment." }) + "</div></div>" +

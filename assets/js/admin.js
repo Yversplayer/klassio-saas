@@ -194,6 +194,8 @@
       // l'établissement dans le bandeau, notes d'aide d'une école encore vide.
       // Du décor seulement — rien de ce qu'elle reçoit ne décide d'un accès.
       if (window.KlassioDecor) window.KlassioDecor.contexte(ctx);
+      // La langue suit le compte d'un appareil à l'autre (langue.js).
+      if (window.KlassioLangue && ctx.language) window.KlassioLangue.accorder(ctx.language);
       if (isMobile()) document.getElementById("sidebarNav").addEventListener("click", function () { setCollapsed(true); });
       return ctx;
     });
@@ -315,7 +317,7 @@
       '<div class="s-account-menu" id="accountMenu" hidden role="menu">' +
         '<a href="parametres.html" class="s-acc-item" role="menuitem">' + UI.icon("settings", 15) + "Paramètres</a>" +
         (ctx.role === "directeur"
-          ? '<a href="abonnement.html" class="s-acc-item" role="menuitem">' + UI.icon("receipt", 15) + "Abonnement</a>"
+          ? '<a href="parametres.html?section=facturation" class="s-acc-item" role="menuitem">' + UI.icon("receipt", 15) + "Facturation</a>"
           : "") +
         '<a href="mailto:mudeyimusimwa@gmail.com" class="s-acc-item" role="menuitem">' + UI.icon("mail", 15) + "Écrire à Klassio</a>" +
         '<button type="button" class="s-acc-item" id="logoutBtn" role="menuitem">' + UI.icon("logout", 15) + "Se déconnecter</button>" +

@@ -144,7 +144,7 @@
     if (classes.length > 1) {
       var k = document.getElementById("classKpis"); k.hidden = false;
       var absent = classes.reduce(function (s, c) { return s + (c.absent_today || 0); }, 0);
-      k.innerHTML = UI.kpi("Classes", String(classes.length), { icon: "classes" }) + UI.kpi("Élèves", total.toLocaleString("fr-FR"), { icon: "students" }) +
+      k.innerHTML = UI.kpi("Classes", String(classes.length), { icon: "classes" }) + UI.kpi("Élèves", total.toLocaleString((window.KLASSIO_LOCALE || "fr-FR")), { icon: "students" }) +
         UI.kpi("Appels faits aujourd'hui", called + " / " + classes.length, { icon: "clipboard", tone: called === classes.length ? "ok" : "" }) + UI.kpi("Absents aujourd'hui", String(absent), { icon: "calendar", tone: absent ? "bad" : "ok" });
     }
     var groups = {};

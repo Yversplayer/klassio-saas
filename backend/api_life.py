@@ -750,13 +750,18 @@ def student_contacts(student_id):
                     "message_link": f"messages.html?student={student_id}"})
 
 
+# Les langues de l'interface — les mêmes que assets/js/langue.js.
+LANGUES_INTERFACE = ("fr", "en", "es", "pt", "de", "sw", "ln")
+
+
 @bp.get("/api/me/preferences")
 @require_auth
 def get_preferences():
     conn = db.get_connection()
     row = conn.execute("SELECT * FROM user_preferences WHERE user_id=?", (g.ctx["user_id"],)).fetchone()
     conn.close()
-    return jsonify({"notify_present_daily": bool(row["notify_present_daily"]) if row else True, "share_phone": bool(row["share_phone"]) if row else False})
+    return jsonify({"notify_present_daily": bool(row["notify_present_daily"]) if row else True, "share_phone": bool(row["share_phone"]) if row else False,
+                    "language": (row["language"] if row else None) or "fr"})
 
 
 @bp.put("/api/me/preferences")
@@ -767,8 +772,15 @@ def put_preferences():
     cur = conn.execute("SELECT * FROM user_preferences WHERE user_id=?", (g.ctx["user_id"],)).fetchone()
     npd = int(bool(data.get("notify_present_daily", cur["notify_present_daily"] if cur else 1)))
     sp = int(bool(data.get("share_phone", cur["share_phone"] if cur else 0)))
-    conn.execute("INSERT INTO user_preferences (user_id, notify_present_daily, share_phone, updated_at) VALUES (?,?,?,?) ON CONFLICT(user_id) DO UPDATE SET notify_present_daily=excluded.notify_present_daily, share_phone=excluded.share_phone, updated_at=excluded.updated_at",
-                 (g.ctx["user_id"], npd, sp, str(time.time())))
+    # Langue de l'interface (08/10/2026) : une liste fermée. Une valeur
+    # inconnue est refusée plutôt qu'enregistrée — elle finirait dans
+    # l'attribut lang de chaque page et dans le chemin d'un dictionnaire.
+    langue = data.get("language", cur["language"] if cur else None)
+    if langue is not None and langue not in LANGUES_INTERFACE:
+        conn.close()
+        return jsonify({"error": "Langue non prise en charge."}), 400
+    conn.execute("INSERT INTO user_preferences (user_id, notify_present_daily, share_phone, updated_at, language) VALUES (?,?,?,?,?) ON CONFLICT(user_id) DO UPDATE SET notify_present_daily=excluded.notify_present_daily, share_phone=excluded.share_phone, updated_at=excluded.updated_at, language=excluded.language",
+                 (g.ctx["user_id"], npd, sp, str(time.time()), langue))
     conn.commit()
     conn.close()
-    return jsonify({"notify_present_daily": bool(npd), "share_phone": bool(sp)})
+    return jsonify({"notify_present_daily": bool(npd), "share_phone": bool(sp), "language": langue or "fr"})

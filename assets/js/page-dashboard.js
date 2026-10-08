@@ -93,7 +93,7 @@
     ].filter(function (t) { return t.count > 0; });
     var enAttente = todo.reduce(function (s, t) { return s + t.count; }, 0);
 
-    var hero = '<section class="kt-hero kt-3d"><span class="kt-sur">' + UI.escapeHtml(new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })) + "</span>" +
+    var hero = '<section class="kt-hero kt-3d"><span class="kt-sur">' + UI.escapeHtml(new Date().toLocaleDateString((window.KLASSIO_LOCALE || "fr-FR"), { weekday: "long", day: "numeric", month: "long" })) + "</span>" +
       "<h1 class=\"kt-titre\">Bonjour" + (ctx.user_name ? ", " + UI.escapeHtml(api.firstName(ctx.user_name)) : "") + ".</h1>" +
       "<p>" + UI.escapeHtml(ctx.tenant_name || "") + (ctx.tenant_name ? " — " : "") + (enAttente ? UI.plural(todo.length, "sujet vous attend", "sujets vous attendent") + " aujourd'hui." : "tout est à jour ce matin.") + "</p>" +
       '<div class="kt-actions"><a class="kt-btn-lime" href="eleves.html?new=1">' + UI.icon("plus", 15) + 'Ajouter un élève</a><a class="kt-btn-clair" href="paiements.html?new=1">' + UI.icon("payments", 15) + 'Enregistrer un paiement</a><a class="kt-btn-clair" href="etablissement.html?tab=equipe">' + UI.icon("users", 15) + "Inviter</a></div>" +
@@ -105,7 +105,7 @@
     var aujourdhui = '<section class="kt-carte kt-3d"><div class="kt-tete"><h2>Présence du jour</h2><a class="link-btn" href="classes.html">Classes</a></div>' + appel + "</section>";
 
     var trio = '<div class="kt-trio">' +
-      '<a class="kt-stat t1 kt-3d" href="eleves.html"><span class="kt-stat-ic">' + UI.icon("students", 20) + '</span><span class="kt-stat-lbl">Élèves</span><span class="kt-stat-val">' + d.student_count.toLocaleString("fr-FR") + '</span><span class="kt-stat-sub">' + UI.plural(d.class_count, "classe") + " · " + UI.plural(d.teacher_count, "enseignant") + "</span>" + "</a>" +
+      '<a class="kt-stat t1 kt-3d" href="eleves.html"><span class="kt-stat-ic">' + UI.icon("students", 20) + '</span><span class="kt-stat-lbl">Élèves</span><span class="kt-stat-val">' + d.student_count.toLocaleString((window.KLASSIO_LOCALE || "fr-FR")) + '</span><span class="kt-stat-sub">' + UI.plural(d.class_count, "classe") + " · " + UI.plural(d.teacher_count, "enseignant") + "</span>" + "</a>" +
       '<a class="kt-stat t2 kt-3d" href="finance.html"><span class="kt-stat-ic">' + UI.icon("payments", 20) + '</span><span class="kt-stat-lbl">Encaissé</span><span class="kt-stat-val">' + UI.compactMoney(d.total_paid, d.currency) + '</span><span class="kt-stat-sub">' + d.collection_rate + " % de " + UI.compactMoney(d.total_due, d.currency) + ' attendus</span><span class="kt-jauge"><span style="width:' + Math.max(0, Math.min(100, d.collection_rate)) + '%"></span></span>' + "</a>" +
       '<a class="kt-stat t3 kt-3d" href="finance.html#impayes"><span class="kt-stat-ic">' + UI.icon("alert", 20) + '</span><span class="kt-stat-lbl">Restant à encaisser</span><span class="kt-stat-val">' + UI.compactMoney(d.outstanding, d.currency) + '</span><span class="kt-stat-sub">' + (d.outstanding > 0 ? "Voir les impayés dans Finance" : "Aucun impayé") + "</span>" + "</a>" +
       "</div>";

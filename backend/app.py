@@ -440,6 +440,8 @@ def me():
                              "locked": sub["locked"], "bypass": sub["bypass"],
                              "provisional": sub["provisional"], "provisional_until": sub["provisional_until"]}
     extra["title"] = membership["title"] if membership else None
+    pref = conn.execute("SELECT language FROM user_preferences WHERE user_id=?", (g.ctx["user_id"],)).fetchone()
+    extra["language"] = (pref["language"] if pref else None) or "fr"
     if g.ctx["role"] == "discipline":
         extra["scope_cycles"] = school.discipline_scope_cycles(conn, g.ctx)
     if g.ctx["role"] == "professeur":

@@ -733,6 +733,8 @@ def _migrate(conn):
     _add_column_if_missing(conn, "plans", "yearly_price", "REAL")
     _add_column_if_missing(conn, "subscriptions", "billing_cycle", "TEXT NOT NULL DEFAULT 'monthly'")
     _add_column_if_missing(conn, "invoices", "billing_cycle", "TEXT NOT NULL DEFAULT 'monthly'")
+    # Langue de l'interface (08/10/2026). NULL = français, la langue d'origine.
+    _add_column_if_missing(conn, "user_preferences", "language", "TEXT")
 
     # Plans d'abonnement par défaut (modifiables par l'administration de la plateforme).
     if not conn.execute("SELECT 1 FROM plans LIMIT 1").fetchone():

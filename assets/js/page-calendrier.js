@@ -31,8 +31,14 @@
   var filtres = { evenements: true, examens: true, devoirs: true, echeances: true, convocations: true, presences: true, periodes: true };
   var sens = 0;                                          // -1 / +1 : direction de la dernière navigation
 
-  var MOIS = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
-  var JOURS_COURTS = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
+  // Noms de mois et de jours dans la langue de l'interface (langue.js) : des
+  // dates assemblées à la main ne se traduiraient pas d'un bloc.
+  var LOC = window.KLASSIO_LOCALE || "fr-FR";
+  var MOIS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map(function (m) { return new Date(2026, m, 1).toLocaleDateString(LOC, { month: "long" }); });
+  var JOURS_COURTS = [5, 6, 7, 8, 9, 10, 11].map(function (j) {
+    var t = new Date(2026, 9, j).toLocaleDateString(LOC, { weekday: "short" }).replace(/\.$/, "");
+    return t.charAt(0).toUpperCase() + t.slice(1);
+  });
   var HEURE_DEBUT = 7, HEURE_FIN = 18;
 
   // Chaque type d'élément appartient à une famille (filtre) et à une couleur.

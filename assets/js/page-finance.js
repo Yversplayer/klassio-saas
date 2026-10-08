@@ -32,7 +32,7 @@
   function render(rep, dash, items) {
     var T = window.KlassioTableau;
     var cur = rep.currency, f = rep.financial;
-    var monthly = rep.monthly_collections.map(function (m) { var d = new Date(m.month + "-01T00:00:00"); return { label: d.toLocaleDateString("fr-FR", { month: "short" }), value: m.total, display: UI.compactMoney(m.total, cur) }; });
+    var monthly = rep.monthly_collections.map(function (m) { var d = new Date(m.month + "-01T00:00:00"); return { label: d.toLocaleDateString((window.KLASSIO_LOCALE || "fr-FR"), { month: "short" }), value: m.total, display: UI.compactMoney(m.total, cur) }; });
     var classRows = dash.classes_outstanding.filter(function (c) { return c.student_count > 0; }).map(function (c) { return { label: c.name, value: c.outstanding, display: UI.compactMoney(c.outstanding, cur), cls: c.outstanding > 0 ? "warn" : "", href: "classe.html?id=" + c.id + "&tab=situation" }; });
     var catalogue = items.filter(function (i) { return i.category !== "boutique"; });
     var aConfirmer = dash.pending_payments || 0;

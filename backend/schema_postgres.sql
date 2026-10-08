@@ -880,7 +880,8 @@ CREATE TABLE IF NOT EXISTS user_preferences (
   user_id TEXT PRIMARY KEY REFERENCES users(id),
   notify_present_daily INTEGER NOT NULL DEFAULT 1,
   share_phone INTEGER NOT NULL DEFAULT 0,
-  updated_at TEXT
+  updated_at TEXT,
+  language TEXT                   -- langue de l'interface (08/10/2026) ; NULL = français
 );
 
 -- ---------------------------------------------------------------------------

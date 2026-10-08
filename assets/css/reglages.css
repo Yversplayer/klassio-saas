@@ -1,0 +1,82 @@
+/* =========================================================
+   KLASSIO — Paramètres et Facturation (08/10/2026)
+   Le propriétaire : « suis vraiment ce que tes créateurs ont fait », c'est-à-
+   dire les réglages de Claude — une colonne de sections à gauche, une section
+   à la fois, des lignes calmes séparées d'un filet, peu de boîtes — en
+   gardant l'identité de Klassio : Fraunces pour les titres, Plus Jakarta Sans,
+   vert forêt et lime. Préfixe kr-. Chargée par parametres.html seulement.
+   ========================================================= */
+.kr-page { max-width: 1080px; }
+.kr-titre { margin: 6px 0 26px; font-family: var(--font-display); font-weight: 500; font-size: clamp(28px, 3vw, 36px); letter-spacing: -.01em; }
+.kr-cadre { display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 44px; align-items: start; }
+
+/* Colonne des sections */
+.kr-nav { position: sticky; top: 84px; display: flex; flex-direction: column; gap: 2px; }
+.kr-nav-item { display: block; padding: 9px 12px; border-radius: 10px; color: var(--ink-soft); font-size: 14px; font-weight: 600; text-decoration: none; transition: background .15s ease, color .15s ease; }
+.kr-nav-item:hover { background: var(--surface-soft); color: var(--ink); }
+.kr-nav-item.active { background: var(--surface-soft); color: var(--ink); box-shadow: inset 0 0 0 1px var(--line); }
+.kr-nav-item:focus-visible { outline: none; box-shadow: var(--focus); }
+
+/* Une section */
+.kr-section > h2 { margin: 0 0 6px; font-size: 20px; font-weight: 700; }
+.kr-bloc { margin-top: 30px; }
+.kr-bloc > h3 { margin: 0 0 4px; font-size: 15px; font-weight: 700; }
+.kr-intro { margin: 0 0 10px; font-size: 13.5px; line-height: 1.5; color: var(--ink-soft); }
+.kr-vide { margin: 8px 0 0; font-size: 13.5px; color: var(--ink-soft); }
+.kr-petit { display: block; font-size: 12px; color: var(--ink-faint); text-align: right; }
+
+/* Une ligne : libellé à gauche, contrôle à droite, un filet au-dessus */
+.kr-ligne { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 16px 0; border-top: 1px solid var(--line); }
+.kr-bloc > h3 + .kr-ligne, .kr-bloc > .kr-intro + .kr-ligne { margin-top: 10px; }
+.kr-lib { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.kr-lib strong { font-size: 14px; font-weight: 600; }
+.kr-lib span { font-size: 13px; line-height: 1.5; color: var(--ink-soft); max-width: 60ch; }
+.kr-ctrl { flex: none; display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--ink); text-align: right; }
+.kr-ligne.kr-colonne { flex-direction: column; align-items: stretch; gap: 12px; }
+
+/* Les panneaux et interrupteurs existants, mis à plat dans une section */
+.kr-contenu .panel { margin: 30px 0 0; padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; animation: none; }
+.kr-contenu .panel-head { margin-bottom: 10px; }
+.kr-contenu .panel-head h2 { font-size: 15px; font-weight: 700; }
+.kr-contenu .switch { margin: 0; padding: 16px 0; border: 0; border-top: 1px solid var(--line); border-radius: 0; background: none; }
+.kr-contenu .danger-zone { padding: 18px 20px; border: 1px solid #E7B9A8; border-radius: 16px; background: transparent; }
+:root[data-theme="dark"] .kr-contenu .danger-zone { border-color: #6A3424; }
+.kr-contenu .danger-zone > h3 { color: #A33A12; }
+:root[data-theme="dark"] .kr-contenu .danger-zone > h3 { color: #F0A07E; }
+
+/* Langues */
+.kr-langues { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.kr-langue { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 11px 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: inherit; text-align: left; cursor: pointer; transition: border-color .15s ease, background .15s ease; }
+.kr-langue strong { font-size: 14px; font-weight: 700; }
+.kr-langue span { font-size: 12px; color: var(--ink-soft); }
+.kr-langue:hover { border-color: var(--ink-faint); }
+.kr-langue.active { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+.kr-langue:focus-visible { outline: none; box-shadow: var(--focus); }
+.kr-langue:disabled { opacity: .6; cursor: progress; }
+
+/* Facturation — l'offre en tête, comme la carte « plan » de Claude */
+.kr-offre { display: flex; align-items: center; gap: 16px; margin-top: 14px; padding: 18px 20px; border-radius: 16px; border: 1px solid var(--line); background: var(--surface); }
+.kr-offre-ic { flex: none; display: grid; place-items: center; width: 48px; height: 48px; border-radius: 14px; background: #16301F; color: #B8FF00; }
+.kr-offre-txt { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.kr-offre-txt strong { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-family: var(--font-display); font-size: 19px; font-weight: 600; }
+.kr-offre-txt span { font-size: 13px; color: var(--ink-soft); }
+.kr-offre-prix { margin-left: auto; display: flex; flex-direction: column; align-items: flex-end; text-align: right; }
+.kr-offre-prix strong { font-size: 22px; font-weight: 800; letter-spacing: -.02em; }
+.kr-offre-prix span { font-size: 12.5px; color: var(--ink-soft); }
+.kr-contenu .note-inline { margin-top: 14px; }
+.kr-table th { font-size: 12px; }
+
+@media (max-width: 860px) {
+  .kr-cadre { grid-template-columns: 1fr; gap: 18px; }
+  .kr-nav { position: static; flex-direction: row; overflow-x: auto; gap: 6px; padding-bottom: 4px; scrollbar-width: none; }
+  .kr-nav::-webkit-scrollbar { display: none; }
+  .kr-nav-item { flex: none; padding: 8px 14px; border: 1px solid var(--line); border-radius: 100px; }
+  .kr-nav-item.active { background: var(--ink); color: var(--surface); box-shadow: none; border-color: var(--ink); }
+}
+@media (max-width: 560px) {
+  .kr-ligne { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .kr-ctrl { text-align: left; }
+  .kr-offre { flex-wrap: wrap; }
+  .kr-offre-prix { margin-left: 0; align-items: flex-start; text-align: left; width: 100%; }
+  .kr-petit { text-align: left; }
+}

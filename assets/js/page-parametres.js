@@ -6,23 +6,113 @@
   var UI = window.KlassioUI, api = window.KlassioApi, admin = window.KlassioAdmin;
   var ctx = null;
 
+  // Sections par rôle, dans l'ordre de la colonne de gauche. Une section
+  // qu'un rôle ne concerne pas n'apparaît pas — plutôt qu'un écran vide.
+  var SECTIONS = {
+    directeur: ["general", "compte", "confidentialite", "notifications", "etablissement", "facturation"],
+    professeur: ["general", "compte", "confidentialite", "acces"],
+    discipline: ["general", "compte", "confidentialite", "acces"],
+    parent: ["general", "compte", "confidentialite", "notifications"],
+  };
+  var NOMS = { general: "Général", compte: "Compte", confidentialite: "Confidentialité", notifications: "Notifications", etablissement: "Établissement", acces: "Vos accès", facturation: "Facturation" };
+
   admin.initShell("parametres").then(function (c) {
     ctx = c;
     document.getElementById("pName").textContent = c.user_name || "—";
     document.getElementById("pRole").textContent = (api.roleLabels[c.role] || c.role) + (c.title ? " — " + c.title : "");
     document.getElementById("pSchool").textContent = c.tenant_name || "—";
+    naviguer(c);
     renderProfile(c);
+    renderLangues();
     renderPreferences(c);
+    renderConfidentialite(c);
     renderAbonnement(c);
     renderSuppression(c);
-    if (UI.qs("tab") === "abonnement") {
-      var cible = document.getElementById("abonnement");
-      if (cible) setTimeout(function () { cible.scrollIntoView({ behavior: "smooth", block: "start" }); }, 200);
-    }
     if (c.role === "directeur") loadSettings();
-    else if (c.role === "professeur") document.getElementById("settingsPanels").innerHTML = '<div class="panel"><div class="panel-head"><h2>Vos accès</h2></div><dl class="dl"><dt>Situation financière des classes</dt><dd>' + (c.finance_visible ? UI.badge("ok", "Autorisée par la Direction") : UI.badge("neutral", "Non autorisée")) + "</dd><dt>Titulaire</dt><dd>" + (c.is_titulaire ? UI.badge("ok", "Oui") : "Non") + "</dd><dt>Niveau</dt><dd>" + UI.escapeHtml(c.teaching_level === "primaire" ? "Maternelle / primaire" : c.teaching_level === "secondaire" ? "Secondaire" : "—") + '</dd></dl><p class="muted mt-8">Ces accès sont décidés par la Direction — rien ne se règle depuis votre espace.</p></div>';
-    else if (c.role === "discipline") document.getElementById("settingsPanels").innerHTML = '<div class="panel"><div class="panel-head"><h2>Votre périmètre</h2></div><div class="pill-row">' + (c.scope_cycles || []).map(function (x) { return UI.badge(x, x); }).join("") + '</div><p class="muted mt-8">Vous voyez les classes de ces cycles : présences, retards, incidents, convocations. Les finances ne relèvent jamais de la discipline. Le périmètre et le titre sont fixés par la Direction.</p><p class="mt-16"><a class="link-btn" href="discipline.html?tab=regles">Voir le capital de points et les seuils</a></p></div>';
+    else if (c.role === "professeur") document.getElementById("krAcces").innerHTML = '<div class="kr-bloc">' + ligne("Situation financière des classes", "", c.finance_visible ? UI.badge("ok", "Autorisée par la Direction") : UI.badge("neutral", "Non autorisée")) + ligne("Titulaire", "", c.is_titulaire ? UI.badge("ok", "Oui") : "Non") + ligne("Niveau", "", UI.escapeHtml(c.teaching_level === "primaire" ? "Maternelle / primaire" : c.teaching_level === "secondaire" ? "Secondaire" : "—")) + '<p class="kr-intro">Ces accès sont décidés par la Direction — rien ne se règle depuis votre espace.</p></div>';
+    else if (c.role === "discipline") document.getElementById("krAcces").innerHTML = '<div class="kr-bloc"><h3>Votre périmètre</h3><div class="pill-row">' + (c.scope_cycles || []).map(function (x) { return UI.badge(x, x); }).join("") + '</div><p class="kr-intro">Vous voyez les classes de ces cycles : présences, retards, incidents, convocations. Les finances ne relèvent jamais de la discipline. Le périmètre et le titre sont fixés par la Direction.</p>' + ligne("Capital de points et seuils", "", '<a class="btn btn-ghost btn-sm" href="discipline.html?tab=regles">Voir</a>') + "</div>";
   });
+
+  // Une ligne « réglage » : libellé et explication à gauche, contrôle à droite.
+  function ligne(titre, desc, droite) {
+    return '<div class="kr-ligne"><div class="kr-lib"><strong>' + titre + "</strong>" + (desc ? "<span>" + desc + "</span>" : "") + '</div><div class="kr-ctrl">' + (droite || "") + "</div></div>";
+  }
+
+  // ---- Navigation entre sections ----
+  // `?section=` porte la section ; `?tab=abonnement` (ancien lien, bandeau de
+  // lecture seule) mène à Facturation.
+  function naviguer(c) {
+    var liste = SECTIONS[c.role] || SECTIONS.parent;
+    var nav = document.getElementById("krNav");
+    nav.innerHTML = liste.map(function (n) { return '<a href="parametres.html?section=' + n + '" class="kr-nav-item" data-section="' + n + '">' + NOMS[n] + "</a>"; }).join("");
+    var voulu = UI.qs("tab") === "abonnement" ? "facturation" : UI.qs("section");
+    montrer(liste.indexOf(voulu) >= 0 ? voulu : liste[0], false);
+    nav.addEventListener("click", function (e) {
+      var a = e.target.closest("[data-section]");
+      if (!a) return;
+      e.preventDefault();
+      montrer(a.dataset.section, true);
+    });
+    window.addEventListener("popstate", function () {
+      var s = UI.qs("section");
+      montrer(liste.indexOf(s) >= 0 ? s : liste[0], false);
+    });
+    if (location.hash === "#langue") setTimeout(function () { var l = document.getElementById("langue"); if (l) l.scrollIntoView({ block: "start" }); }, 150);
+  }
+  function montrer(nom, pousser) {
+    document.querySelectorAll(".kr-section").forEach(function (s) { s.hidden = s.dataset.section !== nom; });
+    document.querySelectorAll(".kr-nav-item").forEach(function (a) {
+      var on = a.dataset.section === nom;
+      a.classList.toggle("active", on);
+      if (on) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
+    });
+    if (pousser) { history.pushState(null, "", "parametres.html?section=" + nom); window.scrollTo(0, 0); }
+  }
+
+  // ---- Langue ----
+  // La traduction elle-même vit dans langue.js : ici, seulement le choix.
+  function renderLangues() {
+    var hote = document.getElementById("krLangues"), L = window.KlassioLangue;
+    if (!hote || !L) return;
+    var actuelle = L.actuelle();
+    hote.innerHTML = L.liste().map(function (l) {
+      var on = l.code === actuelle;
+      return '<button type="button" role="radio" aria-checked="' + on + '" class="kr-langue' + (on ? " active" : "") + '" data-langue="' + l.code + '" lang="' + l.code + '"><strong data-no-tr>' + l.nom + "</strong><span>" + l.region + "</span></button>";
+    }).join("");
+    hote.addEventListener("click", function (e) {
+      var b = e.target.closest("[data-langue]");
+      if (!b || b.dataset.langue === L.actuelle()) return;
+      hote.querySelectorAll("[data-langue]").forEach(function (x) { x.disabled = true; });
+      L.choisir(b.dataset.langue).then(function (ok) {
+        if (!ok) { hote.querySelectorAll("[data-langue]").forEach(function (x) { x.disabled = false; }); UI.toast("Impossible d'enregistrer la langue.", "error"); return; }
+        window.location.reload();
+      });
+    });
+  }
+
+  // ---- Confidentialité ----
+  // Ne rassemble que ce qui existe vraiment : la politique publiée, la
+  // sécurité, la visibilité des coordonnées, l'export, l'assistant en lecture
+  // seule, la suppression du compte. Aucun réglage décoratif.
+  function renderConfidentialite(c) {
+    var hote = document.getElementById("krConfidentialite");
+    var html = '<div class="kr-bloc"><h3>Vos données</h3>' +
+      ligne("Politique de confidentialité", "Ce que Klassio collecte, pourquoi, combien de temps, et vos droits.", '<a class="btn btn-ghost btn-sm" href="../confidentialite.html" target="_blank" rel="noopener">Lire</a>') +
+      ligne("Sécurité", "Comment les données des élèves et des familles sont protégées.", '<a class="btn btn-ghost btn-sm" href="../securite.html" target="_blank" rel="noopener">Lire</a>') +
+      (c.role === "directeur" ? ligne("Exporter les données de l'établissement", "Un classeur Excel par type de données, dans une archive à télécharger.", '<a class="btn btn-ghost btn-sm" href="exports.html">Exporter</a>') : "") +
+      '</div><div class="kr-bloc" id="krVisibilite"></div>' +
+      '<div class="kr-bloc"><h3>Assistant</h3>' +
+      ligne("En lecture seule", "L'assistant de Klassio ne peut ni créer, ni modifier, ni supprimer quoi que ce soit.", UI.badge("ok", "Toujours")) +
+      ligne("Vos échanges avec l'assistant", "Supprimés avec votre compte.", "") +
+      "</div>" +
+      '<div class="kr-bloc"><h3>Suppression</h3>' +
+      ligne("Supprimer mon compte", "Ce qui part et ce qui reste vous est expliqué avant toute confirmation.", '<a class="btn btn-ghost btn-sm" href="parametres.html?section=compte" id="krVersSuppr">Voir</a>') + "</div>";
+    hote.innerHTML = html;
+    document.getElementById("krVersSuppr").addEventListener("click", function (e) {
+      e.preventDefault(); montrer("compte", true);
+      document.getElementById("suppressionCompte").scrollIntoView({ block: "start" });
+    });
+  }
 
   api.wirePasswordRules(document.getElementById("pwNew"), document.getElementById("pwRules"));
   document.getElementById("pwForm").addEventListener("submit", function (e) {
@@ -40,6 +130,9 @@
       msg.textContent = "Mot de passe mis à jour. Vos autres sessions ont été déconnectées."; msg.className = "form-msg success";
     });
   });
+
+  var dec = document.getElementById("krDeconnexion");
+  if (dec) dec.addEventListener("click", function () { var b = document.getElementById("logoutBtn"); if (b) b.click(); });
 
   // ---- Profil : téléphone et email de connexion ----
   // ---- Apparence : le thème, déplacé de la topbar vers les paramètres ----
@@ -157,63 +250,22 @@
   // de règlement pour l'abonnement Klassio, et l'écran ne prétend pas le
   // contraire.
   function renderAbonnement(c) {
-    var panneau = document.getElementById("abonnement");
-    if (!panneau || c.role !== "directeur") return;
-    panneau.hidden = false;
+    if (c.role !== "directeur") return;
     var corps = document.getElementById("abonnementCorps");
-    corps.innerHTML = UI.skeleton("row", 2);
-
-    api.fetch("/subscription").then(function (res) {
-      if (!res.ok) {
-        corps.innerHTML = UI.errorState("Abonnement indisponible", res.body.error || "");
-        return;
-      }
-      var s = res.body, plan = s.plan || null;
-      var ETATS = {
-        awaiting_plan: ["warn", "Offre à choisir"],
-        awaiting_payment: ["warn", "En attente du paiement"],
-        trial: ["ok", "Période d'essai"],
-        active: ["ok", "Actif"],
-        past_due: ["warn", "Facture en retard"],
-        suspended: ["bad", "Lecture seule"],
-        cancelled: ["neutral", "Résilié"],
-      };
-      var etat = ETATS[s.status] || ["neutral", s.status];
-
-      corps.innerHTML =
-        '<div class="kpi-grid cols-3" style="margin-bottom:14px">' +
-        UI.kpi("Statut", etat[1], { icon: "receipt", tone: etat[0] === "ok" ? "ok" : etat[0],
-          sub: s.status === "trial" && s.days_left != null ? UI.plural(s.days_left, "jour restant", "jours restants") : "" }) +
-        UI.kpi("Formule", plan ? plan.name : "—", { icon: "grid", sub: plan ? plan.description : "" }) +
-        UI.kpi("Estimation mensuelle", plan && plan.base_price === 0 && plan.per_student === 0 ? "Sur devis" : UI.money(s.estimated_amount || 0, plan ? plan.currency : "USD"),
-          { icon: "finance", sub: UI.plural(s.students, "élève actif", "élèves actifs") }) +
-        "</div>" +
-
-        '<dl class="dl">' +
-        (s.trial_ends_at ? "<dt>Fin de la période d'essai</dt><dd>" + UI.fmtDate(s.trial_ends_at) + "</dd>" : "") +
-        (s.current_period_end ? "<dt>Échéance de la période en cours</dt><dd>" + UI.fmtDate(s.current_period_end) + "</dd>" : "") +
-        (plan ? "<dt>Périmètre de la formule</dt><dd>" + (plan.max_students ? "Jusqu'à " + plan.max_students.toLocaleString("fr-FR") + " élèves" : "Au-delà de " + (plan.min_students || 0).toLocaleString("fr-FR") + " élèves — sur devis") + "</dd>" : "") +
-        (s.open_invoice ? "<dt>Facture en cours</dt><dd>" + UI.escapeHtml(s.open_invoice.number) + " — " +
-          UI.money(s.open_invoice.amount, s.open_invoice.currency) + ", à régler avant le " + UI.fmtDate(s.open_invoice.due_at) + "</dd>" : "") +
-        "</dl>" +
-
-        (s.attention ? '<p class="note-inline note-garde mt-16">' + UI.icon("alert", 15) + "<span>" + UI.escapeHtml(s.attention) + "</span></p>" : "") +
-
-        '<p class="note-inline mt-16">' + UI.icon("info", 15) +
-        "<span><strong>À ne pas confondre avec les frais scolaires.</strong> L'abonnement Klassio est ce que votre établissement paie pour utiliser la plateforme. Les frais de scolarité réglés par les familles sont un circuit distinct, dans " +
-        '<a class="link-btn" href="finance.html">Finance</a>.</span></p>' +
-
-        '<div class="row mt-16"><a href="abonnement.html" class="btn btn-ghost btn-sm">' + UI.icon("receipt", 15) + "Factures et détail de l'abonnement</a></div>";
-      UI.wireHrefs(corps);
-    }).catch(function () {
-      corps.innerHTML = UI.errorState("Le serveur Klassio est injoignable");
-    });
+    function charger() {
+      corps.innerHTML = UI.skeleton("row", 3);
+      api.fetch("/subscription").then(function (res) {
+        if (!res.ok) { corps.innerHTML = UI.errorState("Facturation indisponible", res.body.error || ""); return; }
+        window.KlassioFacturation.render(corps, res.body, { reload: charger });
+      }).catch(function () { corps.innerHTML = UI.errorState("Le serveur Klassio est injoignable"); });
+    }
+    charger();
   }
 
   function renderProfile(c) {
     var host = document.getElementById("profilePanel");
     if (!host) return;
-    host.innerHTML = '<div class="panel"><div class="panel-head"><h2>Identifiants de connexion</h2><span class="sub">Connectez-vous avec l\'un ou l\'autre</span></div><form id="profileForm" class="form-grid">' +
+    host.innerHTML = '<div class="kr-bloc"><h3>Identifiants de connexion</h3><p class="kr-intro">Connectez-vous avec l\'un ou l\'autre.</p><form id="profileForm" class="form-grid">' +
       '<div class="field"><label for="prPhone">Téléphone</label><input id="prPhone" type="tel" value="' + UI.escapeHtml(c.phone || "") + '" placeholder="09xx xxx xxx" /></div>' +
       '<div class="field"><label for="prEmail">Email</label><input id="prEmail" type="email" value="' + UI.escapeHtml(c.email || "") + '" placeholder="vous@exemple.com" /></div>' +
       '<div class="full row between"><p class="form-msg" id="prMsg"></p><button type="submit" class="btn btn-ghost btn-sm" id="prBtn">Enregistrer</button></div></form></div>';
@@ -229,18 +281,22 @@
   }
 
   // ---- Préférences personnelles (notifications, coordonnées) ----
+  // Préférences personnelles : la notification quotidienne d'un parent va dans
+  // Notifications ; le téléphone d'un professeur est une affaire de
+  // visibilité, il va dans Confidentialité.
   function renderPreferences(c) {
-    var host = document.getElementById("profilePanel");
-    if (!host || c.role === "directeur") return;
+    if (c.role !== "parent" && c.role !== "professeur") return;
     api.fetch("/me/preferences").then(function (r) {
       if (!r.ok) return;
-      var p = r.body;
-      var rows = "";
-      if (c.role === "parent") rows += sw("notify_present_daily", "Me prévenir chaque jour que mon enfant est bien arrivé", "Une notification par enfant et par jour, à la validation de l'appel. Les absences et retards vous sont signalés dans tous les cas.", p.notify_present_daily);
-      if (c.role === "professeur") rows += sw("share_phone", "Autoriser les parents de mes classes à voir mon téléphone", "Sinon, les parents passent par le cahier de communication de Klassio. La Direction peut aussi ouvrir les coordonnées pour tout l'établissement.", p.share_phone);
-      if (!rows) return;
-      host.insertAdjacentHTML("beforeend", '<div class="panel"><div class="panel-head"><h2>Vos notifications</h2></div>' + rows + "</div>");
-      host.querySelectorAll('input[data-pref]').forEach(function (cb) {
+      var p = r.body, hote;
+      if (c.role === "parent") {
+        hote = document.getElementById("krNotifications");
+        hote.innerHTML = '<div class="kr-bloc"><h3>Vos notifications</h3>' + sw("notify_present_daily", "Me prévenir chaque jour que mon enfant est bien arrivé", "Une notification par enfant et par jour, à la validation de l'appel. Les absences et retards vous sont signalés dans tous les cas.", p.notify_present_daily) + "</div>";
+      } else {
+        hote = document.getElementById("krVisibilite");
+        hote.innerHTML = "<h3>Vos coordonnées</h3>" + sw("share_phone", "Autoriser les parents de mes classes à voir mon téléphone", "Sinon, les parents passent par le cahier de communication de Klassio. La Direction peut aussi ouvrir les coordonnées pour tout l'établissement.", p.share_phone);
+      }
+      hote.querySelectorAll("input[data-pref]").forEach(function (cb) {
         cb.addEventListener("change", function () {
           var payload = {}; payload[cb.dataset.pref] = cb.checked;
           api.fetch("/me/preferences", { method: "PUT", body: JSON.stringify(payload) }).then(function (rr) {
@@ -324,15 +380,18 @@
         '<div class="panel-head" style="margin-top:20px"><h2>Capital de conduite</h2><a class="link-btn" href="discipline.html?tab=regles">Modifier les seuils</a></div>' +
         '<p class="muted">Capital de départ : <strong>' + th.capital + ' points</strong>.</p><div class="threshold-list mt-8">' + (th.thresholds || []).map(function (t) { return '<div class="th"><strong>' + t.remaining_points + "</strong><span>" + UI.escapeHtml(t.label) + (t.action ? " — " + UI.escapeHtml(t.action) : "") + "</span></div>"; }).join("") + "</div></div>" +
 
-        '<div class="panel"><div class="panel-head"><h2>Communication aux parents</h2><span class="sub">Vérifiée côté serveur à chaque requête</span></div>' +
+        renderBranding(s);
+      // Communication aux parents → Notifications ; qui voit les coordonnées et
+      // les soldes → Confidentialité. Mêmes interrupteurs, mêmes routes.
+      document.getElementById("krNotifications").innerHTML = '<div class="kr-bloc"><h3>Communication aux parents</h3><p class="kr-intro">Vérifiée côté serveur à chaque requête.</p>' +
         sw2("parent_notify_present", "Prévenir les parents que leur enfant est bien arrivé", "Envoyé à la validation de l'appel, une fois par enfant et par jour. Chaque parent peut se désabonner de son côté.", s.parent_notify_present) +
         sw2("parent_notify_attendance", "Informer les parents des absences et retards", "Notification dès l'enregistrement de l'appel ou du pointage au portail.", s.parent_notify_attendance) +
         sw2("parent_notify_incidents", "Autoriser la communication d'incidents aux parents", "Le DD choisit ensuite, incident par incident, d'informer ou non. Les notes internes ne sont jamais transmises.", s.parent_notify_incidents) +
         sw2("parent_notify_grades", "Informer les parents des nouveaux résultats", "Les résultats restent invisibles tant que la période n'est pas proclamée.", s.parent_notify_grades) +
+        '<p class="note-inline mt-16">' + UI.icon("lock", 15) + "<span>Aucune de ces options ne permet à Klassio de décider à votre place : l'outil informe, vous décidez.</span></p></div>";
+      document.getElementById("krVisibilite").innerHTML = "<h3>Qui voit quoi</h3>" +
         sw2("teacher_contact_visible", "Rendre visibles le téléphone et l'email des enseignants", "Sinon, les parents passent par le cahier de communication. Chaque enseignant peut ouvrir ses coordonnées de son côté.", s.teacher_contact_visible) +
-        sw2("teacher_sees_finance", "Les professeurs voient la situation financière de leurs classes", "Sans cette autorisation, aucun solde n'est transmis à un professeur — ni dans les listes, ni dans les dossiers, ni via l'assistant.", s.teacher_sees_finance) +
-        '<p class="note-inline mt-16">' + UI.icon("lock", 15) + "<span>Aucune de ces options ne permet à Klassio de décider à votre place : l'outil informe, vous décidez.</span></p></div>" +
-        renderBranding(s);
+        sw2("teacher_sees_finance", "Les professeurs voient la situation financière de leurs classes", "Sans cette autorisation, aucun solde n'est transmis à un professeur — ni dans les listes, ni dans les dossiers, ni via l'assistant.", s.teacher_sees_finance);
       wireBranding();
       document.getElementById("etabForm").addEventListener("submit", function (e) {
         e.preventDefault();
@@ -357,7 +416,7 @@
           UI.btnState(btn, "success"); UI.toast("Règles de vie scolaire enregistrées.", "success");
         });
       });
-      host.querySelectorAll("input[data-flag]").forEach(function (cb) {
+      document.querySelectorAll("input[data-flag]").forEach(function (cb) {
         cb.addEventListener("change", function () {
           var payload = {}; payload[cb.dataset.flag] = cb.checked;
           api.fetch("/settings", { method: "PUT", body: JSON.stringify(payload) }).then(function (r) {

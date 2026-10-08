@@ -62,12 +62,12 @@
     var absent = active.filter(function (s) { return s.today_status === "absent"; }).length;
     var late = active.filter(function (s) { return s.today_status === "late"; }).length;
     var called = active.filter(function (s) { return s.today_status; }).length;
-    var html = UI.kpi("Élèves actifs", active.length.toLocaleString("fr-FR"), { icon: "students", sub: classes.length + " classes" }) +
-      UI.kpi("Appelés aujourd'hui", called.toLocaleString("fr-FR"), { icon: "clipboard", sub: active.length ? Math.round(called / active.length * 100) + " % des élèves" : "" }) +
+    var html = UI.kpi("Élèves actifs", active.length.toLocaleString((window.KLASSIO_LOCALE || "fr-FR")), { icon: "students", sub: classes.length + " classes" }) +
+      UI.kpi("Appelés aujourd'hui", called.toLocaleString((window.KLASSIO_LOCALE || "fr-FR")), { icon: "clipboard", sub: active.length ? Math.round(called / active.length * 100) + " % des élèves" : "" }) +
       UI.kpi("Absents / retards", absent + " / " + late, { icon: "calendar", tone: absent ? "bad" : "" });
     if (financeVisible) {
       var due = active.filter(function (s) { return (s.balance || 0) > 0; }).length;
-      html += UI.kpi("Avec solde restant", due.toLocaleString("fr-FR"), { icon: "finance", tone: due ? "warn" : "ok", sub: active.length ? Math.round((active.length - due) / active.length * 100) + " % à jour" : "" });
+      html += UI.kpi("Avec solde restant", due.toLocaleString((window.KLASSIO_LOCALE || "fr-FR")), { icon: "finance", tone: due ? "warn" : "ok", sub: active.length ? Math.round((active.length - due) / active.length * 100) + " % à jour" : "" });
     } else {
       var byGender = active.reduce(function (acc, s) { acc[s.gender || "?"] = (acc[s.gender || "?"] || 0) + 1; return acc; }, {});
       html += UI.kpi("Filles / garçons", (byGender.F || 0) + " / " + (byGender.M || 0), { icon: "users", sub: byGender["?"] ? byGender["?"] + " non renseigné(s)" : "" });
@@ -125,7 +125,7 @@
     host.innerHTML = view === "folders" ? renderFolders(slice) : renderTable(slice);
     UI.wireHrefs(host);
     pager.hidden = pages <= 1;
-    pager.innerHTML = "<span>" + ((page - 1) * PAGE_SIZE + 1) + "–" + Math.min(page * PAGE_SIZE, filtered.length) + " sur " + filtered.length.toLocaleString("fr-FR") + "</span>" +
+    pager.innerHTML = "<span>" + ((page - 1) * PAGE_SIZE + 1) + "–" + Math.min(page * PAGE_SIZE, filtered.length) + " sur " + filtered.length.toLocaleString((window.KLASSIO_LOCALE || "fr-FR")) + "</span>" +
       '<div class="pg-btns"><button type="button" id="pgPrev" aria-label="Page précédente"' + (page <= 1 ? " disabled" : "") + ">" + UI.icon("chevronLeft", 16) + "</button><span style=\"align-self:center;padding:0 6px;\">Page " + page + " / " + pages + '</span><button type="button" id="pgNext" aria-label="Page suivante"' + (page >= pages ? " disabled" : "") + ">" + UI.icon("chevronRight", 16) + "</button></div>";
     var prev = document.getElementById("pgPrev"), next = document.getElementById("pgNext");
     if (prev) prev.addEventListener("click", function () { page--; render(); window.scrollTo({ top: 0, behavior: "smooth" }); });

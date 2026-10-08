@@ -284,9 +284,9 @@
 
     function renderAnalysis(a) {
       state.analysis = a;
-      document.getElementById("resStudents").textContent = a.students_count.toLocaleString("fr-FR");
+      document.getElementById("resStudents").textContent = a.students_count.toLocaleString((window.KLASSIO_LOCALE || "fr-FR"));
       document.getElementById("resClasses").textContent = a.classes_count;
-      document.getElementById("resGuardians").textContent = a.guardians_count.toLocaleString("fr-FR");
+      document.getElementById("resGuardians").textContent = a.guardians_count.toLocaleString((window.KLASSIO_LOCALE || "fr-FR"));
       document.getElementById("resColumns").textContent = a.columns_recognized + " / " + a.columns_total;
       document.getElementById("resQualityBar").style.width = a.data_quality_score + "%";
       document.getElementById("resQuality").textContent = a.data_quality_score + " %";

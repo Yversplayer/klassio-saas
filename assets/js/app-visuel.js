@@ -69,7 +69,7 @@
     passage: "campus", finance: "mod-frais", paiements: "gal-tampon",
     calendrier: "d0730", messages: "d1630", notifications: "d1000", documents: "mod-eleves",
     ressources: "pub", rapports: "campus2", exports: "d1300", etablissement: "dusk",
-    parametres: "portail", abonnement: "mod-direction"
+    abonnement: "mod-direction"
   };
   // L'accueil dépend du rôle : on attend /me plutôt que de deviner sur
   // `klassio_role`, cache d'affichage qu'un second compte du même navigateur

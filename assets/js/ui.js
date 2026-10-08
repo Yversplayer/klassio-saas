@@ -82,7 +82,7 @@
     var cur = currency || defaultCurrency;
     var n = Number(v) || 0;
     var digits = cur === "CDF" ? 0 : 2;
-    var s = n.toLocaleString("fr-FR", { minimumFractionDigits: 0, maximumFractionDigits: digits });
+    var s = n.toLocaleString((window.KLASSIO_LOCALE || "fr-FR"), { minimumFractionDigits: 0, maximumFractionDigits: digits });
     return s + " " + (SYMBOLS[cur] || cur);
   }
   function compactMoney(v, currency) {
@@ -90,23 +90,23 @@
     var n = Number(v) || 0;
     var abs = Math.abs(n);
     var out;
-    if (abs >= 1e9) out = (n / 1e9).toLocaleString("fr-FR", { maximumFractionDigits: 1 }) + " Md";
-    else if (abs >= 1e6) out = (n / 1e6).toLocaleString("fr-FR", { maximumFractionDigits: 1 }) + " M";
-    else if (abs >= 1e4) out = (n / 1e3).toLocaleString("fr-FR", { maximumFractionDigits: 1 }) + " k";
-    else out = n.toLocaleString("fr-FR", { maximumFractionDigits: cur === "CDF" ? 0 : 2 });
+    if (abs >= 1e9) out = (n / 1e9).toLocaleString((window.KLASSIO_LOCALE || "fr-FR"), { maximumFractionDigits: 1 }) + " Md";
+    else if (abs >= 1e6) out = (n / 1e6).toLocaleString((window.KLASSIO_LOCALE || "fr-FR"), { maximumFractionDigits: 1 }) + " M";
+    else if (abs >= 1e4) out = (n / 1e3).toLocaleString((window.KLASSIO_LOCALE || "fr-FR"), { maximumFractionDigits: 1 }) + " k";
+    else out = n.toLocaleString((window.KLASSIO_LOCALE || "fr-FR"), { maximumFractionDigits: cur === "CDF" ? 0 : 2 });
     return out + " " + (SYMBOLS[cur] || cur);
   }
   function fmtDate(v) {
     if (!v) return "—";
     var d = typeof v === "number" || /^\d+(\.\d+)?$/.test(String(v)) ? new Date(parseFloat(v) * 1000) : new Date(v + (String(v).length === 10 ? "T00:00:00" : ""));
     if (isNaN(d.getTime())) return String(v);
-    return d.toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
+    return d.toLocaleDateString((window.KLASSIO_LOCALE || "fr-FR"), { day: "numeric", month: "short", year: "numeric" });
   }
   function fmtDateTime(v) {
     if (!v) return "—";
     var d = new Date(parseFloat(v) * 1000);
     if (isNaN(d.getTime())) return String(v);
-    return d.toLocaleString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+    return d.toLocaleString((window.KLASSIO_LOCALE || "fr-FR"), { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
   }
   function relTime(v) {
     var t = parseFloat(v) * 1000, diff = Date.now() - t;
