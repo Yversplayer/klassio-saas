@@ -24,6 +24,7 @@ import financial
 import events as events_module
 import notifications as notif_module
 import school
+import ia_generative
 import discipline as disc
 import deliveries as deliveries_module
 import mailer
@@ -1783,6 +1784,9 @@ def get_settings_route():
     settings["school_name"] = tenant["name"] if tenant else ""
     if g.ctx["role"] == "directeur" and tenant:
         settings["branding"] = school.branding(tenant)
+        # Palier 1 de l'IA générative : l'interrupteur ne s'affiche que dans
+        # une école ouverte par la plateforme (voir ia_generative.py).
+        settings["ai_generative_ouverte"] = ia_generative.ouverte(g.ctx["tenant_id"])
         settings["code_prefix"] = tenant["code_prefix"] or "STU"
         settings["code_mode"] = tenant["code_mode"] or "random"
     return jsonify(settings)
@@ -1801,7 +1805,7 @@ def update_settings_route():
             raise ValidationError("currency doit être USD, CDF ou EUR.")
         patch["currency"] = cur
     for flag in ("teacher_sees_finance", "parent_notify_attendance", "parent_notify_incidents", "parent_notify_grades",
-                 "parent_notify_present", "teacher_contact_visible"):
+                 "parent_notify_present", "teacher_contact_visible", "ai_generative"):
         if flag in data:
             patch[flag] = 1 if data[flag] else 0
     if "store_cutoff_time" in data:

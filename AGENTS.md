@@ -525,6 +525,33 @@ les emails restent en français. (4) Une date ou un nombre s'écrit avec
 - **Explication du capital de points** pour une première utilisation :
   `discipline-outils.js` (`explication`).
 
+### IA générative — palier 1 (09/10/2026)
+
+Décidée par le propriétaire après le séminaire du 09/10 (règle des trois
+cercles : lire / brouillon validé par un humain / jamais). Fournisseur :
+**OpenAI**. Fichier : `backend/ia_generative.py`, tests :
+`tests/test_ia_generative.py` (chaque garde-fou vu tomber quand on le neutralise).
+
+- **Le modèle ne répond pas, il reformule.** Quand `answer_question` rend
+  `fallback`, le modèle choisit une question type dans un catalogue FERMÉ
+  (`CATALOGUE`) ; c'est l'assistant déterministe qui répond, avec les vrais
+  chiffres. Une question type ajoutée doit être vérifiée par `test_01`.
+- **Aucune donnée de l'école ne part.** Le fournisseur reçoit la question,
+  noms masqués (« Élève 1 »), et le catalogue. Jamais un solde, une note, une
+  liste. Le modèle ne peut désigner un élève que par un repère masqué dans
+  CETTE question. `store: false`.
+- **Toujours lecture seule** : aucune écriture dans le module ; les demandes
+  d'écriture sont refusées par `answer_question` AVANT l'appel.
+- **Qui** : Direction seulement, écoles listées dans `KLASSIO_IA_ECOLES`, si
+  la Direction ne l'a pas coupée (`tenant_settings.ai_generative`, interrupteur
+  dans Paramètres, visible seulement dans une école ouverte). Plafond :
+  `KLASSIO_IA_PLAFOND_MENSUEL` (300), compté sur les réponses `gen:…` de
+  `ai_messages`. Sans `OPENAI_API_KEY`, rien ne part. Panne → réponse d'origine.
+- **Palier 2 (pas fait)** : DD et professeurs, premiers brouillons (messages
+  aux parents). Un brouillon n'est jamais envoyé par l'IA : elle remplit un
+  champ, l'humain clique.
+- Pas de chatbot : la forme de l'assistant ne change pas.
+
 ### Analytics et cookies — ne décide pas seul
 
 Klassio manipule des dossiers d'enfants scolarisés. Brancher un outil

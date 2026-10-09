@@ -64,3 +64,13 @@ services:
       # du Worker.
       - key: KLASSIO_RELAIS_SECRET
         generateValue: true
+
+      # IA générative, palier 1 (09/10/2026, backend/ia_generative.py). Sans
+      # clé, rien ne part : l'assistant déterministe répond seul. La clé est
+      # saisie par le propriétaire dans Render, jamais dans ce dépôt public.
+      - key: OPENAI_API_KEY
+        sync: false
+      # Écoles ouvertes (identifiants séparés par des virgules, ou `*`).
+      # D'abord l'école pilote seulement.
+      - key: KLASSIO_IA_ECOLES
+        sync: false

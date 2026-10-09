@@ -27,6 +27,7 @@ import mailer
 import notifications as notif_module
 import ingestion
 import ai_assistant
+import ia_generative
 import school
 import api_school
 import api_life
@@ -2471,6 +2472,9 @@ def ai_ask():
                  (new_id(), conversation_id, tenant_id, message, now))
 
     result = ai_assistant.answer_question(conn, g.ctx, message, previous_intent=previous_intent)
+    # Palier 1 de l'IA générative : seulement quand l'assistant n'a pas compris,
+    # et seulement pour qui y a droit. Le modèle reformule ; l'assistant répond.
+    result = ia_generative.reformuler(conn, g.ctx, message, result)
 
     import json as _json
     conn.execute(

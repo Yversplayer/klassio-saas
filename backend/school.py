@@ -181,6 +181,10 @@ SETTINGS_DEFAULTS = {
     "parent_notify_present": 1,         # notification quotidienne « votre enfant est à l'école »
     "exam_period_starts": None, "exam_period_ends": None,
     "teacher_contact_visible": 0,       # le téléphone des enseignants est-il visible des parents ?
+    # IA générative (palier 1, 09/10/2026) : la Direction peut la couper pour
+    # son école. Allumée par défaut, mais elle ne fonctionne que dans les écoles
+    # ouvertes par la plateforme (KLASSIO_IA_ECOLES) — voir ia_generative.py.
+    "ai_generative": 1,
     # Politique de diffusion des résultats — CONFIGURABLE, jamais écrite en dur.
     # JSON : {"mode": "always" | "balance", "max_balance": 0, "exempt_class_ids": []}
     #   always  : les résultats proclamés sont accessibles à tous les parents autorisés.
@@ -198,7 +202,7 @@ SETTINGS_DEFAULTS = {
 }
 DEFAULT_CONDUCT_SCALE = [[90, "Très bien"], [75, "Bien"], [60, "Assez bien"], [40, "Passable"], [0, "Insuffisant"]]
 BOOL_SETTINGS = {"teacher_sees_finance", "parent_notify_attendance", "parent_notify_incidents", "parent_notify_grades",
-                 "parent_notify_present", "teacher_contact_visible"}
+                 "parent_notify_present", "teacher_contact_visible", "ai_generative"}
 INT_SETTINGS = {"discipline_alert_threshold", "discipline_capital"}
 
 

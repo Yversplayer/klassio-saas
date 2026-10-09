@@ -417,7 +417,10 @@
         '<p class="note-inline mt-16">' + UI.icon("lock", 15) + "<span>Aucune de ces options ne permet à Klassio de décider à votre place : l'outil informe, vous décidez.</span></p></div>";
       document.getElementById("krVisibilite").innerHTML = "<h3>Qui voit quoi</h3>" +
         sw2("teacher_contact_visible", "Rendre visibles le téléphone et l'email des enseignants", "Sinon, les parents passent par le cahier de communication. Chaque enseignant peut ouvrir ses coordonnées de son côté.", s.teacher_contact_visible) +
-        sw2("teacher_sees_finance", "Les professeurs voient la situation financière de leurs classes", "Sans cette autorisation, aucun solde n'est transmis à un professeur — ni dans les listes, ni dans les dossiers, ni via l'assistant.", s.teacher_sees_finance);
+        sw2("teacher_sees_finance", "Les professeurs voient la situation financière de leurs classes", "Sans cette autorisation, aucun solde n'est transmis à un professeur — ni dans les listes, ni dans les dossiers, ni via l'assistant.", s.teacher_sees_finance) +
+        // IA générative (palier 1) : seulement dans une école ouverte par la
+        // plateforme — ailleurs, l'interrupteur décrirait une fonction absente.
+        (s.ai_generative_ouverte ? sw2("ai_generative", "Laisser l'IA reformuler les questions que l'assistant ne comprend pas", "Un modèle d'OpenAI reçoit seulement la question de la Direction, noms masqués, et choisit la question type correspondante. Aucune donnée de l'école ne lui est envoyée : les chiffres viennent toujours de Klassio.", s.ai_generative) : "");
       wireBranding();
       document.getElementById("etabForm").addEventListener("submit", function (e) {
         e.preventDefault();

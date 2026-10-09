@@ -661,6 +661,8 @@ def _migrate(conn):
     #   PREPARATION en cours de construction, pas encore ouverte aux usagers
     #   ARCHIVED    close. Consultable, jamais modifiable, JAMAIS supprimée.
     _add_column_if_missing(conn, "tenant_settings", "delib_max_absences", "INTEGER")
+    # La Direction peut couper l'IA générative pour son école (09/10/2026).
+    _add_column_if_missing(conn, "tenant_settings", "ai_generative", "INTEGER NOT NULL DEFAULT 1")
     _add_column_if_missing(conn, "academic_years", "status", "TEXT NOT NULL DEFAULT 'ACTIVE'")
     _add_column_if_missing(conn, "academic_years", "starts_on", "TEXT")
     _add_column_if_missing(conn, "academic_years", "ends_on", "TEXT")
