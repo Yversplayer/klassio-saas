@@ -8,9 +8,83 @@ Ce fichier existe pour qu'une nouvelle conversation reprenne sans rien
 redécouvrir. Lisez-le en entier : il contient tout ce qui n'est pas déductible
 du code.
 
-Dernière mise à jour : **2026-10-07**. **Commencez par §00 ci-dessous** (le bloc « état au 07/10 » d'abord) : il donne l'état courant. Le §0 et la suite sont l'historique (17/09 et avant), toujours vrai sauf là où §00 le corrige.
+Dernière mise à jour : **2026-10-09**. **Commencez par §000 ci-dessous** (état au 09/10), puis §00 (07/10) : il donne l'état courant. Le §0 et la suite sont l'historique (17/09 et avant), toujours vrai sauf là où §00 le corrige.
 
 ---
+
+## 000. REPRISE IMMÉDIATE — état au 09/10/2026 (ce bloc fait foi)
+
+> **Nouvelle discussion ?** Lisez `AGENTS.md` (§10 : tous les chantiers du
+> 07–08/10 y sont décrits, fichier par fichier), puis ce bloc, puis §00.
+
+### Où en est le code
+
+| Commit | Contenu | GitHub | Render |
+|---|---|---|---|
+| `2758a37` et avant | Accueil/Finance « en gros », Paramètres façon Claude, langue (FR/EN), boutique avec stock, agenda, site 36 fonctions | ✅ | ✅ (5c27706) |
+| `d5687ba` | Compte professeur : signalements sur les règles, fichiers de cours tout format (10 Mo, formats actifs refusés), comète de chargement, Livres & devoirs en librairie, assistant du professeur, onglets en couleur | ✅ poussé | ❌ **PAS déployé** — sans lui, « Signaler » est bloqué en ligne (route `/api/incident-reports/rules` en 404) |
+| `da1e074` | Discipline : règlement lu dans un Word/PDF (`reglement.py`), faits en lot (`discipline_lot.py`), récidivistes, pastilles du menu (`/api/me/badges`), logo sur les documents et bulletins PDF, explication du capital de points, accueil du DD ; site 38 fonctions, démo 27 écrans | ❌ **local seulement** | ❌ |
+
+Tests au dernier passage : **624** SQLite, **44/44** PostgreSQL.
+
+**Le propriétaire a demandé d'ATTENDRE SON SIGNAL** avant de pousser `da1e074`
+(Bureau → GitHub → Render). Au signal : rsync du miroir (AGENTS §7, vérifier
+qu'aucune suppression n'emporte un fichier du miroir), contrôle des secrets,
+`git push origin main`, puis **Render → klassio-api → Manual Deploy → Deploy
+latest commit** (le propriétaire doit être connecté à Render dans le volet
+navigateur ; ne jamais saisir ses identifiants), puis vérifier en ligne que
+`/api/incident-reports/rules`, `/api/discipline/lot/analyze` et
+`/api/me/badges` répondent 401 (et non 404).
+
+### Décisions et demandes du propriétaire (08–09/10) — ne pas rouvrir
+
+- **Signalements** : le professeur CHOISIT le fait dans les règles de la
+  Direction ; description libre seulement si l'école n'a aucune règle ; le DD
+  analyse et décide (y compris d'informer le parent).
+- **Discipline inspirée du règlement de Lestonnac** (photos envoyées le 09/10,
+  à ne pas intégrer telles quelles) : capital 100, barème par faute, échelle
+  E / TB / B / AB / Me / Ma, renvois définitifs, sanctions positives.
+- **Trois préfets dans une école** (maternelle, primaire, secondaire) : déjà
+  possible (périmètre par cycle du DD). **Un seul abonnement par école**, palier
+  selon l'effectif total (Lestonnac ≈ 2 000 élèves → Complexe).
+- **Langues** : seules les langues au dictionnaire complet sont proposées
+  (FR, EN). ES, PT, DE, SW, LN : acceptées par le serveur, à traduire.
+- **Photos de documents** (règlement, liste papier) : NON lues — il faudrait un
+  service de reconnaissance de caractères externe = décision du propriétaire
+  (coût, données d'élèves envoyées à un tiers).
+
+### En attente du propriétaire
+
+1. **Signal pour pousser `da1e074`** + déploiement Render (et celui de `d5687ba`).
+2. Stockage des fichiers de cours : aujourd'hui dans la base (base64) ; quota
+   Supabase gratuit 500 Mo → Supabase Storage ou Cloudflare R2 à décider.
+3. Assistant IA génératif (confidentialité, coût, clé) — non tranché.
+4. Domaine `klassio.cd` (puis référencement Google, e-mail).
+5. MAMAC / agrégateur de paiement : licence d'exploitation (Klassio reste au
+   propriétaire, MAMAC exploite) puis procuration du gérant ; pièces : RCCM
+   `CD/KNG/RCCM/24-B-01623`, Id. Nat., NIF (sur le certificat GUCE), statuts.
+   Deux modèles proposés à rédiger dès qu'il donne : rémunération voulue,
+   licence exclusive ou non.
+6. Application hors ligne pour parents, professeurs et DD : « un autre sujet ».
+7. Écrans encore « trop vides » : à densifier selon ses retours.
+
+### Prospection (hors code)
+
+Lettre et enveloppe pour **Lestonnac Mobokoli** (« Révérende Sœur Préfète »,
+proposition d'école pilote) : `prospection/lettre-lestonnac.pdf` et
+`prospection/enveloppe-lestonnac.pdf` (dossier exclu de Git par
+`.git/info/exclude`, absent du dépôt public). Le courriel correspondant est à
+envoyer AVANT de déposer la lettre. Démo : https://klassio.mudeyimusimwa.workers.dev/demo.html
+
+### Pour vérifier à l'écran (local)
+
+Base de démonstration : `KLASSIO_DB_BACKEND=sqlite KLASSIO_DB_PATH=klassio_demo.db backend_venv/bin/python backend/tools/demo.py`,
+puis une configuration temporaire `klassio-demo` dans `.claude/launch.json`
+(`env KLASSIO_DB_BACKEND=sqlite KLASSIO_DB_PATH=klassio_demo.db ./demarrer.sh --testeur`, port 5001),
+à retirer après (`git checkout .claude/launch.json`, supprimer `backend/klassio_demo.db`).
+Comptes : `direction@`, `prof0@`, `parent0@`, `discipline@ecole1.charge.test`
+(mot de passe dans les données de démonstration). Ne pas laisser de serveur
+tourner sans le « go » du propriétaire.
 
 ## 00. REPRISE IMMÉDIATE — état au 07/10/2026 (ce bloc fait foi ; la suite date du 02/10)
 
