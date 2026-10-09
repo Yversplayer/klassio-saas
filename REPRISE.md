@@ -61,7 +61,9 @@ quand l'assistant ne comprend pas une question de la Direction, Claude Haiku 5.5
 nouvel essai) la reformule en question type d'un catalogue fermé ; Klassio
 répond. Seuls la question (noms masqués) et le catalogue partent. 19 tests
 (`test_ia_generative.py`), chaque garde-fou vu tomber une fois neutralisé.
-INACTIF tant que la clé n'est pas posée.
+**Déployé sur Render le 09/10 à 7 h 27 (`503a6a9`, avec la correction du
+taux d'encaissement `00ad589`)** ; vérifié : santé 200, routes protégées en
+401, pages identiques aux fichiers locaux. INACTIF tant que la clé n'est pas posée.
 
 Pour l'ALLUMER (propriétaire seul) : compte sur console.anthropic.com, crédit
 prépayé et plafond de dépense bas, clé API (`sk-ant-…`, affichée une seule
