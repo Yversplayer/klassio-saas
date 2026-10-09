@@ -53,6 +53,23 @@ Décisions acceptées par le propriétaire le 09/10 :
 6. Clé du fournisseur saisie par le propriétaire seul (Render), jamais dans le
    code ni dans la discussion.
 
+**Palier 1 CONSTRUIT et DÉPLOYÉ le 09/10 (`c3a9328`), fournisseur OpenAI,
+INACTIF tant que le propriétaire n'a pas posé la clé.** `backend/ia_generative.py`
+(AGENTS §10) : quand l'assistant ne comprend pas une question de la Direction,
+le modèle la reformule en question type d'un catalogue fermé ; Klassio répond.
+Seuls la question (noms masqués) et le catalogue partent — aucune donnée de
+l'école. 18 tests (`test_ia_generative.py`), chacun vu tomber garde-fou
+neutralisé ; 642 SQLite, 45/45 PostgreSQL.
+
+Pour l'ALLUMER (propriétaire seul, dans Render → klassio-api → Environment) :
+`OPENAI_API_KEY` (sa clé), `KLASSIO_IA_ECOLES` = identifiant de l'école pilote
+(`*` = toutes) ; facultatif `KLASSIO_IA_PLAFOND_MENSUEL` (300),
+`KLASSIO_IA_MODELE` (gpt-4o-mini). Vérifier sur le compte OpenAI que le modèle
+existe toujours et que le contrat exclut l'entraînement sur les données d'API.
+L'interrupteur apparaît alors dans Paramètres → Qui voit quoi.
+Pas encore sur la landing ni la démo : fonction réservée à l'école pilote —
+à y ajouter quand elle sera ouverte à tous (règle « tout le logiciel »).
+
 **Stockage des fichiers de cours** : passage à l'offre payante Supabase prévu
 la semaine du 12/10 — plus à trancher.
 
@@ -75,9 +92,8 @@ la semaine du 12/10 — plus à trancher.
 
 ### En attente du propriétaire
 
-1. **IA générative, palier 1** : choix du fournisseur et de son contrat
-   (non-conservation écrite), puis la clé saisie par lui dans Render. Rien
-   n'est construit tant que le fournisseur n'est pas choisi.
+1. **IA générative, palier 1** : construite et déployée (OpenAI) ; attend que
+   le propriétaire pose `OPENAI_API_KEY` et `KLASSIO_IA_ECOLES` dans Render.
 2. Domaine `klassio.cd` (puis référencement Google, e-mail) — on patiente.
 3. MAMAC / agrégateur de paiement — en attente (licence d'exploitation, puis
    procuration du gérant ; pièces : RCCM `CD/KNG/RCCM/24-B-01623`, Id. Nat.,
