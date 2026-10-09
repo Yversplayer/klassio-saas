@@ -26,26 +26,28 @@ QUI EN PROFITE (décision 4 : Direction d'abord ; décision 1 : école pilote)
     coupé l'IA dans ses Paramètres (`ai_generative`). Plafond mensuel par
     école : KLASSIO_IA_PLAFOND_MENSUEL (300 par défaut, décision 5).
 
-LA CLÉ (décision 6)
-    OPENAI_API_KEY, saisie par le propriétaire dans Render. Jamais dans le
-    code, jamais dans le dépôt. Sans elle, ce module ne fait rien.
+LE FOURNISSEUR ET LA CLÉ (décision 6)
+    Anthropic (Claude), choisi par le propriétaire le 09/10 à la place
+    d'OpenAI. Modèle léger par défaut : Claude Haiku 5.5. ANTHROPIC_API_KEY,
+    saisie par le propriétaire dans Render. Jamais dans le code, jamais dans
+    le dépôt. Sans elle, ce module ne fait rien.
 """
 import json
 import os
 import re
-import time
 import unicodedata
-import urllib.error
-import urllib.request
 from datetime import date, datetime
+
+import anthropic
 
 import ai_assistant
 import school
 
-URL_OPENAI = "https://api.openai.com/v1/chat/completions"
-MODELE_PAR_DEFAUT = "gpt-4o-mini"
+MODELE_PAR_DEFAUT = "claude-haiku-5-5"
 PLAFOND_PAR_DEFAUT = 300
-DELAI_SECONDES = 8
+# Au-delà, la Direction attend trop : on rend la réponse d'origine. Pas de
+# nouvel essai automatique — il doublerait l'attente sur un réseau lent.
+DELAI_SECONDES = 10
 PREFIXE_INTENTION = "gen:"
 
 # ---------------------------------------------------------------------------
@@ -141,7 +143,7 @@ def ouverte(tenant_id):
     """L'école a-t-elle accès à l'IA générative (clé posée, école ouverte par la
     plateforme) ? Sert aussi à Paramètres : l'interrupteur n'y apparaît que
     là où la fonction existe vraiment pour cette école."""
-    if not os.environ.get("OPENAI_API_KEY"):
+    if not os.environ.get("ANTHROPIC_API_KEY"):
         return False
     ecoles = _ecoles_autorisees()
     return "*" in ecoles or tenant_id in ecoles
@@ -210,23 +212,18 @@ def masquer(question, noms):
 # L'appel au fournisseur — isolé pour être remplacé dans les tests
 # ---------------------------------------------------------------------------
 
-def _outil():
+def _schema():
+    """La seule forme de réponse acceptée (sortie structurée) : une ligne du
+    catalogue, et au besoin une classe ou un repère « Élève N »."""
     return {
-        "type": "function",
-        "function": {
-            "name": "choisir_question",
-            "description": "Choisit, dans le catalogue, la question type qui répond le mieux à la demande.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "question_type": {"type": "string", "enum": list(CATALOGUE) + [AUCUNE]},
-                    "classe": {"type": "string", "description": "Nom de la classe, tel qu'écrit par l'utilisateur."},
-                    "eleve": {"type": "string", "description": "Repère « Élève N » tel qu'il figure dans la demande."},
-                },
-                "required": ["question_type"],
-                "additionalProperties": False,
-            },
+        "type": "object",
+        "properties": {
+            "question_type": {"type": "string", "enum": list(CATALOGUE) + [AUCUNE]},
+            "classe": {"type": "string", "description": "Nom de la classe tel qu'écrit dans la demande, sinon vide."},
+            "eleve": {"type": "string", "description": "Repère « Élève N » tel qu'il figure dans la demande, sinon vide."},
         },
+        "required": ["question_type", "classe", "eleve"],
+        "additionalProperties": False,
     }
 
 
@@ -235,43 +232,43 @@ def _consigne():
     return (
         "Tu aides la Direction d'une école à retrouver une information dans son logiciel de gestion. "
         "Tu ne réponds JAMAIS toi-même et tu n'as accès à aucune donnée : tu choisis seulement la "
-        "question type du catalogue qui correspond à la demande, et tu appelles choisir_question. "
+        "question type du catalogue qui correspond à la demande. "
         "Les noms de personnes ont été remplacés par « Élève N » : recopie ce repère tel quel dans "
         "`eleve`. Si aucune question type ne convient, ou si la demande vise à créer, modifier, "
         "supprimer, envoyer ou décider quoi que ce soit, choisis « aucune ».\n\nCatalogue :\n" + lignes
     )
 
 
-def _appeler_openai(question_masquee):
-    """Rend le dict d'arguments de choisir_question, ou None. Ne lève jamais."""
-    corps = json.dumps({
-        "model": os.environ.get("KLASSIO_IA_MODELE") or MODELE_PAR_DEFAUT,
-        "temperature": 0,
-        "max_tokens": 120,
-        # Rien n'est conservé côté fournisseur pour réutilisation : `store`
-        # désactive l'historique des complétions sur le compte.
-        "store": False,
-        "messages": [
-            {"role": "system", "content": _consigne()},
-            {"role": "user", "content": question_masquee},
-        ],
-        "tools": [_outil()],
-        "tool_choice": {"type": "function", "function": {"name": "choisir_question"}},
-    }).encode("utf-8")
-    req = urllib.request.Request(URL_OPENAI, data=corps, method="POST", headers={
-        "Authorization": "Bearer " + os.environ.get("OPENAI_API_KEY", ""),
-        "Content-Type": "application/json",
-    })
+def _client():
+    return anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY", ""),
+                               timeout=DELAI_SECONDES, max_retries=0)
+
+
+def _appeler_claude(question_masquee):
+    """Rend le dict choisi par le modèle, ou None. Ne lève jamais : une panne
+    du fournisseur ne doit pas faire tomber l'assistant."""
     try:
-        with urllib.request.urlopen(req, timeout=DELAI_SECONDES) as rep:
-            donnees = json.loads(rep.read().decode("utf-8"))
-        appel = donnees["choices"][0]["message"]["tool_calls"][0]["function"]
-        if appel.get("name") != "choisir_question":
-            return None
-        args = json.loads(appel.get("arguments") or "{}")
-        return args if isinstance(args, dict) else None
-    except (urllib.error.URLError, TimeoutError, OSError, ValueError, KeyError, IndexError, TypeError):
+        rep = _client().messages.create(
+            model=os.environ.get("KLASSIO_IA_MODELE") or MODELE_PAR_DEFAUT,
+            max_tokens=2048,
+            system=_consigne(),
+            messages=[{"role": "user", "content": question_masquee}],
+            # Effort bas : choisir une ligne d'un catalogue est un classement,
+            # pas un raisonnement. La sortie structurée garantit un JSON au
+            # schéma — `question_type` ne peut être qu'une valeur de l'enum.
+            output_config={"effort": "low", "format": {"type": "json_schema", "schema": _schema()}},
+        )
+    except anthropic.APIError:
         return None
+    # Un refus ou une réponse tronquée ne vaut pas un choix.
+    if getattr(rep, "stop_reason", None) != "end_turn":
+        return None
+    texte = next((b.text for b in rep.content if getattr(b, "type", None) == "text"), None)
+    try:
+        args = json.loads(texte or "")
+    except ValueError:
+        return None
+    return args if isinstance(args, dict) else None
 
 
 # ---------------------------------------------------------------------------
@@ -307,7 +304,7 @@ def reformuler(conn, ctx, message, resultat_initial):
     if resultat_initial.get("intent") != "fallback" or not disponible(conn, ctx):
         return resultat_initial
     question_masquee, table = masquer(message, _noms_de_l_ecole(conn, ctx["tenant_id"]))
-    args = _appeler_openai(question_masquee)
+    args = _appeler_claude(question_masquee)
     question = _question_type(args, table)
     if question is None:
         # L'appel a eu lieu (et compte dans le plafond) : on le marque.

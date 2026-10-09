@@ -10,10 +10,9 @@ Ce que ces tests verrouillent, décision par décision :
   6. sans clé, rien ne part.
 Et le cercle 3 du séminaire : une demande d'écriture n'atteint jamais le modèle.
 
-Le fournisseur n'est JAMAIS appelé pour de vrai : `_appeler_openai` (ou
-`urlopen`, pour le test du format de la requête) est remplacé.
+Le fournisseur (Anthropic, Claude) n'est JAMAIS appelé pour de vrai :
+`_appeler_claude` (ou le client du SDK, pour le test de la requête) est remplacé.
 """
-import io
 import json
 import os
 import re
@@ -79,7 +78,7 @@ class IAGenerativeTests(unittest.TestCase):
 
     def setUp(self):
         security.reset_rate_limits_for_tests()
-        self.env = mock.patch.dict(os.environ, {"OPENAI_API_KEY": "cle-de-test", "KLASSIO_IA_ECOLES": self.tenant_id,
+        self.env = mock.patch.dict(os.environ, {"ANTHROPIC_API_KEY": "cle-de-test", "KLASSIO_IA_ECOLES": self.tenant_id,
                                                 "KLASSIO_IA_PLAFOND_MENSUEL": "1000"})
         self.env.start()
         self.envoyes = []
@@ -96,7 +95,7 @@ class IAGenerativeTests(unittest.TestCase):
         def faux(question_masquee):
             self.envoyes.append(question_masquee)
             return reponse
-        return mock.patch.object(ia_generative, "_appeler_openai", side_effect=faux)
+        return mock.patch.object(ia_generative, "_appeler_claude", side_effect=faux)
 
     def _ask(self, q, h=None):
         r = self.c.post("/api/ai/ask", json={"message": q}, headers=h or self.dir_h)
@@ -135,7 +134,7 @@ class IAGenerativeTests(unittest.TestCase):
     # --- Décision 6 : sans clé, rien ne part ------------------------------------
 
     def test_02_sans_cle_rien_ne_part(self):
-        os.environ.pop("OPENAI_API_KEY")
+        os.environ.pop("ANTHROPIC_API_KEY")
         with self._fournisseur({"question_type": "situation_financiere"}):
             b = self._ask("Comment se porte la caisse ?")
         self.assertEqual(b["intent"], "fallback")
@@ -195,35 +194,68 @@ class IAGenerativeTests(unittest.TestCase):
         self.assertNotIn("Voisin", json.dumps(b["rich"], ensure_ascii=False))
 
     def test_09_aucune_donnee_de_l_ecole_dans_la_requete(self):
-        """Le corps réellement envoyé : question masquée et catalogue, rien d'autre.
-        Pas de solde, pas de classe, pas de nom ; et `store: false`."""
+        """La requête réellement construite pour Claude : question masquée et
+        catalogue, rien d'autre. Pas de solde, pas de classe, pas de nom ; la
+        réponse est contrainte par un schéma ; pas de nouvel essai automatique."""
         capture = {}
 
-        class Rep(io.BytesIO):
-            def __enter__(self):
-                return self
+        class Bloc:
+            type = "text"
+            text = json.dumps({"question_type": "nombre_eleves", "classe": "", "eleve": ""})
 
-            def __exit__(self, *a):
-                return False
+        class Reponse:
+            stop_reason = "end_turn"
+            content = [Bloc()]
 
-        def faux_urlopen(req, timeout=None):
-            capture["corps"] = json.loads(req.data.decode("utf-8"))
-            capture["auth"] = req.get_header("Authorization")
-            capture["timeout"] = timeout
-            return Rep(json.dumps({"choices": [{"message": {"tool_calls": [{"function": {
-                "name": "choisir_question", "arguments": json.dumps({"question_type": "nombre_eleves"})}}]}}]}).encode())
+        class FauxMessages:
+            def create(self, **kwargs):
+                capture["requete"] = kwargs
+                return Reponse()
 
-        with mock.patch.object(ia_generative.urllib.request, "urlopen", side_effect=faux_urlopen):
+        class FauxClient:
+            def __init__(self, **kwargs):
+                capture["client"] = kwargs
+                self.messages = FauxMessages()
+
+        with mock.patch.object(ia_generative.anthropic, "Anthropic", FauxClient):
             b = self._ask("Dis-moi l'effectif, et parle-moi d'Amani")
         self.assertEqual(b["intent"], "gen:count_students")
-        corps = capture["corps"]
-        self.assertIs(corps["store"], False)
-        self.assertEqual(capture["auth"], "Bearer cle-de-test")
-        self.assertLessEqual(capture["timeout"], 10)
-        envoye = json.dumps(corps, ensure_ascii=False)
+        self.assertEqual(capture["client"]["api_key"], "cle-de-test")
+        self.assertEqual(capture["client"]["max_retries"], 0)
+        self.assertLessEqual(capture["client"]["timeout"], 10)
+        req = capture["requete"]
+        self.assertEqual(req["model"], "claude-haiku-5-5")
+        self.assertEqual(req["output_config"]["format"]["type"], "json_schema")
+        self.assertEqual(set(req["output_config"]["format"]["schema"]["properties"]["question_type"]["enum"]),
+                         set(ia_generative.CATALOGUE) | {AUCUNE})
+        self.assertEqual([m["role"] for m in req["messages"]], ["user"])
+        envoye = json.dumps(req, ensure_ascii=False)
         for interdit in ("Amani", "Kabeya", "Mbuyi", "École IA générative", self.tenant_id, self.amani["id"]):
             self.assertNotIn(interdit, envoye)
-        self.assertEqual([m["role"] for m in corps["messages"]], ["system", "user"])
+
+    def test_09bis_refus_ou_panne_du_fournisseur(self):
+        """Un refus, une réponse tronquée, un JSON illisible ou une erreur de
+        l'API rendent la réponse d'origine — jamais une exception."""
+        class Bloc:
+            type = "text"
+
+            def __init__(self, text):
+                self.text = text
+
+        def client(stop_reason="end_turn", text="{}", erreur=None):
+            class Messages:
+                def create(self, **kwargs):
+                    if erreur:
+                        raise erreur
+                    return type("R", (), {"stop_reason": stop_reason, "content": [Bloc(text)]})()
+            return type("C", (), {"messages": Messages()})()
+
+        erreur = ia_generative.anthropic.APIConnectionError(request=mock.Mock())
+        for c in (client(stop_reason="refusal", text='{"question_type": "nombre_eleves"}'),
+                  client(stop_reason="max_tokens", text='{"question_type": "nombre_eleves"}'),
+                  client(text="pas du json"), client(erreur=erreur)):
+            with self.subTest(), mock.patch.object(ia_generative, "_client", return_value=c):
+                self.assertIsNone(ia_generative._appeler_claude("question"))
 
     # --- Le catalogue est fermé -------------------------------------------------
 
@@ -293,7 +325,7 @@ class IAGenerativeTests(unittest.TestCase):
         os.environ["KLASSIO_IA_ECOLES"] = "une-autre-ecole"
         self.assertFalse(self.c.get("/api/settings", headers=self.dir_h).get_json()["ai_generative_ouverte"])
         os.environ["KLASSIO_IA_ECOLES"] = "*"
-        os.environ.pop("OPENAI_API_KEY")
+        os.environ.pop("ANTHROPIC_API_KEY")
         self.assertFalse(self.c.get("/api/settings", headers=self.dir_h).get_json()["ai_generative_ouverte"])
         self.assertNotIn("ai_generative_ouverte", self.c.get("/api/settings", headers=self.prof_h).get_json())
 

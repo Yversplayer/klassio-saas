@@ -529,7 +529,9 @@ les emails restent en français. (4) Une date ou un nombre s'écrit avec
 
 Décidée par le propriétaire après le séminaire du 09/10 (règle des trois
 cercles : lire / brouillon validé par un humain / jamais). Fournisseur :
-**OpenAI**. Fichier : `backend/ia_generative.py`, tests :
+**Anthropic (Claude)**, choisi le 09/10 à la place d'OpenAI ; SDK officiel
+`anthropic` (requirements.txt), modèle par défaut `claude-haiku-5-5`, sortie
+structurée (schéma JSON à enum), effort bas, 10 s, aucun nouvel essai. Fichier : `backend/ia_generative.py`, tests :
 `tests/test_ia_generative.py` (chaque garde-fou vu tomber quand on le neutralise).
 
 - **Le modèle ne répond pas, il reformule.** Quand `answer_question` rend
@@ -539,14 +541,15 @@ cercles : lire / brouillon validé par un humain / jamais). Fournisseur :
 - **Aucune donnée de l'école ne part.** Le fournisseur reçoit la question,
   noms masqués (« Élève 1 »), et le catalogue. Jamais un solde, une note, une
   liste. Le modèle ne peut désigner un élève que par un repère masqué dans
-  CETTE question. `store: false`.
+  CETTE question. Un refus, une réponse tronquée ou une erreur de l'API
+  rendent la réponse d'origine.
 - **Toujours lecture seule** : aucune écriture dans le module ; les demandes
   d'écriture sont refusées par `answer_question` AVANT l'appel.
 - **Qui** : Direction seulement, écoles listées dans `KLASSIO_IA_ECOLES`, si
   la Direction ne l'a pas coupée (`tenant_settings.ai_generative`, interrupteur
   dans Paramètres, visible seulement dans une école ouverte). Plafond :
   `KLASSIO_IA_PLAFOND_MENSUEL` (300), compté sur les réponses `gen:…` de
-  `ai_messages`. Sans `OPENAI_API_KEY`, rien ne part. Panne → réponse d'origine.
+  `ai_messages`. Sans `ANTHROPIC_API_KEY`, rien ne part. Panne → réponse d'origine.
 - **Palier 2 (pas fait)** : DD et professeurs, premiers brouillons (messages
   aux parents). Un brouillon n'est jamais envoyé par l'IA : elle remplit un
   champ, l'humain clique.

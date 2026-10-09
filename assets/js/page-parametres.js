@@ -420,7 +420,7 @@
         sw2("teacher_sees_finance", "Les professeurs voient la situation financière de leurs classes", "Sans cette autorisation, aucun solde n'est transmis à un professeur — ni dans les listes, ni dans les dossiers, ni via l'assistant.", s.teacher_sees_finance) +
         // IA générative (palier 1) : seulement dans une école ouverte par la
         // plateforme — ailleurs, l'interrupteur décrirait une fonction absente.
-        (s.ai_generative_ouverte ? sw2("ai_generative", "Laisser l'IA reformuler les questions que l'assistant ne comprend pas", "Un modèle d'OpenAI reçoit seulement la question de la Direction, noms masqués, et choisit la question type correspondante. Aucune donnée de l'école ne lui est envoyée : les chiffres viennent toujours de Klassio.", s.ai_generative) : "");
+        (s.ai_generative_ouverte ? sw2("ai_generative", "Laisser l'IA reformuler les questions que l'assistant ne comprend pas", "Claude, le modèle d'Anthropic, reçoit seulement la question de la Direction, noms masqués, et choisit la question type correspondante. Aucune donnée de l'école ne lui est envoyée : les chiffres viennent toujours de Klassio.", s.ai_generative) : "");
       wireBranding();
       document.getElementById("etabForm").addEventListener("submit", function (e) {
         e.preventDefault();

@@ -19,3 +19,9 @@ psycopg[binary]==3.2.13
 # Serveur WSGI de production. `flask run` / app.run() ne servent qu'au
 # développement local.
 gunicorn==23.0.0
+
+# IA générative, palier 1 (backend/ia_generative.py) : SDK officiel
+# d'Anthropic (Claude). Sans ANTHROPIC_API_KEY, il est importé mais rien ne
+# part. 0.x : la branche 1.x exige Python 3.10, le poste de développement est
+# en 3.9.
+anthropic==0.125.0
