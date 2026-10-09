@@ -8,7 +8,7 @@ Ce fichier existe pour qu'une nouvelle conversation reprenne sans rien
 redécouvrir. Lisez-le en entier : il contient tout ce qui n'est pas déductible
 du code.
 
-Dernière mise à jour : **2026-10-09**. **Commencez par §000 ci-dessous** (état au 09/10), puis §00 (07/10) : il donne l'état courant. Le §0 et la suite sont l'historique (17/09 et avant), toujours vrai sauf là où §00 le corrige.
+Dernière mise à jour : **2026-10-09** (soir : tout déployé, décisions IA). **Commencez par §000 ci-dessous** (état au 09/10), puis §00 (07/10) : il donne l'état courant. Le §0 et la suite sont l'historique (17/09 et avant), toujours vrai sauf là où §00 le corrige.
 
 ---
 
@@ -21,20 +21,40 @@ Dernière mise à jour : **2026-10-09**. **Commencez par §000 ci-dessous** (ét
 
 | Commit | Contenu | GitHub | Render |
 |---|---|---|---|
-| `2758a37` et avant | Accueil/Finance « en gros », Paramètres façon Claude, langue (FR/EN), boutique avec stock, agenda, site 36 fonctions | ✅ | ✅ (5c27706) |
-| `d5687ba` | Compte professeur : signalements sur les règles, fichiers de cours tout format (10 Mo, formats actifs refusés), comète de chargement, Livres & devoirs en librairie, assistant du professeur, onglets en couleur | ✅ poussé | ❌ **PAS déployé** — sans lui, « Signaler » est bloqué en ligne (route `/api/incident-reports/rules` en 404) |
-| `da1e074` | Discipline : règlement lu dans un Word/PDF (`reglement.py`), faits en lot (`discipline_lot.py`), récidivistes, pastilles du menu (`/api/me/badges`), logo sur les documents et bulletins PDF, explication du capital de points, accueil du DD ; site 38 fonctions, démo 27 écrans | ❌ **local seulement** | ❌ |
+| `2758a37` et avant | Accueil/Finance « en gros », Paramètres façon Claude, langue (FR/EN), boutique avec stock, agenda, site 36 fonctions | ✅ | ✅ |
+| `d5687ba` | Compte professeur : signalements sur les règles, fichiers de cours tout format, comète de chargement, Livres & devoirs, assistant du professeur, onglets en couleur | ✅ | ✅ (09/10) |
+| `da1e074` | Discipline : règlement lu dans un Word/PDF (`reglement.py`), faits en lot (`discipline_lot.py`), récidivistes, pastilles du menu (`/api/me/badges`), logo sur les documents et bulletins PDF, accueil du DD ; site 38 fonctions, démo 27 écrans | ✅ | ✅ (09/10) |
 
-Tests au dernier passage : **624** SQLite, **44/44** PostgreSQL.
-
-**Le propriétaire a demandé d'ATTENDRE SON SIGNAL** avant de pousser `da1e074`
-(Bureau → GitHub → Render). Au signal : rsync du miroir (AGENTS §7, vérifier
-qu'aucune suppression n'emporte un fichier du miroir), contrôle des secrets,
-`git push origin main`, puis **Render → klassio-api → Manual Deploy → Deploy
-latest commit** (le propriétaire doit être connecté à Render dans le volet
-navigateur ; ne jamais saisir ses identifiants), puis vérifier en ligne que
+**Tout est poussé et déployé le 09/10** (`1a47c23` sur Render) après **624**
+tests SQLite et **44/44** PostgreSQL verts. Vérifié en ligne :
 `/api/incident-reports/rules`, `/api/discipline/lot/analyze` et
-`/api/me/badges` répondent 401 (et non 404).
+`/api/me/badges` répondent 401 (et non plus 404), sur Render comme à travers
+le Worker ; les fichiers de pages servis sont identiques aux fichiers locaux.
+
+### IA générative — séminaire du 09/10, six décisions ACCEPTÉES
+
+Séminaire (présentation privée) : https://claude.ai/artifact/G9tRXK2Cc227csVezJffoZ
+Règle des **trois cercles** : (1) autorisé = lire, résumer, expliquer dans le
+périmètre de `school.py` ; (2) brouillon = l'IA prépare, un humain relit et
+clique ; (3) jamais = écrire en base, sanctionner, proclamer, confirmer un
+paiement, envoyer, changer un compte, voir hors périmètre, inventer un chiffre.
+Le modèle ne reçoit que des outils de LECTURE (catalogue actuel de
+`ai_assistant.py`) ; panne ou plafond → retour à l'assistant déterministe.
+Toujours pas de chatbot (réponse sous la recherche, cartes par écran).
+
+Décisions acceptées par le propriétaire le 09/10 :
+1. Brancher un modèle génératif — oui, d'abord sur l'école pilote.
+2. Confidentialité — option B : noms masqués avant envoi (« Élève 14 »),
+   contrat fournisseur sans conservation ni entraînement (à vérifier par écrit).
+3. Brouillons — aucun au palier 1 ; messages aux parents au palier 2.
+4. Accès — Direction d'abord, puis DD et professeurs.
+5. Inclus dans les offres, avec un plafond de questions par école
+   (tarifs inchangés).
+6. Clé du fournisseur saisie par le propriétaire seul (Render), jamais dans le
+   code ni dans la discussion.
+
+**Stockage des fichiers de cours** : passage à l'offre payante Supabase prévu
+la semaine du 12/10 — plus à trancher.
 
 ### Décisions et demandes du propriétaire (08–09/10) — ne pas rouvrir
 
@@ -55,18 +75,16 @@ navigateur ; ne jamais saisir ses identifiants), puis vérifier en ligne que
 
 ### En attente du propriétaire
 
-1. **Signal pour pousser `da1e074`** + déploiement Render (et celui de `d5687ba`).
-2. Stockage des fichiers de cours : aujourd'hui dans la base (base64) ; quota
-   Supabase gratuit 500 Mo → Supabase Storage ou Cloudflare R2 à décider.
-3. Assistant IA génératif (confidentialité, coût, clé) — non tranché.
-4. Domaine `klassio.cd` (puis référencement Google, e-mail).
-5. MAMAC / agrégateur de paiement : licence d'exploitation (Klassio reste au
-   propriétaire, MAMAC exploite) puis procuration du gérant ; pièces : RCCM
-   `CD/KNG/RCCM/24-B-01623`, Id. Nat., NIF (sur le certificat GUCE), statuts.
-   Deux modèles proposés à rédiger dès qu'il donne : rémunération voulue,
-   licence exclusive ou non.
-6. Application hors ligne pour parents, professeurs et DD : « un autre sujet ».
-7. Écrans encore « trop vides » : à densifier selon ses retours.
+1. **IA générative, palier 1** : choix du fournisseur et de son contrat
+   (non-conservation écrite), puis la clé saisie par lui dans Render. Rien
+   n'est construit tant que le fournisseur n'est pas choisi.
+2. Domaine `klassio.cd` (puis référencement Google, e-mail) — on patiente.
+3. MAMAC / agrégateur de paiement — en attente (licence d'exploitation, puis
+   procuration du gérant ; pièces : RCCM `CD/KNG/RCCM/24-B-01623`, Id. Nat.,
+   NIF, statuts ; rémunération voulue et exclusivité à connaître).
+4. Application hors ligne pour parents, professeurs et DD : « un autre sujet ».
+5. Écrans « trop vides » : le propriétaire en juge lui-même, ne rien
+   densifier sans sa demande.
 
 ### Prospection (hors code)
 
