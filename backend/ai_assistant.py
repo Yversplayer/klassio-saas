@@ -713,6 +713,15 @@ def answer_question(conn, ctx, message, previous_intent=None):
         return _result("Je n'ai pas accès aux données financières globales de l'établissement depuis votre espace.",
                         intent="denied_financial_professeur", refused=False)
 
+    # Le TAUX avant le MONTANT (trouvé le 09/10/2026) : « encaissement »
+    # commence par « encaisse », et la branche du montant répondait « encaissé
+    # 0 $ ce mois-ci » à qui demandait un pourcentage. test_assistant_taux.
+    if re.search(r"taux d.encaissement|pourcentage", low):
+        s = get_tenant_financial_summary(conn, ctx)
+        rate = round((s["total_paid"] / s["total_due"]) * 100) if s["total_due"] else 0
+        return _result(f"Le taux d'encaissement est de **{rate} %**.\n\n{_money(s['total_paid'])} encaissés sur {_money(s['total_due'])} attendus.",
+                        intent="collection_rate")
+
     if re.search(r"encaiss[ée]", low):
         period = "this_month"
         if re.search(r"mois dernier|mois pr[ée]c[ée]dent", low):
@@ -738,12 +747,6 @@ def answer_question(conn, ctx, message, previous_intent=None):
                             {"label": "Encaissé", "value": _money(s["total_paid"])},
                             {"label": "Restant", "value": _money(s["outstanding"])},
                         ]}, actions=[{"label": "Voir Finance", "target": "finance.html"}])
-
-    if re.search(r"taux d.encaissement|pourcentage", low):
-        s = get_tenant_financial_summary(conn, ctx)
-        rate = round((s["total_paid"] / s["total_due"]) * 100) if s["total_due"] else 0
-        return _result(f"Le taux d'encaissement est de **{rate} %**.\n\n{_money(s['total_paid'])} encaissés sur {_money(s['total_due'])} attendus.",
-                        intent="collection_rate")
 
     if re.search(r"plus gros.{0,10}impay|plus grosses?.{0,10}dettes?|impay[ée]s? les plus", low):
         rows = get_biggest_unpaid(conn, ctx, 5)
